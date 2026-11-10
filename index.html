@@ -79,6 +79,10 @@ h1,h2,h3,h4{ margin:0; font-weight:700; }
 .shopbtn svg{ width:38px; height:38px; }
 .shopbtn:hover{ filter:brightness(1.06); }
 .shopbtn:active{ transform:translateY(4px); box-shadow:none; }
+.resetbtn{ margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:12px; color:var(--muted); font-weight:600; font-size:14px; border:1.5px solid var(--line); background:#fff; }
+.resetbtn svg{ width:18px; height:18px; }
+.resetbtn:hover{ background:#FFF0F1; color:var(--red); border-color:#FFC7CB; }
+.resetbtn.ask{ background:var(--red); color:#fff; border-color:var(--red); animation:bump .5s ease-in-out infinite; }
 .total{ display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:17px; color:var(--muted); }
 .total svg{ width:28px; height:28px; }
 .sec{ display:flex; align-items:center; gap:12px; margin:34px 0 4px; flex-wrap:wrap; }
@@ -384,7 +388,7 @@ canvas#conf{ position:fixed; inset:0; pointer-events:none; z-index:150; width:10
     <div class="htxt">
       <h1 id="heroTitle" aria-label="Programación por bloques"></h1>
       <p>Arrastrá los bloques, armá el programa y llevá al robot hasta la estrella.</p>
-      <div class="herobtns"><button class="shopbtn" id="shopBtn"></button><span class="total" id="total"></span></div>
+      <div class="herobtns"><button class="shopbtn" id="shopBtn"></button><span class="total" id="total"></span><button class="resetbtn" id="resetBtn" title="Para cuando juega un alumno nuevo"></button></div>
     </div>
   </section>
   <div id="parts"></div>
@@ -575,9 +579,11 @@ const RM=matchMedia("(prefers-reduced-motion: reduce)");
 /* modo profe (robot-bloques.html?profe): todo abierto, todos los diseños, y guarda aparte para no tocar el progreso de los chicos */
 const PROFE=/[?&]profe/.test(location.search);
 const KEY=PROFE?"robot-bloques-profe":"robot-bloques-v2";
-let SAVE={stars:{},custom:null,spent:0,owned:["robi"],skin:"robi",color:"cel",seen:["A"]};
+const FRESH=()=>({stars:{},custom:null,spent:0,owned:["robi"],skin:"robi",color:"cel",seen:["A"]});
+let SAVE=FRESH();
 try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) SAVE=Object.assign(SAVE,s); }catch(e){}
-if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id); SAVE.owned=["robi","gato","astro","dino","rey"]; }
+function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id); SAVE.owned=["robi","gato","astro","dino","rey"]; } }
+applyProfe();
 function groupsNow(){ const gs=groupState(SAVE.stars); if(PROFE) gs.forEach(s=>s.open=true); return gs; }
 function persist(){ try{ localStorage.setItem(KEY,JSON.stringify(SAVE)); }catch(e){} }
 const earned=()=>Object.values(SAVE.stars).reduce((a,b)=>a+b,0);
@@ -655,6 +661,7 @@ $("icoRun").innerHTML=ICO.flag(); $("icoStep").innerHTML=ICO.step(); $("icoStop"
 $("trash").innerHTML=ICO.trash(); $("backBtn").innerHTML=ICO.back()+"<span>Misiones</span>";
 $("edPlay").innerHTML=ICO.flag()+"Jugar este mapa";
 $("shopBtn").innerHTML=ICO.palette()+"<span>Taller del robot</span>";
+$("resetBtn").innerHTML=ICO.trash("currentColor")+"Borrar progreso";
 const RAIN=["#FFC21A","#1EC48C","#2FB0F0","#57E1FF","#FF9A2E","#FF5A62","#FF6FB5","#8B6CF0"];
 const pick=a=>a[Math.random()*a.length|0];
 { let i=0; $("heroTitle").innerHTML="Programación por bloques".split(" ").map(w=>`<b class="word">${[...w].map(ch=>`<span aria-hidden="true" style="--i:${i};color:${["#1689C9","#FF6FB5","#FF9A2E","#1EC48C","#8B6CF0","#2FB0F0"][i++%6]}">${ch}</span>`).join("")}</b>`).join(" "); }
@@ -753,8 +760,16 @@ function renderMenu(){
   $("cards3").innerHTML=c;
   if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); }
 }
+/* borrar progreso (para un alumno nuevo): hay que tocar dos veces */
+let resetT=null;
+function resetResetBtn(){ clearTimeout(resetT); const b=$("resetBtn"); b.classList.remove("ask"); b.innerHTML=ICO.trash("currentColor")+"Borrar progreso"; }
+function askReset(){ const b=$("resetBtn");
+  if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro? Tocá otra vez"; SND.nope(); resetT=setTimeout(resetResetBtn,4000); return; }
+  SAVE=FRESH(); applyProfe(); persist(); for(const k in PROGS) delete PROGS[k];
+  resetResetBtn(); renderMenu(); SND.trash(); toast(ICO.robot(),"Progreso borrado. ¡A empezar de nuevo!"); }
 $("menu").addEventListener("click",e=>{
   if(e.target.closest("#shopBtn")) return openShop();
+  if(e.target.closest("#resetBtn")) return askReset();
   const c=e.target.closest(".card"); if(!c) return;
   if(c.id==="makeBtn") return openEditor();
   if(c.classList.contains("locked")){ bumpEl(c,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),c.dataset.why); }
