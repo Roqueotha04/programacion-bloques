@@ -123,12 +123,40 @@ h1,h2,h3,h4{ margin:0; font-weight:700; }
 .card .lock svg{ width:46px; height:46px; }
 .card.no, .skin.no{ animation:shake .4s; }
 .mini{ display:grid; gap:2px; background:#D2ECFA; padding:3px; border-radius:8px; }
-.mini i{ display:block; width:14px; height:14px; background:#F8FDFF; border-radius:3px; }
+.mini i{ display:block; width:var(--ms,14px); height:var(--ms,14px); background:#F8FDFF; border-radius:3px; }
 .mini i.r{ background:#8DA3B7; } .mini i.R{ background:var(--cel); border-radius:50%; } .mini i.E{ background:var(--star); } .mini i.B{ background:var(--ok); }
 .card.make .plus{ width:86px; height:86px; border-radius:18px; border:3px dashed var(--line2); display:grid; place-items:center; color:var(--cel); font-size:46px; font-weight:700; }
 .toast{ position:fixed; left:50%; bottom:26px; z-index:300; transform:translateX(-50%); display:flex; align-items:center; gap:10px; background:var(--ink); color:#fff; padding:12px 22px 12px 14px; border-radius:18px; font-weight:600; font-size:18px; box-shadow:0 12px 30px rgba(13,48,73,.35); animation:toastIn .35s cubic-bezier(.3,1.6,.5,1); max-width:calc(100vw - 32px); }
 .toast svg{ width:30px; height:30px; flex:none; }
 @keyframes toastIn{ from{ transform:translate(-50%,40px) scale(.8); opacity:0; } }
+
+/* ---------- desafío extra (una card con 3 niveles contra reloj) ---------- */
+.chcard{ position:relative; width:100%; display:flex; align-items:center; gap:16px; flex-wrap:wrap; text-align:left; padding:16px 18px; border-radius:22px; border:2px solid #CBBDFF; background:linear-gradient(120deg,#F4F0FF,#FFF6E0); box-shadow:0 6px 16px rgba(139,108,240,.15);
+  transition:transform .2s cubic-bezier(.3,1.6,.5,1),box-shadow .15s; animation:cardIn .5s cubic-bezier(.3,1.6,.5,1) backwards; animation-delay:calc(var(--i,0)*40ms); }
+.chcard+.chcard{ margin-top:16px; }
+.chcard:hover{ transform:translateY(-4px); box-shadow:0 12px 26px rgba(139,108,240,.25); }
+.chcard.s3{ border-color:#FFD75E; }
+.chcard.new{ animation:cardIn .5s cubic-bezier(.3,1.6,.5,1) backwards,newgrp 1.3s ease-in-out .5s 3; animation-delay:calc(var(--i,0)*40ms),.5s; }
+.chcard.locked{ filter:grayscale(.9); opacity:.6; cursor:not-allowed; }
+.chcard.locked:hover{ transform:none; }
+.chcard.no{ animation:shake .4s; }
+.chico{ width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg,#8B6CF0,#FF6FB5); display:grid; place-items:center; flex:none; box-shadow:0 4px 0 rgba(13,48,73,.15); }
+.chico svg{ width:42px; height:42px; }
+.chtxt{ flex:1; min-width:200px; display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+.chtag{ background:#8B6CF0; color:#fff; font-size:13px; font-weight:700; padding:2px 10px; border-radius:999px; }
+.chtxt h3{ font-size:20px; }
+.chsub{ color:var(--muted); font-size:15px; }
+.chrow{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:2px; }
+.chrow .stars{ display:flex; gap:3px; }
+.chrow .stars svg{ width:26px; height:26px; }
+.chbest{ display:inline-flex; align-items:center; gap:4px; font-weight:700; font-size:15px; background:#fff; border:1.5px solid var(--line); border-radius:999px; padding:2px 10px 2px 4px; }
+.chbest svg{ width:20px; height:20px; }
+.chcard .need{ display:inline-flex; align-items:center; gap:4px; background:#FFF4E5; border:1.5px solid #FFD199; color:#9A5A00; padding:3px 10px; border-radius:999px; font-weight:700; font-size:13px; }
+.chcard .need svg{ width:16px; height:16px; }
+.chmaps{ display:flex; gap:10px; align-items:center; }
+@media (max-width:640px){ .chmaps{ display:none; } }
+.ttimer{ display:flex; align-items:center; gap:6px; background:#fff; color:var(--ink); border-radius:999px; padding:4px 14px 4px 6px; font-weight:700; font-size:20px; box-shadow:0 3px 0 rgba(13,48,73,.18); position:relative; z-index:1; flex:none; font-variant-numeric:tabular-nums; }
+.ttimer svg{ width:28px; height:28px; }
 
 /* ---------- juego: estilo Scratch ---------- */
 .ide{ display:grid; grid-template-columns:86px 236px minmax(280px,1fr) minmax(360px,470px); gap:12px; padding:12px; height:calc(100vh - 64px); min-height:620px; }
@@ -377,6 +405,7 @@ canvas#conf{ position:fixed; inset:0; pointer-events:none; z-index:150; width:10
   <div class="logo" id="logo"><svg viewBox="-50 -50 100 100" id="logoBot" data-look="r" aria-hidden="true"></svg><span>Programación por bloques</span></div>
   <div class="ttitle hidden" id="tTitle"><span class="badge" id="tNum"></span><span id="tName"></span></div>
   <span class="grow"></span>
+  <div class="ttimer hidden" id="tTimer" title="Tiempo del desafío"></div>
   <div class="tstars hidden" id="tStars"></div>
   <button class="wallet" id="wallet" title="Tus estrellas · Taller del robot"><span id="walletIco"></span><span id="walletN">0</span></button>
 </header>
@@ -482,6 +511,22 @@ const MISSIONS=[
  {id:"f1",grp:"F",title:"Dos puntas",max:7,rows:["B..R..B","######.","######.","#.....E"],sol:"3(l) 6(r) 3(d)"},
  {id:"f2",grp:"F",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"}
 ].map((m,i)=>Object.assign(m,{num:i+1,cls:GROUPS.find(g=>g.id===m.grp).cls}));
+/* desafíos extra: 3 niveles seguidos con cronómetro (no hay límite de tiempo, solo se mide).
+   Estrellas por el tiempo total: hasta t3 segundos = 3, hasta t2 = 2, más = 1.
+   El reloj se pausa entre nivel y nivel. Se abre al terminar todos los niveles de la parte. */
+const CHALLENGES=[
+ {id:"x1",cls:1,title:"Desafío de secuencia",t3:150,t2:240,levels:[
+   {title:"Calentando motores",rows:["R..#..","##.#.#","#.....","#.##..","#...#E"],sol:"r r d d r r d r d"},
+   {title:"La batería escondida",rows:["...#.E",".#.#..",".#B.#.","R..#..","##...#","......"],sol:"r r u d d r r u r u u u"},
+   {title:"Dos baterías",rows:["..#..B",".B..#.","#.#...","R..#.#","#.#...","...#.E"],sol:"r u u r r u r r d d l d d r d"}]},
+ {id:"x2",cls:2,title:"Desafío de repetir",t3:150,t2:240,levels:[
+   {title:"Escalones dobles",max:5,rows:["R..####","##...##","####...","######E"],sol:"3(r r d)"},
+   {title:"Subir y bajar",max:7,rows:["####B.###","###....##","##..##..#","#..####..","R.######E"],sol:"4(r u) 4(r d)"},
+   {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"}]}
+];
+CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.cls,ch:ch.id})));
+function timeStars(ch,sec){ return sec<=ch.t3?3:sec<=ch.t2?2:1; }
+function fmtTime(sec){ sec=Math.floor(sec); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
 const DIRS={u:[-1,0],d:[1,0],l:[0,-1],r:[0,1]};
 const MAXSTEPS=400, MAXB=30;
 
@@ -560,7 +605,7 @@ function simulate(map,prog){ let S=startState(map), n=0;
   return {k:"end",S}; }
 function maxRun(list){ const s=[...walk(list)].filter(e=>e.t==="move").map(e=>e.dir).join(""); return s?Math.max(...s.match(/(.)\1*/g).map(x=>x.length)):0; }
 function selfTest(){
-  const res=MISSIONS.map(m=>{ const sol=parseSol(m.sol), sim=simulate(m,sol), path=shortest(m,startState(m)), cnt=countBlocks(sol)+1, used=hasRepeat(sol);
+  const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>{ const sol=parseSol(m.sol), sim=simulate(m,sol), path=shortest(m,startState(m)), cnt=countBlocks(sol)+1, used=hasRepeat(sol);
     const opt=optFor(m,path), lim=limitFor(m,opt), run=maxRun(sol);
     const ok=sim.k==="win"&&!!path&&cnt<=lim&&(m.cls===1?(cnt===opt&&!used&&run<=3):used)&&starsFor(m,cnt,used,opt,false)===3;
     return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1?" seguidos:"+run:""}`}; });
@@ -579,10 +624,12 @@ const RM=matchMedia("(prefers-reduced-motion: reduce)");
 /* modo profe (robot-bloques.html?profe): todo abierto, todos los diseños, y guarda aparte para no tocar el progreso de los chicos */
 const PROFE=/[?&]profe/.test(location.search);
 const KEY=PROFE?"robot-bloques-profe":"robot-bloques-v2";
-const FRESH=()=>({stars:{},custom:null,spent:0,owned:["robi"],skin:"robi",color:"cel",seen:["A"]});
+const FRESH=()=>({stars:{},best:{},custom:null,spent:0,owned:["robi"],skin:"robi",color:"cel",seen:["A"]});
 let SAVE=FRESH();
 try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) SAVE=Object.assign(SAVE,s); }catch(e){}
-function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id); SAVE.owned=["robi","gato","astro","dino","rey"]; } }
+function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id).concat(CHALLENGES.map(c=>c.id)); SAVE.owned=["robi","gato","astro","dino","rey"]; } }
+/* el desafío de cada parte se abre al terminar (con al menos 1 estrella) todos sus niveles */
+function chOpen(ch){ return PROFE||MISSIONS.filter(m=>m.cls===ch.cls).every(m=>SAVE.stars[m.id]); }
 applyProfe();
 function groupsNow(){ const gs=groupState(SAVE.stars); if(PROFE) gs.forEach(s=>s.open=true); return gs; }
 function persist(){ try{ localStorage.setItem(KEY,JSON.stringify(SAVE)); }catch(e){} }
@@ -654,6 +701,7 @@ const ICO={
   unlock:()=>`<svg viewBox="0 0 32 32"><path d="M10.5 14V9.5a5.5 5.5 0 0 1 10.6-2" fill="none" stroke="#11986A" stroke-width="3.2" stroke-linecap="round"/><rect x="6" y="14" width="20" height="15" rx="4" fill="#1EC48C"/><circle cx="16" cy="21.5" r="2.4" fill="#fff"/></svg>`,
   palette:()=>`<svg viewBox="0 0 32 32"><path d="M16 3C8.5 3 3 8.7 3 15.5 3 22.3 8.3 28 14.3 28c2 0 2.6-1.6 1.8-3.1-.9-1.7.2-3.3 2.2-3.3H22c4 0 7-3 7-7C29 8.2 23.3 3 16 3z" fill="#fff" stroke="#0D3049" stroke-width="2"/><circle cx="9.5" cy="14.5" r="2.6" fill="#FF5A62"/><circle cx="14.5" cy="9" r="2.6" fill="#FFC21A"/><circle cx="21" cy="9.5" r="2.6" fill="#1EC48C"/><circle cx="23.5" cy="15.5" r="2.6" fill="#3B82F0"/></svg>`,
   next:()=>`<svg viewBox="0 0 32 32"><path d="M6 16h18M17 8l8 8-8 8" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  clock:()=>`<svg viewBox="0 0 32 32"><path d="M13 3h6M16 3v4M24.5 8.5l2-2" stroke="#0D3049" stroke-width="2.6" stroke-linecap="round"/><circle cx="16" cy="18" r="11" fill="#fff" stroke="#0D3049" stroke-width="2.6"/><path d="M16 12v6l4 3" fill="none" stroke="#FF5A62" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   check:()=>`<svg viewBox="0 0 32 32"><path d="M6 17l6 6L26 9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 };
 $("ico3").innerHTML=ICO.pencil(); $("walletIco").innerHTML=starIco(true);
@@ -722,15 +770,17 @@ function toast(icon,txt){ let t=$("toast"); if(!t){ t=document.createElement("di
 /* ================= pantallas ================= */
 let SCREEN="menu";
 function show(id){ SCREEN=id; ["menu","game","editor","shop"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); scrollTo(0,0);
+  if(id!=="game"&&CH) endChallenge(); /* salir del juego cancela el desafío en curso */
+  const inCh=id==="game"&&!!(G&&G.map.ch);
   $("backBtn").classList.toggle("hidden",id==="menu"); $("logo").classList.toggle("hidden",id!=="menu");
-  $("tTitle").classList.toggle("hidden",id==="menu"); $("tStars").classList.toggle("hidden",id!=="game"); }
+  $("tTitle").classList.toggle("hidden",id==="menu"); $("tStars").classList.toggle("hidden",id!=="game"||inCh); $("tTimer").classList.toggle("hidden",!inCh); }
 function setTop(num,name){ $("tNum").innerHTML=num; $("tName").textContent=name; }
 function renderTopStars(){ const k=G&&G.map.id!=="custom"?(SAVE.stars[G.map.id]||0):0; $("tStars").innerHTML=starRow(k,"rgba(255,255,255,.45)"); }
 $("backBtn").onclick=()=>{ if(SCREEN==="game") stopRun(); renderMenu(); show("menu"); };
 $("wallet").onclick=()=>openShop();
 
 /* ================= menú ================= */
-function miniMap(rows){ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},14px)">`;
+function miniMap(rows,s=14){ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},${s}px);--ms:${s}px">`;
   for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }
 function gIcon(g){ return g.cls===1?(g.id==="A"?ICO.arrow("r"):batSVG()):ICO.repeat(); }
 function lockWhy(st){ return st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas (tenés ${st.earned})`; }
@@ -754,11 +804,31 @@ function renderMenu(){
     }
     h+=`</div></section>`;
   }
+  /* tercera card aparte: los desafíos extra, para los que terminan antes */
+  const chGot=CHALLENGES.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0);
+  h+=`<section class="grp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+
+    `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos extra</h3><span class="gsub">3 niveles seguidos, con cronómetro</span></div>`+
+    `<span class="gprog">${starIco(true)} ${chGot} / ${CHALLENGES.length*3}</span></div>`;
+  for(const ch of CHALLENGES){
+    const open=chOpen(ch), isNew=open&&!SAVE.seen.includes(ch.id);
+    if(isNew){ SAVE.seen.push(ch.id); fresh=true; }
+    h+=chCard(ch,i++,open,isNew);
+  }
+  h+=`</section>`;
   $("parts").innerHTML=h;
   let c=`<button class="card make" id="makeBtn" style="--i:${i++}"><span class="plus">+</span><h3>Creá tu mapa</h3></button>`;
   if(SAVE.custom) c+=`<button class="card" data-id="custom" style="--i:${i}">${miniMap(SAVE.custom.rows)}<h3>Mi mapa</h3></button>`;
   $("cards3").innerHTML=c;
   if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); }
+}
+function chCard(ch,i,open,isNew){
+  const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la Parte ${ch.cls}`;
+  return `<button class="chcard${open?"":" locked"}${k===3?" s3":""}${isNew?" new":""}" data-ch="${ch.id}" data-why="${why}" style="--i:${i}">`+
+    `<span class="chico">${ICO.clock()}</span><div class="chtxt"><span class="chtag">Desafío extra</span><h3>${ch.title}</h3>`+
+    `<span class="chsub">3 niveles seguidos · con cronómetro</span>`+
+    (open?`<div class="chrow"><span class="stars">${starRow(k)}</span>${best!=null?`<span class="chbest">${ICO.clock()}Récord ${fmtTime(best)}</span>`:""}</div>`
+         :`<span class="need">${ICO.lock("#9A5A00")}${why}</span>`)+
+    `</div><div class="chmaps">${ch.levels.map(m=>miniMap(m.rows,9)).join("")}</div></button>`;
 }
 /* borrar progreso (para un alumno nuevo): hay que tocar dos veces */
 let resetT=null;
@@ -770,6 +840,9 @@ function askReset(){ const b=$("resetBtn");
 $("menu").addEventListener("click",e=>{
   if(e.target.closest("#shopBtn")) return openShop();
   if(e.target.closest("#resetBtn")) return askReset();
+  const x=e.target.closest(".chcard");
+  if(x){ if(x.classList.contains("locked")){ bumpEl(x,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),x.dataset.why); }
+    return startChallenge(CHALLENGES.find(c=>c.id===x.dataset.ch)); }
   const c=e.target.closest(".card"); if(!c) return;
   if(c.id==="makeBtn") return openEditor();
   if(c.classList.contains("locked")){ bumpEl(c,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),c.dataset.why); }
@@ -797,10 +870,13 @@ function startPlay(map){
   const S=startState(map), opt=optFor(map,shortest(map,S));
   G={map,rows:map.rows,n:map.rows.length,m:map.rows[0].length,nB:countB(map.rows),prog:PROGS[map.id],
      run:0,busy:false,ctx:null,S,rep:map.cls!==1,opt,max:limitFor(map,opt),hint:false};
-  setTop(map.num||ICO.pencil(),map.title); renderTopStars();
+  setTop(map.num||ICO.pencil(),map.ch?`Desafío · Nivel ${map.num} de 3`:map.title); renderTopStars();
+  $("hintBtn").classList.toggle("hidden",!!map.ch);
   renderPalette(); show("game"); drawBoard(false,true); renderProg();
   const lim=`Podés usar hasta ${G.max} bloques`;
-  if(G.nB) say("",ICO.bat(),G.nB>1?`Juntá las ${G.nB} baterías`:"Primero la batería",`Después, a la estrella · ${lim}`);
+  if(map.ch&&map.num===1){ const ch=CHALLENGES.find(c=>c.id===map.ch);
+    say("",ICO.clock(),"El reloj mide cuánto tardás",`3 estrellas: menos de ${fmtTime(ch.t3)} · 2 estrellas: menos de ${fmtTime(ch.t2)}`); }
+  else if(G.nB) say("",ICO.bat(),G.nB>1?`Juntá las ${G.nB} baterías`:"Primero la batería",`Después, a la estrella · ${lim}`);
   else if(map.cls===2) say("",ICO.repeat("#D9780F"),"¡Usá el bloque repetir!",lim);
   else say("",ICO.star(),"¡Llevá al robot a la estrella!",lim);
 }
@@ -990,6 +1066,7 @@ async function animate(r,dir){
 }
 function finish(res,last){
   document.querySelectorAll("#canvas .on").forEach(x=>x.classList.remove("on"));
+  if(res.k==="win"&&G.map.ch) return chLevelWin(res);
   if(res.k==="win"){
     const count=used(), usedRep=hasRepeat(G.prog), k=starsFor(G.map,count,usedRep,G.opt,G.hint);
     let gained=0, opened=[];
@@ -1007,10 +1084,7 @@ function finish(res,last){
     if(opened.length) extra+=`<div class="unl">${ICO.unlock()} ¡Desbloqueaste «${opened.join("» y «")}»!</div>`;
     if(idx>=0&&gs&&gs.open) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;
     say("ok",ICO.star(),"¡Llegó!",sub,extra);
-    SND.win(); confetti(); $("gBoard").classList.add("win");
-    const bot=$("bot"); bot.classList.add("happy"); setTimeout(()=>bot.classList.remove("happy"),2100);
-    const [x,y]=center(cellEl(G.S.r,G.S.c)); burst(x,y,["#FFC21A","#FFE27A","#FFFFFF","#FF6FB5"],26,8);
-    if(gained){ renderWallet(wallet()-gained); setTimeout(()=>flyStars($("msg").querySelector(".bigstars")||bot,gained),700); }
+    celebrate(gained);
     if(opened.length) setTimeout(()=>{ SND.unlock(); confetti(); },1600);
     return;
   }
@@ -1021,10 +1095,47 @@ function finish(res,last){
   if(G.S.starNoBat||(G.nB&&G.S.got.length<G.nB)) return say("warn",ICO.bat(),G.nB>1?"Faltan baterías":"Falta la batería","Primero las baterías, después la estrella");
   say("warn",ICO.question(),"No llegó todavía","¿Qué bloque falta?");
 }
+function celebrate(gained){
+  SND.win(); confetti(); $("gBoard").classList.add("win");
+  const bot=$("bot"); bot.classList.add("happy"); setTimeout(()=>bot.classList.remove("happy"),2100);
+  const [x,y]=center(cellEl(G.S.r,G.S.c)); burst(x,y,["#FFC21A","#FFE27A","#FFFFFF","#FF6FB5"],26,8);
+  if(gained){ renderWallet(wallet()-gained); setTimeout(()=>flyStars($("msg").querySelector(".bigstars")||bot,gained),700); }
+}
 function stopRun(){ if(!G) return; G.run++; releaseWait(); G.ctx=null; setBusy(false); resetRobot(); }
+
+/* ---------- desafío extra: cronómetro que suma (se pausa entre niveles) ---------- */
+let CH=null, chTick=null;
+function chMs(){ return CH?CH.acc+(CH.t0!=null?performance.now()-CH.t0:0):0; }
+function renderTimer(){ if(CH) $("tTimer").innerHTML=ICO.clock()+`<span>${fmtTime(chMs()/1000)}</span>`; }
+function endChallenge(){ clearInterval(chTick); CH=null; }
+function startChallenge(ch){ CH={ch,idx:0,acc:0,t0:null}; playLevel(); }
+function playLevel(){ const m=CH.ch.levels[CH.idx]; PROGS[m.id]=[]; startPlay(m);
+  CH.t0=performance.now(); clearInterval(chTick); chTick=setInterval(renderTimer,250); renderTimer(); }
+function chLevelWin(res){
+  CH.acc+=performance.now()-CH.t0; CH.t0=null; clearInterval(chTick); renderTimer();
+  G.done=true; setBusy(true); /* nivel cerrado: solo se puede seguir */
+  const ch=CH.ch, left=res.left?" · Sobraron bloques":"";
+  if(CH.idx<ch.levels.length-1){
+    say("ok",ICO.star(),`¡Nivel ${CH.idx+1} superado!`,`${ICO.clock()} El reloj espera hasta que sigas${left}`,`<button class="nextbtn" data-chnext>Nivel ${CH.idx+2}${ICO.next()}</button>`);
+    return celebrate(0); }
+  const sec=Math.floor(CH.acc/1000), k=timeStars(ch,sec), old=SAVE.stars[ch.id]||0, prev=SAVE.best[ch.id], rec=prev==null||sec<prev;
+  const gained=Math.max(0,k-old);
+  if(k>old) SAVE.stars[ch.id]=k; if(rec) SAVE.best[ch.id]=sec; persist();
+  let sub=k<3?`Para ${k+1} estrellas: menos de ${fmtTime(k===2?ch.t3:ch.t2)}`:"¡Tiempo perfecto!";
+  if(!rec) sub+=` · Tu récord: ${fmtTime(prev)}`;
+  let extra=`<div class="bigstars">${starRow(k)}</div>`;
+  if(rec&&prev!=null) extra+=`<div class="unl">${ICO.clock()} ¡Nuevo récord!</div>`;
+  extra+=`<button class="nextbtn" data-chagain>Jugar otra vez${ICO.next()}</button>`;
+  say("ok",ICO.star(),`¡Desafío completo en ${fmtTime(sec)}!`,sub,extra);
+  celebrate(gained);
+}
+
 $("runBtn").onclick=()=>run(false); $("stepBtn").onclick=()=>run(true);
-$("stopBtn").onclick=()=>{ stopRun(); $("runBtn").classList.toggle("ready",G.prog.length>0); say("",ICO.robot(),"Listo para empezar","Tocá Ir para probar"); };
-$("msg").addEventListener("click",e=>{ const b=e.target.closest("[data-next]"); if(!b) return;
+$("stopBtn").onclick=()=>{ if(G.done) return; stopRun(); $("runBtn").classList.toggle("ready",G.prog.length>0); say("",ICO.robot(),"Listo para empezar","Tocá Ir para probar"); };
+$("msg").addEventListener("click",e=>{
+  if(CH&&e.target.closest("[data-chnext]")){ stopRun(); CH.idx++; return playLevel(); }
+  if(CH&&e.target.closest("[data-chagain]")){ stopRun(); return startChallenge(CH.ch); }
+  const b=e.target.closest("[data-next]"); if(!b) return;
   const m=MISSIONS.find(x=>x.id===b.dataset.next); stopRun(); startPlay(m); });
 
 /* pista: ilumina las próximas casillas del camino más corto (en misiones baja una estrella) */
