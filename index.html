@@ -11,6 +11,7 @@
   --cel:#2FB0F0; --cel-d:#1689C9; --cel-l:#BDE8FF; --glow:#57E1FF; --ink:#0D3049; --muted:#5F7F96;
   --mov:#3B82F0; --mov-d:#2563C9; --ctl:#FF9A2E; --ctl-d:#D9780F; --evt:#FFC83D; --evt-d:#DDA312;
   --star:#FFC21A; --red:#FF5A62; --ok:#1EC48C; --ok-d:#11986A; --pink:#FF6FB5; --vio:#8B6CF0;
+  --pnt:#A35BD6; --pnt-d:#7E3DB0; --paint:#4C8DF6;
   --t:480ms; --cs:64px; --hole:#fff;
   color-scheme:light;
 }
@@ -125,6 +126,7 @@ h1,h2,h3,h4{ margin:0; font-weight:700; }
 .mini{ display:grid; gap:2px; background:#D2ECFA; padding:3px; border-radius:8px; }
 .mini i{ display:block; width:var(--ms,14px); height:var(--ms,14px); background:#F8FDFF; border-radius:3px; }
 .mini i.r{ background:#8DA3B7; } .mini i.R{ background:var(--cel); border-radius:50%; } .mini i.E{ background:var(--star); } .mini i.B{ background:var(--ok); }
+.mini i.X{ background:#FF5A62; } .mini i.V{ background:#1EC48C; border-radius:50%; }
 .card.make .plus{ width:86px; height:86px; border-radius:18px; border:3px dashed var(--line2); display:grid; place-items:center; color:var(--cel); font-size:46px; font-weight:700; }
 .toast{ position:fixed; left:50%; bottom:26px; z-index:300; transform:translateX(-50%); display:flex; align-items:center; gap:10px; background:var(--ink); color:#fff; padding:12px 22px 12px 14px; border-radius:18px; font-weight:600; font-size:18px; box-shadow:0 12px 30px rgba(13,48,73,.35); animation:toastIn .35s cubic-bezier(.3,1.6,.5,1); max-width:calc(100vw - 32px); }
 .toast svg{ width:30px; height:30px; flex:none; }
@@ -211,6 +213,13 @@ h1,h2,h3,h4{ margin:0; font-weight:700; }
 .blk .ic{ width:34px; height:34px; border-radius:9px; background:rgba(255,255,255,.2); display:grid; place-items:center; flex:none; }
 .blk .ic svg{ width:25px; height:25px; }
 .mov{ --c:var(--mov); --cd:var(--mov-d); }
+.act{ --c:var(--pnt); --cd:var(--pnt-d); }
+/* bloque si: misma forma que repetir, con selector de color */
+.colsel{ display:inline-flex; align-items:center; gap:6px; background:#fff; color:var(--ink); border-radius:999px; padding:3px 12px 3px 5px; font-size:17px; font-weight:700; }
+.colsel i{ width:22px; height:22px; border-radius:50%; background:var(--cc); box-shadow:inset 0 0 0 2px rgba(13,48,73,.18); }
+button.colsel:hover{ box-shadow:0 0 0 3px rgba(255,255,255,.6); }
+.iff.yes>.rtop{ box-shadow:0 0 0 3px #fff,0 0 0 6px var(--ok),0 0 18px var(--ok); }
+.iff.nope>.rtop{ box-shadow:0 0 0 3px #fff,0 0 0 6px #9DB2C4; filter:saturate(.5); }
 .hat{ --c:var(--evt); --cd:var(--evt-d); color:#4A3300; height:66px; padding-top:8px; border-radius:30px 14px 10px 10px / 26px 14px 10px 10px; cursor:default; min-width:190px; }
 .hat::before{ display:none; }
 .hat .ic{ background:rgba(255,255,255,.55); }
@@ -275,6 +284,22 @@ body.busy .canvas .blk{ cursor:default; }
 .cell.flash{ animation:flash .5s 2; }
 @keyframes flash{ 50%{ box-shadow:inset 0 0 0 4px var(--red); background:#FFE3E5; } }
 .cell.got .bat{ opacity:.18; transition:opacity .4s; animation:none; }
+/* pintar: celdas rojas (hay que pintarlas), verdes (hay que bailar) y pintadas de azul */
+.cell.red{ background:#FFC2C6; box-shadow:inset 0 0 0 3px #FF5A62; }
+.cell.green{ background:#C4F3E0; box-shadow:inset 0 0 0 3px #1EC48C; }
+.cell.pnt{ background:var(--paint); box-shadow:inset 0 0 0 3px #2563C9; animation:paintIn .45s cubic-bezier(.3,1.6,.5,1); }
+@keyframes paintIn{ from{ background:#fff; transform:scale(.8); } }
+.cell.danced{ box-shadow:inset 0 0 0 3px #1EC48C,0 0 0 3px var(--star),0 0 16px var(--star); }
+.robot.boogie .bob{ animation:dance .6s ease-in-out 1; }
+/* pincel en uso: se ve un pincel sobre el robot */
+.robot .penmark{ position:absolute; right:-6%; bottom:4%; width:42%; height:42%; border-radius:50%; background:var(--pnt); border:2.5px solid #fff; box-shadow:0 2px 6px rgba(13,48,73,.3); display:grid; place-items:center; transform:scale(0); transition:transform .25s cubic-bezier(.3,1.8,.5,1); z-index:2; }
+.robot .penmark svg{ width:62%; height:62%; }
+.robot.pen .penmark{ transform:scale(1); }
+.act.off{ --c:#8E6AAE; --cd:#6C4D88; }
+.chip.pench{ color:#7E3DB0; }
+.chip.pench svg{ width:22px; height:22px; }
+.chip.pench.on{ background:var(--pnt); border-color:var(--pnt-d); color:#fff; }
+.chip .sq{ width:20px; height:20px; border-radius:5px; flex:none; }
 .cell.hint::before{ content:""; position:absolute; inset:16%; border-radius:50%; border:4px solid var(--star); box-shadow:0 0 14px var(--star); animation:pulse 1.1s ease-in-out infinite; animation-delay:var(--hd,0s); opacity:0; z-index:2; }
 @keyframes pulse{ 0%{ opacity:0; transform:scale(.6); } 40%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(1.15); } }
 .robot{ position:absolute; top:3px; left:3px; width:var(--cs); height:var(--cs); pointer-events:none; transition:transform var(--t) cubic-bezier(.45,.05,.3,1); z-index:3; }
@@ -479,16 +504,33 @@ canvas#conf{ position:fixed; inset:0; pointer-events:none; z-index:150; width:10
 <script>
 /*PURE-START*/
 /* ================= misiones =================
-   . piso  # caja  R robot  E estrella  B batería
-   sol: solución de referencia ("r u" = derecha arriba, "4(r u)" = repetir 4 [derecha arriba])
-   max: bloques permitidos en Repetir, contando el bloque «al tocar» */
+   . piso  # caja  R robot  E estrella  B batería  X celda roja (hay que pintarla)  V celda verde (hay que bailar)
+   sol: solución de referencia: r l u d flechas, n usar pincel, f guardar pincel, p pintar (sello, parte Si), b bailar,
+        "4(r u)" = repetir 4 [derecha arriba], "?x(p)" = si la celda es roja [pintar], "?v(b)" = si es verde [bailar]
+   max: bloques permitidos (reglas de Repetir), contando el bloque «al tocar»
+   need: llegar pintando, hay que llegar a la estrella con al menos «need» celdas pintadas (cualquiera)
+   pincel: mientras está en uso, el robot pinta la celda donde está y cada celda que pisa (la estrella no se pinta) */
+/* partes = cards del menú. after: partes que hay que terminar para abrirla */
+const PARTS=[
+ {id:1,title:"Secuencia",sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
+ {id:2,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
+ {id:3,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[1]},
+ {id:4,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,3]}
+];
+/* cls: reglas (1 = meta de bloques, 2 = máximo de bloques).
+   tools: bloques extra (r repetir, n pincel, p pintar de un toque, b bailar, i si).
+   strict: pintar o bailar en la celda equivocada es error. need: estrellas de la parte para abrir el grupo */
 const GROUPS=[
- {id:"A",cls:1,title:"Primeros pasos",sub:"sin baterías",need:0,c:"#3B82F0",l:"#DCE9FF"},
- {id:"B",cls:1,title:"Con batería",sub:"primero la batería, después la estrella",need:8,c:"#1EC48C",l:"#D2F6E8"},
- {id:"C",cls:1,title:"Dos baterías",sub:"juntá las dos",need:16,c:"#8B6CF0",l:"#E6DFFF"},
- {id:"D",cls:2,title:"Repetir",sub:"pocos bloques, muchos pasos",need:20,c:"#FF9A2E",l:"#FFE2C2"},
- {id:"E",cls:2,title:"Repetir con batería",sub:"repetir y juntar",need:28,c:"#FF6FB5",l:"#FFDCEC"},
- {id:"F",cls:2,title:"Repetir con 2 baterías",sub:"el gran desafío",need:34,c:"#E64C55",l:"#FFD9DB"}
+ {id:"A",part:1,cls:1,tools:"",title:"Primeros pasos",sub:"sin baterías",need:0,c:"#3B82F0",l:"#DCE9FF"},
+ {id:"B",part:1,cls:1,tools:"",title:"Con batería",sub:"primero la batería, después la estrella",need:8,c:"#1EC48C",l:"#D2F6E8"},
+ {id:"C",part:1,cls:1,tools:"",title:"Dos baterías",sub:"juntá las dos",need:16,c:"#8B6CF0",l:"#E6DFFF"},
+ {id:"G",part:2,cls:1,tools:"n",title:"Llegar pintando",sub:"el pincel pinta todo por donde pasa",need:0,c:"#A35BD6",l:"#F0E1FF"},
+ {id:"H",part:2,cls:1,tools:"n",title:"Solo las rojas",sub:"guardá el pincel en las blancas",need:6,c:"#FF4F7A",l:"#FFDCE5"},
+ {id:"D",part:3,cls:2,tools:"r",title:"Repetir",sub:"pocos bloques, muchos pasos",need:0,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"E",part:3,cls:2,tools:"r",title:"Repetir con batería",sub:"repetir y juntar",need:8,c:"#FF6FB5",l:"#FFDCEC"},
+ {id:"F",part:3,cls:2,tools:"r",title:"Repetir con 2 baterías",sub:"el gran desafío",need:14,c:"#E64C55",l:"#FFD9DB"},
+ {id:"J",part:4,cls:2,tools:"rpi",strict:true,title:"Si es roja",sub:"pintá solo las rojas",need:0,c:"#14B8A6",l:"#CCF5EF"},
+ {id:"K",part:4,cls:2,tools:"rpbi",strict:true,title:"Rojo y verde",sub:"rojas: pintar · verdes: bailar",need:6,c:"#0EA5E9",l:"#D3F0FC"}
 ];
 const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
@@ -501,6 +543,14 @@ const MISSIONS=[
  {id:"b4",grp:"B",title:"El laberinto",rows:[".#...","B..#E","#.#..","..#.#","R...."],sol:"u r u u l r r u r r d"},
  {id:"c1",grp:"C",title:"Abajo y arriba",rows:["..#.B",".#...","R..#E","...#.","B#..."],sol:"d d u u r r u r u r d d"},
  {id:"c2",grp:"C",title:"El gran recorrido",rows:["B.#...","..#.#.","R...#E","..#...","#...#B"],sol:"u u d r d r r d r r d u u"},
+ {id:"g1",grp:"G",title:"Primer pincelazo",need:3,rows:["..#..","R...E","..#.."],sol:"n r r r r"},
+ {id:"g2",grp:"G",title:"Caminito pintado",need:5,rows:[".#...","R..#.","#...E"],sol:"n r r d r r"},
+ {id:"g3",grp:"G",title:"Pintar y juntar",need:6,rows:["..B..","R.#.E","....."],sol:"n u r r r d r"},
+ {id:"h1",grp:"H",title:"Tres rojas",rows:["..#..","RXXXE","..#.."],sol:"r n r r r"},
+ {id:"h2",grp:"H",title:"Rojas y blancas",rows:["#.#.#..","RXX.XXE","#...#.."],sol:"r n r f r r n r r"},
+ {id:"h3",grp:"H",title:"Bajar pintando",rows:["R.#..","X.#..","X..XE","#.#.."],sol:"d n d f r r r n r"},
+ {id:"h4",grp:"H",title:"Rojas y batería",rows:[".B#..","X..#E","R.#X.","....."],sol:"u n f u r d d d r r u n f r u"},
+ {id:"h5",grp:"H",title:"La gran mancha",rows:["..#...","XX..#.","..#XX.","R..#.X","#....X","...#.E"],sol:"u u n r f r r d n r f d r n d d"},
  {id:"d1",grp:"D",title:"El pasillo largo",max:3,rows:["..#...#","#######","R.....E","#######","#...#.."],sol:"6(r)"},
  {id:"d2",grp:"D",title:"La vuelta grande",max:5,rows:["R......",".#####.",".#...#.",".#.#.#.",".#...#.",".#####.","......E"],sol:"6(r) 6(d)"},
  {id:"d3",grp:"D",title:"La escalera",max:4,rows:["...#E","..#..",".#..#","#..#.","R.#.."],sol:"4(r u)"},
@@ -509,22 +559,37 @@ const MISSIONS=[
  {id:"e2",grp:"E",title:"Escalera a la batería",max:6,rows:["##.#...","#..B..E","##..#.#","#..#..#","R.#...."],sol:"3(r u) 3(r)"},
  {id:"e3",grp:"E",title:"La montaña",max:7,rows:["R.####E","#..#...","##.....","###B.##"],sol:"3(r d) 3(r u)"},
  {id:"f1",grp:"F",title:"Dos puntas",max:7,rows:["B..R..B","######.","######.","#.....E"],sol:"3(l) 6(r) 3(d)"},
- {id:"f2",grp:"F",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"}
-].map((m,i)=>Object.assign(m,{num:i+1,cls:GROUPS.find(g=>g.id===m.grp).cls}));
+ {id:"f2",grp:"F",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"},
+ {id:"j1",grp:"J",title:"Solo las rojas",max:5,rows:["#.##.#.#","RX.XX.XE","#.#..#.#"],sol:"7(r ?x(p))"},
+ {id:"j2",grp:"J",title:"Escalera roja",max:7,rows:["####XE","###X.#","##..##","#X.###","R.####"],sol:"4(r u ?x(p)) r"},
+ {id:"j3",grp:"J",title:"Bajar y doblar",max:9,rows:["R#....","X#.#..","X#...#",".#.#..","X#....","..XX.E"],sol:"5(d ?x(p)) 5(r ?x(p))"},
+ {id:"k1",grp:"K",title:"A bailar",max:5,rows:["##.#.##","R.VV.VE","#.##..#"],sol:"6(r ?v(b))"},
+ {id:"k2",grp:"K",title:"Rojo y verde",max:7,rows:["#.#..#.#","RXV.XXVE","#..#.#.."],sol:"7(r ?x(p) ?v(b))"},
+ {id:"k3",grp:"K",title:"Escalera de colores",max:8,rows:["R.####","#X.###","##V.##","###..#","####X.","#####E"],sol:"5(r d ?x(p) ?v(b))"}
+].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict}); });
+PARTS.forEach(p=>MISSIONS.filter(m=>m.part===p.id).forEach((m,i)=>m.num=i+1)); /* numeración dentro de cada parte */
 /* desafíos extra: 3 niveles seguidos con cronómetro (no hay límite de tiempo, solo se mide).
    Estrellas por el tiempo total: hasta t3 segundos = 3, hasta t2 = 2, más = 1.
    El reloj se pausa entre nivel y nivel. Se abre al terminar todos los niveles de la parte. */
 const CHALLENGES=[
- {id:"x1",cls:1,title:"Desafío de secuencia",t3:150,t2:240,levels:[
+ {id:"x1",part:1,cls:1,tools:"",title:"Desafío de secuencia",t3:150,t2:240,levels:[
    {title:"Calentando motores",rows:["R..#..","##.#.#","#.....","#.##..","#...#E"],sol:"r r d d r r d r d"},
    {title:"La batería escondida",rows:["...#.E",".#.#..",".#B.#.","R..#..","##...#","......"],sol:"r r u d d r r u r u u u"},
    {title:"Dos baterías",rows:["..#..B",".B..#.","#.#...","R..#.#","#.#...","...#.E"],sol:"r u u r r u r r d d l d d r d"}]},
- {id:"x2",cls:2,title:"Desafío de repetir",t3:150,t2:240,levels:[
+ {id:"x4",part:2,cls:1,tools:"n",title:"Desafío de pintar",t3:150,t2:240,levels:[
+   {title:"Rojas en fila",rows:["R.XX.","#.#X.","XX...","E...."],sol:"r r n r d f d l l n l d"},
+   {title:"Rojas y estrella",rows:["..X#E","XX#..","R..XX","##..."],sol:"u n r f u r n f l d d r r n r f u u"},
+   {title:"La gran pintada",rows:["..#.B","XXX..","R.#.#","#....","EXX.."],sol:"u n r r f r u r d l d d d l n l l"}]},
+ {id:"x2",part:3,cls:2,tools:"r",title:"Desafío de repetir",t3:150,t2:240,levels:[
    {title:"Escalones dobles",max:5,rows:["R..####","##...##","####...","######E"],sol:"3(r r d)"},
    {title:"Subir y bajar",max:7,rows:["####B.###","###....##","##..##..#","#..####..","R.######E"],sol:"4(r u) 4(r d)"},
-   {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"}]}
+   {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"}]},
+ {id:"x5",part:4,cls:2,tools:"rpbi",strict:true,title:"Desafío del si",t3:150,t2:240,levels:[
+   {title:"Pasillo de colores",max:7,rows:["#.#..#.#.#","RXV.XX.VXE","#..#.#..#."],sol:"9(r ?x(p) ?v(b))"},
+   {title:"Escalera de colores",max:8,rows:["####E","###X.","##X.#","#V.##","R.###"],sol:"4(r u ?x(p) ?v(b))"},
+   {title:"Dos pasillos",max:10,rows:["RX.VX####","####.####","####.V.XX","########.","########E"],sol:"2(4(r ?x(p) ?v(b)) 2(d))"}]}
 ];
-CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.cls,ch:ch.id})));
+CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
 function timeStars(ch,sec){ return sec<=ch.t3?3:sec<=ch.t2?2:1; }
 function fmtTime(sec){ sec=Math.floor(sec); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
 const DIRS={u:[-1,0],d:[1,0],l:[0,-1],r:[0,1]};
@@ -532,7 +597,21 @@ const MAXSTEPS=400, MAXB=30;
 
 function find(rows,ch){ for(let r=0;r<rows.length;r++){ const c=rows[r].indexOf(ch); if(c>=0) return [r,c]; } return null; }
 function countB(rows){ return rows.join("").split("B").length-1; }
-function startState(map){ const R=find(map.rows,"R"); return {r:R[0],c:R[1],got:[],starNoBat:false}; }
+function cellsOf(rows,ch){ const out=[]; rows.forEach((row,r)=>[...row].forEach((x,c)=>{ if(x===ch) out.push(r+","+c); })); return out; }
+function hasE(map){ return map.rows.some(r=>r.includes("E")); }
+/* pnt: celdas pintadas, dan: verdes donde bailó, wrong: pintadas que no eran rojas, pen: pincel en uso */
+function startState(map){ const R=find(map.rows,"R"); return {r:R[0],c:R[1],got:[],pnt:[],dan:[],wrong:0,pen:false,starNoBat:false}; }
+/* bloques de acción y su letra en las soluciones */
+const ACTS={paint:"p",dance:"b",penon:"n",penoff:"f"};
+/* pinta la celda (r,c) si se puede (la estrella no se pinta). Pintar algo que no es rojo cuenta como «wrong», salvo en llegar pintando */
+function paintCell(map,S,r,c){ const key=r+","+c, ch=map.rows[r][c];
+  if(ch==="E"||S.pnt.includes(key)) return S;
+  return {...S,pnt:S.pnt.concat(key),wrong:S.wrong+(ch!=="X"&&!map.need?1:0)}; }
+/* lo que falta para ganar (baterías, rojas, verdes, celdas en pintar libre) */
+function goalLeft(map,S){
+  return {bat:countB(map.rows)-S.got.length, red:cellsOf(map.rows,"X").filter(k=>!S.pnt.includes(k)).length,
+    green:cellsOf(map.rows,"V").filter(k=>!S.dan.includes(k)).length, need:map.need?Math.max(0,map.need-S.pnt.length):0}; }
+function goalMet(map,S){ const g=goalLeft(map,S); return !g.bat&&!g.red&&!g.green&&!g.need; }
 
 /* un movimiento: devuelve choque, ok o llegada (no modifica S) */
 function tryMove(map,S,dir){
@@ -541,54 +620,95 @@ function tryMove(map,S,dir){
   const ch=rows[r][c]; if(ch==="#") return {k:"crash",why:"rock",r,c};
   const got=S.got.slice(), key=r+","+c; let bat=false;
   if(ch==="B"&&!got.includes(key)){ got.push(key); bat=true; }
-  const S2={r,c,got,starNoBat:S.starNoBat};
-  if(ch==="E"){ if(got.length>=countB(rows)) return {k:"win",S:S2,bat}; S2.starNoBat=true; }
-  return {k:"ok",S:S2,bat};
+  let S2={...S,r,c,got}; const n0=S2.pnt.length;
+  if(S.pen) S2=paintCell(map,S2,r,c); /* con el pincel en uso pinta cada celda que pisa */
+  const pnt=S2.pnt.length>n0;
+  if(ch==="E"){ if(goalMet(map,S2)) return {k:"win",S:S2,bat,pnt}; S2.starNoBat=true; }
+  return {k:"ok",S:S2,bat,pnt};
 }
+/* acciones en la celda del robot: n usar pincel (y pinta donde está), f guardar pincel,
+   p pintar de un toque, b bailar. En niveles «strict» pintar/bailar en la celda equivocada es error */
+function tryAct(map,S,a){
+  if(a==="n"){ const S2={...paintCell(map,S,S.r,S.c),pen:true}; return {k:"ok",S:S2,ok:true,pnt:S2.pnt.length>S.pnt.length}; }
+  if(a==="f") return {k:"ok",S:{...S,pen:false},ok:true};
+  const key=S.r+","+S.c, ch=map.rows[S.r][S.c], S2={...S};
+  if(a==="p"){ const ok=ch==="X"&&!S.pnt.includes(key);
+    if(!ok&&map.strict) return {k:"bad",why:"p"};
+    if(!S.pnt.includes(key)) S2.pnt=S.pnt.concat(key);
+    if(!ok&&!map.need) S2.wrong=S.wrong+1;
+    return {k:"ok",S:S2,ok}; }
+  const ok=ch==="V"; if(!ok&&map.strict) return {k:"bad",why:"b"};
+  if(ok&&!S.dan.includes(key)) S2.dan=S.dan.concat(key);
+  return {k:"ok",S:S2,ok};
+}
+/* color de la celda del robot para el bloque si: "x" roja sin pintar, "v" verde */
+function cellColor(map,S){ const ch=map.rows[S.r][S.c]; return ch==="X"&&!S.pnt.includes(S.r+","+S.c)?"x":ch==="V"?"v":""; }
 
-/* camino más corto (cada casilla = 1 bloque) desde S, juntando todas las baterías */
+/* camino más corto (cada acción = 1 bloque) desde S: junta baterías, pinta rojas, baila en verdes y llega a la estrella si hay.
+   Con pincel (tools «n») busca usarlo y guardarlo sin pintar nunca una celda que no sea roja.
+   Devuelve [[fila,col,acción],...] (acción: u d l r, n/f pincel, p pintar, b bailar) */
 function shortest(map,S){
-  const rows=map.rows, n=rows.length, m=rows[0].length, bats=[];
-  rows.forEach((row,r)=>[...row].forEach((ch,c)=>{ if(ch==="B") bats.push(r+","+c); }));
-  const full=(1<<bats.length)-1; let mk0=0;
-  S.got.forEach(k=>{ const i=bats.indexOf(k); if(i>=0) mk0|=1<<i; });
-  const start={r:S.r,c:S.c,mk:mk0,prev:null}, seen=new Set([`${S.r},${S.c},${mk0}`]); let q=[start];
+  const rows=map.rows, n=rows.length, m=rows[0].length, E=hasE(map), PEN=!!map.tools&&map.tools.includes("n");
+  const bats=cellsOf(rows,"B"), tg=cellsOf(rows,"X").map(k=>[k,"p"]).concat(PEN?[]:cellsOf(rows,"V").map(k=>[k,"b"]));
+  const fullB=(1<<bats.length)-1, fullT=(1<<tg.length)-1; let b0=0, t0=0;
+  S.got.forEach(k=>{ const i=bats.indexOf(k); if(i>=0) b0|=1<<i; });
+  tg.forEach(([k,a],i)=>{ if((a==="p"?S.pnt:S.dan).includes(k)) t0|=1<<i; });
+  if(!E&&b0===fullB&&t0===fullT) return [];
+  /* con pincel: pisar (r,c) pinta; devuelve el nuevo t o -1 si pintaría una celda que no es roja */
+  const ink=(t,r,c)=>{ const k=r+","+c, ch=rows[r][c], i=tg.findIndex(([x])=>x===k);
+    if(i>=0) return t|1<<i; return ch==="E"||S.pnt.includes(k)?t:-1; };
+  const start={r:S.r,c:S.c,b:b0,t:t0,w:S.pen?1:0,prev:null}, seen=new Set([`${S.r},${S.c},${b0},${t0},${start.w}`]); let q=[start];
   while(q.length){ const nq=[];
-    for(const s of q) for(const d of "udlr"){
-      const r=s.r+DIRS[d][0], c=s.c+DIRS[d][1];
-      if(r<0||c<0||r>=n||c>=m||rows[r][c]==="#") continue;
-      let mk=s.mk; const bi=bats.indexOf(r+","+c); if(bi>=0) mk|=1<<bi;
-      const node={r,c,mk,prev:s};
-      if(rows[r][c]==="E"&&mk===full){ const path=[]; for(let x=node;x.prev;x=x.prev) path.unshift([x.r,x.c]); return path; }
-      const k=`${r},${c},${mk}`; if(!seen.has(k)){ seen.add(k); nq.push(node); }
-    }
+    for(const s of q){ const next=[];
+      for(const d of "udlr"){
+        const r=s.r+DIRS[d][0], c=s.c+DIRS[d][1];
+        if(r<0||c<0||r>=n||c>=m||rows[r][c]==="#") continue;
+        const t=PEN&&s.w?ink(s.t,r,c):s.t; if(t<0) continue;
+        const bi=bats.indexOf(r+","+c); next.push({r,c,b:bi>=0?s.b|1<<bi:s.b,t,w:s.w,a:d}); }
+      if(PEN){ if(s.w) next.push({...s,w:0,a:"f"});
+        else { const t=ink(s.t,s.r,s.c); if(t>=0) next.push({...s,t,w:1,a:"n"}); } }
+      else { const ti=tg.findIndex(([k])=>k===s.r+","+s.c);
+        if(ti>=0&&!(s.t>>ti&1)) next.push({r:s.r,c:s.c,b:s.b,t:s.t|1<<ti,w:0,a:tg[ti][1]}); }
+      for(const x of next){ const node={...x,prev:s};
+        if(x.b===fullB&&x.t===fullT&&(!E||(DIRS[x.a]&&rows[x.r][x.c]==="E"))){ const path=[]; for(let y=node;y.prev;y=y.prev) path.unshift([y.r,y.c,y.a]); return path; }
+        const k=`${x.r},${x.c},${x.b},${x.t},${x.w}`; if(!seen.has(k)){ seen.add(k); nq.push(node); } } }
     q=nq; }
   return null;
 }
 
-/* recorre el programa: "loop" al empezar cada vuelta de un repetir, "move" por cada flecha */
-function* walk(list,prefix=[]){
+/* recorre el programa: "loop" al empezar cada vuelta de un repetir, "if" al preguntar, y una acción por cada bloque.
+   test(color) se consulta en el momento, así el si ve la celda donde está el robot */
+function* walk(list,test,prefix=[]){
   for(let i=0;i<list.length;i++){ const b=list[i], addr=prefix.concat(i);
     if(b.t==="move") yield {t:"move",addr,dir:b.dir};
-    else for(let k=0;k<b.n;k++){ yield {t:"loop",addr,k,n:b.n}; yield* walk(b.body,addr); } }
+    else if(ACTS[b.t]) yield {t:b.t,addr};
+    else if(b.t==="if"){ const ok=test(b.c); yield {t:"if",addr,ok}; if(ok) yield* walk(b.body,test,addr); }
+    else for(let k=0;k<b.n;k++){ yield {t:"loop",addr,k,n:b.n}; yield* walk(b.body,test,addr); } }
 }
-function countBlocks(list){ return list.reduce((a,b)=>a+1+(b.t==="repeat"?countBlocks(b.body):0),0); }
+function countBlocks(list){ return list.reduce((a,b)=>a+1+(b.body?countBlocks(b.body):0),0); }
 function hasRepeat(list){ return list.some(b=>b.t==="repeat"); }
+function hasIf(list){ return list.some(b=>b.t==="if"||(b.body&&hasIf(b.body))); }
 /* opt y límites cuentan el bloque «al tocar» */
-function optFor(map,path){ return map.cls===2?map.max:(path?path.length+1:null); }
-function limitFor(map,opt){ return map.cls===2?map.max:map.cls===1?opt+2:MAXB; }
-function starsFor(map,count,usedRep,opt,hint){
+function optFor(map,path){ return map.cls===2?map.max:map.need?null:(path?path.length+1:null); }
+function limitFor(map,opt){ return map.cls===2?map.max:map.cls===1&&opt!=null?opt+2:MAXB; }
+function starsFor(map,count,usedRep,opt,hint,wrong){
   let k=map.cls===2?(usedRep?3:2):(opt==null||count<=opt?3:2);
-  if(hint) k--; return Math.max(1,k);
+  if(wrong) k=Math.min(k,2); if(hint) k--; return Math.max(1,k);
 }
-/* grupos: se abren al terminar todo el grupo anterior y juntar las estrellas pedidas */
+/* grupos: cada parte tiene su cadena. El primero se abre al terminar las partes «after»;
+   los demás al terminar el grupo anterior y juntar las estrellas pedidas (de esa parte) */
+function partDone(stars,p){ return MISSIONS.filter(m=>m.part===p).every(m=>stars[m.id]); }
+function partName(p){ return `Parte ${p} · ${PARTS.find(x=>x.id===p).title}`; }
 function groupState(stars){
-  const earned=Object.values(stars).reduce((a,b)=>a+b,0); let prev=null;
+  let prev=null;
   return GROUPS.map(g=>{
+    if(prev&&prev.g.part!==g.part) prev=null;
     const ms=MISSIONS.filter(m=>m.grp===g.id), done=ms.filter(m=>stars[m.id]).length;
-    const prevLeft=prev?prev.ms.length-prev.done:0;
-    const open=!prev||(prev.open&&prevLeft===0&&earned>=g.need);
-    return prev={g,ms,done,open,prevLeft,prevTitle:prev&&prev.g.title,earned}; });
+    const earned=MISSIONS.filter(m=>m.part===g.part).reduce((a,m)=>a+(stars[m.id]||0),0);
+    let open, prevLeft=0, gate=null;
+    if(!prev){ const miss=PARTS.find(p=>p.id===g.part).after.filter(p=>!partDone(stars,p)); open=!miss.length; if(!open) gate=miss.map(partName).join(" y "); }
+    else { prevLeft=prev.ms.length-prev.done; open=prev.open&&prevLeft===0&&earned>=g.need; }
+    return prev={g,ms,done,open,prevLeft,prevTitle:prev&&prev.g.title,gate,earned}; });
 }
 function parseSol(s){ let i=0;
   function list(){ const out=[];
@@ -596,21 +716,28 @@ function parseSol(s){ let i=0;
       if(ch===" "){ i++; continue; }
       if(ch===")"){ i++; return out; }
       if(/\d/.test(ch)){ let num=""; while(/\d/.test(s[i])) num+=s[i++]; i++; out.push({t:"repeat",n:+num,body:list()}); }
-      else { out.push({t:"move",dir:ch}); i++; } }
+      else if(ch==="?"){ const c=s[i+1]; i+=3; out.push({t:"if",c,body:list()}); }
+      else { const a=Object.keys(ACTS).find(k=>ACTS[k]===ch); out.push(a?{t:a}:{t:"move",dir:ch}); i++; } }
     return out; }
   return list(); }
 function simulate(map,prog){ let S=startState(map), n=0;
-  for(const ev of walk(prog)){ if(++n>MAXSTEPS) return {k:"long"}; if(ev.t!=="move") continue;
-    const res=tryMove(map,S,ev.dir); if(res.k==="crash") return res; S=res.S; if(res.k==="win") return res; }
-  return {k:"end",S}; }
-function maxRun(list){ const s=[...walk(list)].filter(e=>e.t==="move").map(e=>e.dir).join(""); return s?Math.max(...s.match(/(.)\1*/g).map(x=>x.length)):0; }
+  for(const ev of walk(prog,c=>cellColor(map,S)===c)){ if(++n>MAXSTEPS) return {k:"long"};
+    if(ev.t==="move"){ const res=tryMove(map,S,ev.dir); if(res.k==="crash") return res; S=res.S; if(res.k==="win") return res; }
+    else if(ACTS[ev.t]){ const res=tryAct(map,S,ACTS[ev.t]); if(res.k==="bad") return res; S=res.S; } }
+  return !hasE(map)&&goalMet(map,S)?{k:"win",S}:{k:"end",S}; }
+function maxRun(list){ const s=[...walk(list,()=>false)].filter(e=>e.t!=="loop"&&e.t!=="if").map(e=>e.t==="move"?e.dir:ACTS[e.t]).join(""); return s?Math.max(...s.match(/(.)\1*/g).map(x=>x.length)):0; }
+/* el mismo programa sin los si (todo lo de adentro siempre): en los niveles de Si tiene que fallar */
+function stripIf(list){ return list.flatMap(b=>b.t==="if"?stripIf(b.body):b.body?[{...b,body:stripIf(b.body)}]:[b]); }
 function selfTest(){
   const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>{ const sol=parseSol(m.sol), sim=simulate(m,sol), path=shortest(m,startState(m)), cnt=countBlocks(sol)+1, used=hasRepeat(sol);
-    const opt=optFor(m,path), lim=limitFor(m,opt), run=maxRun(sol);
-    const ok=sim.k==="win"&&!!path&&cnt<=lim&&(m.cls===1?(cnt===opt&&!used&&run<=3):used)&&starsFor(m,cnt,used,opt,false)===3;
-    return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1?" seguidos:"+run:""}`}; });
-  /* con 2 estrellas en todo lo anterior alcanza para abrir cada grupo */
-  let before=0; GROUPS.forEach(g=>{ const ok=g.need<=before*2; res.push({id:g.id,title:"Grupo "+g.title,ok,info:`pide ${g.need}, máx ${before*3}`}); before+=MISSIONS.filter(m=>m.grp===g.id).length; });
+    const opt=optFor(m,path), lim=limitFor(m,opt), run=maxRun(sol), cond=m.tools.includes("i");
+    /* todos los niveles terminan en la estrella: se gana al llegar con todo hecho */
+    let ok=hasE(m)&&sim.k==="win"&&!!path&&cnt<=lim&&starsFor(m,cnt,used,opt,false,sim.S&&sim.S.wrong)===3;
+    if(m.cls===1) ok=ok&&!used&&(m.need||(cnt===opt&&run<=3)); else ok=ok&&used;
+    if(cond) ok=ok&&hasIf(sol)&&simulate(m,stripIf(sol)).k!=="win";
+    return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1&&!m.need?" seguidos:"+run:""}${cond?" sin si: "+simulate(m,stripIf(sol)).k:""}`}; });
+  /* con 2 estrellas en todo lo anterior de la parte alcanza para abrir cada grupo */
+  PARTS.forEach(p=>{ let before=0; GROUPS.filter(g=>g.part===p.id).forEach(g=>{ const ok=g.need<=before*2; res.push({id:g.id,title:"Grupo "+g.title,ok,info:`pide ${g.need}, máx ${before*3}`}); before+=MISSIONS.filter(m=>m.grp===g.id).length; }); });
   return res;
 }
 /*PURE-END*/
@@ -629,7 +756,7 @@ let SAVE=FRESH();
 try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) SAVE=Object.assign(SAVE,s); }catch(e){}
 function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id).concat(CHALLENGES.map(c=>c.id)); SAVE.owned=["robi","gato","astro","dino","rey"]; } }
 /* el desafío de cada parte se abre al terminar (con al menos 1 estrella) todos sus niveles */
-function chOpen(ch){ return PROFE||MISSIONS.filter(m=>m.cls===ch.cls).every(m=>SAVE.stars[m.id]); }
+function chOpen(ch){ return PROFE||partDone(SAVE.stars,ch.part); }
 applyProfe();
 function groupsNow(){ const gs=groupState(SAVE.stars); if(PROFE) gs.forEach(s=>s.open=true); return gs; }
 function persist(){ try{ localStorage.setItem(KEY,JSON.stringify(SAVE)); }catch(e){} }
@@ -701,6 +828,10 @@ const ICO={
   unlock:()=>`<svg viewBox="0 0 32 32"><path d="M10.5 14V9.5a5.5 5.5 0 0 1 10.6-2" fill="none" stroke="#11986A" stroke-width="3.2" stroke-linecap="round"/><rect x="6" y="14" width="20" height="15" rx="4" fill="#1EC48C"/><circle cx="16" cy="21.5" r="2.4" fill="#fff"/></svg>`,
   palette:()=>`<svg viewBox="0 0 32 32"><path d="M16 3C8.5 3 3 8.7 3 15.5 3 22.3 8.3 28 14.3 28c2 0 2.6-1.6 1.8-3.1-.9-1.7.2-3.3 2.2-3.3H22c4 0 7-3 7-7C29 8.2 23.3 3 16 3z" fill="#fff" stroke="#0D3049" stroke-width="2"/><circle cx="9.5" cy="14.5" r="2.6" fill="#FF5A62"/><circle cx="14.5" cy="9" r="2.6" fill="#FFC21A"/><circle cx="21" cy="9.5" r="2.6" fill="#1EC48C"/><circle cx="23.5" cy="15.5" r="2.6" fill="#3B82F0"/></svg>`,
   next:()=>`<svg viewBox="0 0 32 32"><path d="M6 16h18M17 8l8 8-8 8" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  brush:(c="#fff")=>`<svg viewBox="0 0 32 32"><rect x="4" y="4" width="20" height="9" rx="3" fill="${c}"/><path d="M24 8.5h3v8H15v4" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/><rect x="12.5" y="20" width="5" height="9" rx="2" fill="${c}"/></svg>`,
+  brushOff:(c="#fff")=>`<svg viewBox="0 0 32 32"><g opacity=".75"><rect x="4" y="4" width="20" height="9" rx="3" fill="${c}"/><path d="M24 8.5h3v8H15v4" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/><rect x="12.5" y="20" width="5" height="9" rx="2" fill="${c}"/></g><path d="M4 28L28 4" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/></svg>`,
+  music:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M12 24V7l14-3v17" fill="none" stroke="${c}" stroke-width="2.8" stroke-linejoin="round"/><circle cx="8.5" cy="24" r="4" fill="${c}"/><circle cx="22.5" cy="21" r="4" fill="${c}"/></svg>`,
+  ifq:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M16 3l13 13-13 13L3 16z" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/><path d="M13 13a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4" fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="21.6" r="1.6" fill="${c}"/></svg>`,
   clock:()=>`<svg viewBox="0 0 32 32"><path d="M13 3h6M16 3v4M24.5 8.5l2-2" stroke="#0D3049" stroke-width="2.6" stroke-linecap="round"/><circle cx="16" cy="18" r="11" fill="#fff" stroke="#0D3049" stroke-width="2.6"/><path d="M16 12v6l4 3" fill="none" stroke="#FF5A62" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   check:()=>`<svg viewBox="0 0 32 32"><path d="M6 17l6 6L26 9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 };
@@ -723,7 +854,9 @@ function tone(f,d,type="sine",vol=.12,when=0){ try{ AC=AC||new (window.AudioCont
 const SND={ move:()=>tone(620,.08,"triangle"), crash:()=>{tone(140,.3,"sawtooth",.12);tone(90,.35,"sawtooth",.1,.05)},
   bat:()=>[660,880,1100,1320].forEach((f,i)=>tone(f,.12,"triangle",.1,i*.07)), add:()=>tone(820,.05,"sine",.08),
   pick:()=>tone(520,.05,"sine",.07), snap:()=>{tone(880,.05,"sine",.09);tone(1320,.06,"sine",.06,.04)}, trash:()=>tone(200,.15,"triangle",.1),
-  loop:()=>tone(980,.05,"sine",.05), nope:()=>{tone(300,.1,"triangle",.1);tone(240,.14,"triangle",.1,.09)},
+  loop:()=>tone(980,.05,"sine",.05),
+  paint:()=>{tone(400,.12,"triangle",.09);tone(700,.1,"sine",.07,.06)},
+  dance:()=>[784,988,784,1175].forEach((f,i)=>tone(f,.1,"square",.05,i*.1)), nope:()=>{tone(300,.1,"triangle",.1);tone(240,.14,"triangle",.1,.09)},
   unlock:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.2,"triangle",.11,i*.09)),
   buy:()=>[988,1319,1568].forEach((f,i)=>tone(f,.16,"square",.05,i*.08)),
   win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.22,"triangle",.12,i*.11)), fail:()=>{tone(330,.18,"triangle");tone(262,.28,"triangle",.12,.16)} };
@@ -782,29 +915,29 @@ $("wallet").onclick=()=>openShop();
 /* ================= menú ================= */
 function miniMap(rows,s=14){ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},${s}px);--ms:${s}px">`;
   for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }
-function gIcon(g){ return g.cls===1?(g.id==="A"?ICO.arrow("r"):batSVG()):ICO.repeat(); }
-function lockWhy(st){ return st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas (tenés ${st.earned})`; }
+function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():ICO.ifq(); }
+function lockWhy(st){ return st.gate?`Primero terminá ${st.gate}`:st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }
 function renderMenu(){
   $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();
   $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`;
   const GS=groupsNow(); let h="", i=0, fresh=false;
-  for(const cls of [1,2]){
-    /* una sola lista por parte; cada grupo de niveles se abre por separado */
-    const sts=GS.filter(s=>s.g.cls===cls), ms=MISSIONS.filter(m=>m.cls===cls), got=ms.reduce((a,m)=>a+(SAVE.stars[m.id]||0),0);
-    h+=`<section class="grp" style="--gc:${cls===1?"#3B82F0":"#FF9A2E"};--gl:${cls===1?"#DCE9FF":"#FFE2C2"}"><div class="grph">`+
-      `<span class="gdot">${cls===1?ICO.arrow("r"):ICO.repeat()}</span><div><h3>Parte ${cls} · ${cls===1?"Secuencia":"Repetir"}</h3><span class="gsub">${cls===1?"un bloque después del otro":"el bloque que repite"}</span></div>`+
+  for(const P of PARTS){
+    /* una card por parte; cada grupo de niveles se abre por separado */
+    const sts=GS.filter(s=>s.g.part===P.id), ms=MISSIONS.filter(m=>m.part===P.id), got=ms.reduce((a,m)=>a+(SAVE.stars[m.id]||0),0);
+    h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+
+      `<span class="gdot">${partIco(P.id)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+
       `<span class="gprog">${starIco(true)} ${got} / ${ms.length*3}</span></div><div class="cards">`;
     for(const st of sts){
       const g=st.g, isNew=st.open&&!SAVE.seen.includes(g.id);
       if(isNew){ SAVE.seen.push(g.id); fresh=true; }
-      const need=st.prevLeft?"Terminá los anteriores":`Juntá ${g.need}${starIco(true)}`;
+      const need=st.gate?`Terminá la Parte ${PARTS.find(p=>p.id===g.part).after.filter(p=>!partDone(SAVE.stars,p)).join(" y ")}`:st.prevLeft?"Terminá los anteriores":`Juntá ${g.need}${starIco(true)}`;
       h+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;
         return `<button class="card${k===3?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}" style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+
           (st.open?`<div class="stars">${starRow(k)}</div>`:`<span class="need">${need}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`; }).join("");
     }
     h+=`</div></section>`;
   }
-  /* tercera card aparte: los desafíos extra, para los que terminan antes */
+  /* card aparte: los desafíos extra, para los que terminan antes */
   const chGot=CHALLENGES.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0);
   h+=`<section class="grp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+
     `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos extra</h3><span class="gsub">3 niveles seguidos, con cronómetro</span></div>`+
@@ -822,7 +955,7 @@ function renderMenu(){
   if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); }
 }
 function chCard(ch,i,open,isNew){
-  const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la Parte ${ch.cls}`;
+  const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la ${partName(ch.part)}`;
   return `<button class="chcard${open?"":" locked"}${k===3?" s3":""}${isNew?" new":""}" data-ch="${ch.id}" data-why="${why}" style="--i:${i}">`+
     `<span class="chico">${ICO.clock()}</span><div class="chtxt"><span class="chtag">Desafío extra</span><h3>${ch.title}</h3>`+
     `<span class="chsub">3 niveles seguidos · con cronómetro</span>`+
@@ -857,8 +990,8 @@ function buildBoard(holder,rows,withRobot,availW,availH,intro){
   let h=`<div class="cells${intro?" intro":""}" style="grid-template-columns:repeat(${m},var(--cs))">`;
   for(let r=0;r<n;r++) for(let c=0;c<m;c++){ const ch=rows[r][c];
     const inner=ch==="#"?rockSVG():ch==="E"?goalSVG():ch==="B"?batSVG():(ch==="R"&&!withRobot)?`<svg class="rsvg" viewBox="-50 -50 100 100" data-look="r">${robotSVG()}</svg>`:"";
-    h+=`<div class="cell${(r+c)%2?" alt":""}" data-r="${r}" data-c="${c}" style="--i:${r+c}">${inner}</div>`; }
-  if(withRobot) h+=`<div class="robot noanim${intro?" drop":""}" id="bot" data-look="r"><div class="shadow"></div><div class="bob"><svg viewBox="-50 -50 100 100">${robotSVG()}</svg></div></div>`;
+    h+=`<div class="cell${(r+c)%2?" alt":""}${ch==="X"?" red":ch==="V"?" green":""}" data-r="${r}" data-c="${c}" style="--i:${r+c}">${inner}</div>`; }
+  if(withRobot) h+=`<div class="robot noanim${intro?" drop":""}" id="bot" data-look="r"><div class="shadow"></div><div class="bob"><svg viewBox="-50 -50 100 100">${robotSVG()}</svg></div><span class="penmark">${ICO.brush()}</span></div>`;
   holder.innerHTML=h+"</div>";
   return cs+3; // paso entre casillas (incluye separación)
 }
@@ -868,14 +1001,19 @@ let G=null; const PROGS={};
 function startPlay(map){
   PROGS[map.id]=PROGS[map.id]||[];
   const S=startState(map), opt=optFor(map,shortest(map,S));
-  G={map,rows:map.rows,n:map.rows.length,m:map.rows[0].length,nB:countB(map.rows),prog:PROGS[map.id],
-     run:0,busy:false,ctx:null,S,rep:map.cls!==1,opt,max:limitFor(map,opt),hint:false};
+  const tools=map.tools??"r"; /* el mapa propio (cls 0) tiene repetir */
+  G={map,rows:map.rows,n:map.rows.length,m:map.rows[0].length,nB:countB(map.rows),nX:cellsOf(map.rows,"X").length,nV:cellsOf(map.rows,"V").length,
+     prog:PROGS[map.id],run:0,busy:false,ctx:null,S,tools,rep:tools.includes("r"),opt,max:limitFor(map,opt),hint:false};
   setTop(map.num||ICO.pencil(),map.ch?`Desafío · Nivel ${map.num} de 3`:map.title); renderTopStars();
-  $("hintBtn").classList.toggle("hidden",!!map.ch);
+  $("hintBtn").classList.toggle("hidden",!!map.ch||!!map.need);
   renderPalette(); show("game"); drawBoard(false,true); renderProg();
-  const lim=`Podés usar hasta ${G.max} bloques`;
+  const lim=`Podés usar hasta ${G.max} bloques`, toStar=hasE(map)?", después a la estrella":"";
   if(map.ch&&map.num===1){ const ch=CHALLENGES.find(c=>c.id===map.ch);
     say("",ICO.clock(),"El reloj mide cuánto tardás",`3 estrellas: menos de ${fmtTime(ch.t3)} · 2 estrellas: menos de ${fmtTime(ch.t2)}`); }
+  else if(G.nV) say("",ICO.ifq("#11986A"),"Rojas: pintar · Verdes: bailar",`Usá el bloque si y llegá a la estrella · ${lim}`);
+  else if(G.nX&&tools.includes("i")) say("",ICO.ifq("#11986A"),"¡Pintá solo las rojas!",`Usá el bloque si y llegá a la estrella · ${lim}`);
+  else if(G.nX) say("",ICO.brush("#7E3DB0"),G.nX>1?`Pintá las ${G.nX} celdas rojas`:"Pintá la celda roja",`Usá el pincel en las rojas y guardalo en las blancas${toStar} · ${lim}`);
+  else if(map.need) say("",ICO.brush("#7E3DB0"),`Llegá a la estrella pintando ${map.need} celdas`,"Usá el pincel: mientras lo usás, pinta todo por donde pasa");
   else if(G.nB) say("",ICO.bat(),G.nB>1?`Juntá las ${G.nB} baterías`:"Primero la batería",`Después, a la estrella · ${lim}`);
   else if(map.cls===2) say("",ICO.repeat("#D9780F"),"¡Usá el bloque repetir!",lim);
   else say("",ICO.star(),"¡Llevá al robot a la estrella!",lim);
@@ -885,7 +1023,8 @@ function drawBoard(keep,intro){
   const [w,h]=boardSpace(); G.step=buildBoard($("gBoard"),G.rows,true,w,h,intro);
   if(intro) setTimeout(()=>{ const b=$("bot"); b&&b.classList.remove("drop"); },1300);
   if(!keep) return resetRobot();
-  for(const k of G.S.got){ const [r,c]=k.split(",").map(Number); cellEl(r,c).classList.add("got"); }
+  const mark=(keys,cls)=>keys.forEach(k=>{ const [r,c]=k.split(",").map(Number); cellEl(r,c).classList.add(cls); });
+  mark(G.S.got,"got"); mark(G.S.pnt,"pnt"); mark(G.S.dan,"danced"); $("bot").classList.toggle("pen",!!G.S.pen);
   placeNow();
 }
 function cellEl(r,c){ return $("gBoard").querySelector(`.cell[data-r="${r}"][data-c="${c}"]`); }
@@ -893,16 +1032,23 @@ function place(S,dx=0,dy=0){ $("bot").style.transform=`translate(${(S.c+dx)*G.st
 function placeNow(){ const bot=$("bot"); bot.classList.add("noanim"); place(G.S); void bot.offsetWidth; bot.classList.remove("noanim"); renderStatus(); }
 function resetRobot(){
   G.S=startState(G.map); G.trail=0; G.lastGot=null; clearHint();
-  $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash"));
+  $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced"));
   $("gBoard").classList.remove("win","bump");
   document.querySelectorAll("#canvas .on, #canvas .err").forEach(b=>b.classList.remove("on","err"));
-  document.querySelectorAll("#canvas .running").forEach(b=>b.classList.remove("running"));
-  $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving"); placeNow();
+  document.querySelectorAll("#canvas .running, #canvas .yes, #canvas .nope").forEach(b=>b.classList.remove("running","yes","nope"));
+  $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen"); placeNow();
 }
 function renderStatus(){
-  if(!G.nB){ $("status").innerHTML=""; return; }
-  const got=G.S.got.length, up=G.lastGot!=null&&got>G.lastGot; G.lastGot=got;
-  $("status").innerHTML=`<span class="chip${got>=G.nB?" full":""}${up?" bump":""}">${Array.from({length:G.nB},(_,i)=>`<span class="bslot${i<got?" on":""}">${batSVG()}</span>`).join("")} ${got} / ${G.nB}</span>`;
+  let h="";
+  if(G.nB){ const got=G.S.got.length, up=G.lastGot!=null&&got>G.lastGot; G.lastGot=got;
+    h+=`<span class="chip${got>=G.nB?" full":""}${up?" bump":""}">${Array.from({length:G.nB},(_,i)=>`<span class="bslot${i<got?" on":""}">${batSVG()}</span>`).join("")} ${got} / ${G.nB}</span>`; }
+  /* contadores de pintar: rojas pintadas, verdes con baile, o celdas pintadas en pintar libre */
+  const g=goalLeft(G.map,G.S), chip=(col,done,tot,txt)=>`<span class="chip${done>=tot?" full":""}"><span class="sq" style="background:${col}"></span>${txt} ${done} / ${tot}</span>`;
+  if(G.nX) h+=chip("#FF5A62",G.nX-g.red,G.nX,"Rojas");
+  if(G.nV) h+=chip("#1EC48C",G.nV-g.green,G.nV,"Verdes");
+  if(G.map.need) h+=chip("var(--paint)",Math.min(G.S.pnt.length,G.map.need),G.map.need,"Pintadas");
+  if(G.tools.includes("n")) h+=`<span class="chip pench${G.S.pen?" on":""}">${ICO.brush(G.S.pen?"#fff":"#7E3DB0")}${G.S.pen?"Pincel en uso":"Pincel guardado"}</span>`;
+  $("status").innerHTML=h;
 }
 function T(){ return 1300-(+$("speed").value); }
 function applySpeed(){ document.documentElement.style.setProperty("--t",Math.round(T()*.8)+"ms"); }
@@ -917,16 +1063,30 @@ function say(kind,icon,title,sub="",extra="",el="msg"){
 function renderPalette(){
   let h=`<div class="pgroup" id="pg-mov"><h4><i style="background:var(--mov)"></i>Movimiento</h4>${["u","d","l","r"].map(d=>blockHTML({t:"move",dir:d},null,true)).join("")}</div>`;
   let cats=`<button class="cat on" data-g="pg-mov"><i style="background:var(--mov)"></i>Movimiento</button>`;
-  if(G.rep){ h+=`<div class="pgroup" id="pg-ctl"><h4><i style="background:var(--ctl)"></i>Control</h4>${blockHTML({t:"repeat",n:2,body:[]},null,true)}</div>`;
+  const T_=G.tools;
+  if(T_.includes("p")||T_.includes("b")||T_.includes("n")){
+    h+=`<div class="pgroup" id="pg-act"><h4><i style="background:var(--pnt)"></i>Acciones</h4>${T_.includes("n")?blockHTML({t:"penon"},null,true)+blockHTML({t:"penoff"},null,true):""}${T_.includes("p")?blockHTML({t:"paint"},null,true):""}${T_.includes("b")?blockHTML({t:"dance"},null,true):""}</div>`;
+    cats+=`<button class="cat" data-g="pg-act"><i style="background:var(--pnt)"></i>Acciones</button>`; }
+  if(T_.includes("r")||T_.includes("i")){
+    h+=`<div class="pgroup" id="pg-ctl"><h4><i style="background:var(--ctl)"></i>Control</h4>${T_.includes("r")?blockHTML({t:"repeat",n:2,body:[]},null,true):""}${T_.includes("i")?blockHTML({t:"if",c:"x",body:[]},null,true):""}</div>`;
     cats+=`<button class="cat" data-g="pg-ctl"><i style="background:var(--ctl)"></i>Control</button>`; }
   $("pal").innerHTML=h; $("cats").innerHTML=cats;
 }
+const COLS={x:["roja","#FF5A62"],v:["verde","#1EC48C"]};
 $("cats").onclick=e=>{ const b=e.target.closest(".cat"); if(!b) return;
   document.querySelectorAll("#cats .cat").forEach(x=>x.classList.toggle("on",x===b)); $(b.dataset.g).scrollIntoView({behavior:"smooth",block:"start"}); };
 function blockHTML(b,addr,pal){
-  const at=pal?`data-new="${b.t==="repeat"?"rep":b.dir}"`:`data-a="${addr}"`;
+  const at=pal?`data-new="${b.t==="repeat"?"rep":b.t==="move"?b.dir:b.t}"`:`data-a="${addr}"`;
   if(b.t==="move") return `<div class="blk mov" ${at}><span class="ic">${ICO.arrow(b.dir)}</span><span>${LABEL[b.dir]}</span></div>`;
+  if(b.t==="paint") return `<div class="blk act" ${at}><span class="ic">${ICO.brush()}</span><span>pintar</span></div>`;
+  if(b.t==="dance") return `<div class="blk act" ${at}><span class="ic">${ICO.music()}</span><span>bailar</span></div>`;
+  if(b.t==="penon") return `<div class="blk act" ${at}><span class="ic">${ICO.brush()}</span><span>usar pincel</span></div>`;
+  if(b.t==="penoff") return `<div class="blk act off" ${at}><span class="ic">${ICO.brushOff()}</span><span>guardar pincel</span></div>`;
   const inner=b.body.length?listHTML(b.body,addr):'<div class="ph"></div>';
+  /* si y repetir comparten la forma de C */
+  if(b.t==="if") return `<div class="blk rep iff" ${at}><div class="rtop"><span class="ic">${ICO.ifq()}</span><span>si la celda es</span>`+
+    (pal?`<span class="colsel"><i style="--cc:${COLS[b.c][1]}"></i>${COLS[b.c][0]}</span>`:`<button class="colsel" data-col title="Cambiar color"><i style="--cc:${COLS[b.c][1]}"></i>${COLS[b.c][0]}</button>`)+
+    `</div><div class="mouth"><div class="arm"></div><div class="slot list"${pal?"":` data-l="${addr}"`}>${inner}</div></div><div class="rbot"></div></div>`;
   return `<div class="blk rep" ${at}><div class="rtop"><span class="ic">${ICO.repeat()}</span><span>repetir</span>`+
     `<span class="nctl">${pal?"":'<button data-minus aria-label="Menos">−</button>'}<b>${b.n}</b>${pal?"":'<button data-plus aria-label="Más">+</button>'}</span><span class="lap"></span></div>`+
     `<div class="mouth"><div class="arm"></div><div class="slot list"${pal?"":` data-l="${addr}"`}>${inner}</div></div><div class="rbot"></div></div>`;
@@ -946,9 +1106,9 @@ const toArr=a=>a===""?[]:String(a).split(".").map(Number);
 function getList(path){ let l=G.prog; for(const i of path) l=l[i].body; return l; }
 function removeAt(addr){ return getList(addr.slice(0,-1)).splice(addr[addr.length-1],1)[0]; }
 function insertAt(path,i,b){ getList(path).splice(i,0,b); }
-function newBlock(kind){ return kind==="rep"?{t:"repeat",n:2,body:[]}:{t:"move",dir:kind}; }
+function newBlock(kind){ return kind==="rep"?{t:"repeat",n:2,body:[]}:kind==="if"?{t:"if",c:"x",body:[]}:ACTS[kind]?{t:kind}:{t:"move",dir:kind}; }
 function tooMany(extra){ if(used()+extra<=G.max) return false;
-  say("warn",G.rep?ICO.repeat("#D9780F"):ICO.blocks(),`¡Máximo ${G.max} bloques!`,G.map.cls===2?"Usá repetir para ahorrar bloques":"El bloque «al tocar» también cuenta");
+  say("warn",G.rep?ICO.repeat("#D9780F"):ICO.blocks(),`¡Máximo ${G.max} bloques!`,G.tools.includes("i")?"Usá repetir y si para ahorrar bloques":G.map.cls===2?"Usá repetir para ahorrar bloques":"El bloque «al tocar» también cuenta");
   bumpEl($("count"),"no"); SND.nope(); return true; }
 function changed(){ G.run++; releaseWait(); G.ctx=null; setBusy(false); renderProg(); resetRobot(); }
 function freshAt(addr){ const el=document.querySelector(`#canvas .blk[data-a="${addr}"]`); if(!el) return;
@@ -1007,6 +1167,9 @@ function showDropline(p){ const el=$("dropline"); if(!el) return; el.classList.t
   el.style.left=(p.x-cr.left+cv.scrollLeft)+"px"; el.style.top=(p.y-cr.top+cv.scrollTop-3)+"px"; }
 
 $("canvas").addEventListener("click",e=>{
+  const cs=e.target.closest("[data-col]");
+  if(cs&&!G.busy){ const a=toArr(cs.closest(".iff").dataset.a), blk=getList(a.slice(0,-1))[a[a.length-1]];
+    const opts=G.tools.includes("b")?["x","v"]:["x"]; blk.c=opts[(opts.indexOf(blk.c)+1)%opts.length]; SND.add(); return changed(); }
   const b=e.target.closest("[data-minus],[data-plus]"); if(!b||G.busy) return;
   const blk=getList(toArr(b.closest(".rep").dataset.a).slice(0,-1))[toArr(b.closest(".rep").dataset.a).pop()];
   blk.n=Math.max(2,Math.min(10,blk.n+(b.hasAttribute("data-plus")?1:-1))); SND.add(); changed();
@@ -1035,20 +1198,46 @@ async function run(step){
   const ctx=G.ctx={id,stepMode:step,waiting:null,moves:0}; setBusy(true);
   say("",ICO.robot(),step?"Paso a paso":"¡Allá va!",step?"Tocá Paso para seguir":"");
   await sleep(200); if(id!==G.run) return;
-  const it=walk(G.prog); let res={k:"end"}, last=null, n=0;
+  /* el si pregunta por la celda donde está el robot en ese momento */
+  const it=walk(G.prog,c=>cellColor(G.map,G.S)===c); let res={k:"end"}, last=null, n=0;
   for(let nx=it.next();!nx.done;nx=it.next()){ const ev=nx.value;
     if(++n>MAXSTEPS){ res={k:"long"}; break; }
     const addr=ev.addr.join(".");
     if(ev.t==="loop"){ setLap(addr,ev.k+1,ev.n); SND.loop(); if(!ctx.stepMode){ await sleep(T()*.25); if(id!==G.run) return; } continue; }
+    if(ev.t==="if"){ askIf(addr,ev.ok); if(!ctx.stepMode){ await sleep(T()*.35); if(id!==G.run) return; } continue; }
     light(addr); last=addr;
-    const r=tryMove(G.map,G.S,ev.dir);
-    await animate(r,ev.dir); if(id!==G.run) return;
+    let r;
+    if(ev.t==="move"){ r=tryMove(G.map,G.S,ev.dir); await animate(r,ev.dir); }
+    else { r=tryAct(G.map,G.S,ACTS[ev.t]); await animateAct(r,ev.t); }
+    if(id!==G.run) return;
     ctx.moves++;
     if(r.k!=="ok"){ res=r; break; }
     if(ctx.stepMode){ say("",ICO.step(),`Paso ${ctx.moves}`,"Tocá Paso para seguir o Ir para terminar"); await waitStep(); if(id!==G.run) return; }
   }
-  if(res.k==="win"){ let nx; do{ nx=it.next(); }while(!nx.done&&nx.value.t!=="move"); res.left=!nx.done; }
+  if(res.k==="win"){ let nx; do{ nx=it.next(); }while(!nx.done&&(nx.value.t==="loop"||nx.value.t==="if")); res.left=!nx.done; }
+  /* sin estrella en el mapa: se gana al terminar el programa con todo pintado */
+  if(res.k==="end"&&!hasE(G.map)&&goalMet(G.map,G.S)) res={k:"win"};
   G.ctx=null; setBusy(false); finish(res,last);
+}
+/* el bloque si se ilumina verde si la respuesta es sí, gris si es no */
+function askIf(addr,ok){ const el=document.querySelector(`#canvas .iff[data-a="${addr}"]`); if(!el) return;
+  el.classList.remove("yes","nope"); void el.offsetWidth; el.classList.add(ok?"yes":"nope"); SND.loop();
+  setTimeout(()=>el.classList.remove("yes","nope"),Math.max(350,T()*.9)); }
+async function animateAct(r,kind){
+  const bot=$("bot"), t=T(), c=cellEl(G.S.r,G.S.c), [x,y]=center(c);
+  if(r.k==="bad"){ SND.crash(); c.classList.add("flash"); bot.classList.add("shake"); setTimeout(()=>bot.classList.remove("shake"),400);
+    floatText(x,y-20,"¡Ups!","#FF5A62"); await sleep(t*.8); return; }
+  G.S=r.S;
+  if(kind==="penon"||kind==="penoff"){ bot.classList.toggle("pen",G.S.pen); SND.add();
+    floatText(x,y-24,G.S.pen?"¡Pincel!":"Guardado",G.S.pen?"#7E3DB0":"#5F7F96");
+    if(r.pnt){ c.classList.add("pnt"); SND.paint(); burst(x,y,["#4C8DF6","#2563C9","#9CC3FF","#FFFFFF"],12,4); }
+    await sleep(t*.6); renderStatus(); return; }
+  if(kind==="paint"){ c.classList.add("pnt"); SND.paint(); burst(x,y,["#4C8DF6","#2563C9","#9CC3FF","#FFFFFF"],14,4);
+    if(r.ok) floatText(x,y-24,"¡Pintada!","#2563C9"); }
+  else { bot.classList.remove("boogie"); void bot.offsetWidth; bot.classList.add("boogie"); SND.dance();
+    if(r.ok){ c.classList.add("danced"); burst(x,y,["#1EC48C","#FFC21A","#FF6FB5","#FFFFFF"],16,5); floatText(x,y-24,"♪ ♫","#11986A"); } }
+  await sleep(t); bot.classList.remove("boogie");
+  renderStatus();
 }
 async function animate(r,dir){
   const bot=$("bot"), t=T(); bot.dataset.look=dir;
@@ -1060,6 +1249,7 @@ async function animate(r,dir){
   G.S=r.S; bot.classList.add("moving"); place(G.S); SND.move();
   const [px,py]=center(prev); sparkle(px,py);
   await sleep(t); bot.classList.remove("moving");
+  if(r.pnt){ const c=cellEl(G.S.r,G.S.c); c.classList.add("pnt"); SND.paint(); const [x,y]=center(c); burst(x,y,["#4C8DF6","#2563C9","#9CC3FF"],8,3); }
   if(r.bat){ const c=cellEl(G.S.r,G.S.c); c.classList.add("got"); SND.bat();
     const [x,y]=center(c); burst(x,y,["#1EC48C","#7BE6BD","#FFC21A","#FFFFFF"],22,6); floatText(x,y-24,"+1 ⚡","#11986A"); }
   renderStatus();
@@ -1068,31 +1258,39 @@ function finish(res,last){
   document.querySelectorAll("#canvas .on").forEach(x=>x.classList.remove("on"));
   if(res.k==="win"&&G.map.ch) return chLevelWin(res);
   if(res.k==="win"){
-    const count=used(), usedRep=hasRepeat(G.prog), k=starsFor(G.map,count,usedRep,G.opt,G.hint);
+    const count=used(), usedRep=hasRepeat(G.prog), k=starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);
     let gained=0, opened=[];
     if(G.map.id!=="custom"){ const old=SAVE.stars[G.map.id]||0;
       if(k>old){ const before=groupsNow(); SAVE.stars[G.map.id]=k; gained=k-old; persist(); renderTopStars();
         opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g.title); } }
     let sub;
     if(G.map.cls===2&&!usedRep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
+    else if(G.S.wrong) sub=`${ICO.brush("#7E3DB0")} Pintaste ${G.S.wrong>1?G.S.wrong+" celdas que no eran rojas":"una celda que no era roja"}${G.tools.includes("n")?" · Guardá el pincel en las blancas":""}`;
     else if(G.opt!=null&&count>G.opt) sub=`${ICO.blocks()} Se puede con <b>${G.opt}</b> bloques`;
-    else sub="¡Programa perfecto!";
+    else sub=G.map.need?"¡Llegó pintando!":"¡Programa perfecto!";
     if(G.hint&&k<3) sub+=" · Sin pista ganás 3 estrellas";
     if(res.left) sub+=" · Sobraron bloques";
     const idx=MISSIONS.indexOf(G.map), nxt=MISSIONS[idx+1], gs=nxt&&groupsNow().find(s=>s.g.id===nxt.grp);
     let extra=`<div class="bigstars">${starRow(k)}</div>`;
     if(opened.length) extra+=`<div class="unl">${ICO.unlock()} ¡Desbloqueaste «${opened.join("» y «")}»!</div>`;
     if(idx>=0&&gs&&gs.open) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;
-    say("ok",ICO.star(),"¡Llegó!",sub,extra);
+    say("ok",ICO.star(),hasE(G.map)?"¡Llegó!":"¡Listo!",sub,extra);
     celebrate(gained);
     if(opened.length) setTimeout(()=>{ SND.unlock(); confetti(); },1600);
     return;
   }
   if(res.k==="crash"){ const el=last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err");
     say("err",ICO.burst(),res.why==="out"?"¡Ahí no hay camino!":"¡Chocó!","Mirá el bloque rojo"); return; }
+  if(res.k==="bad"){ const el=last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err");
+    return res.why==="p"?say("err",ICO.brush("#FF5A62"),"¡Esa celda no era roja!","Solo se pintan las rojas: usá el bloque si")
+                        :say("err",ICO.music("#FF5A62"),"¡Ahí no se baila!","Solo en las celdas verdes: usá el bloque si"); }
   SND.fail();
   if(res.k==="long") return say("err",ICO.hourglass(),"¡Muy largo!","Revisá los números de repetir");
-  if(G.S.starNoBat||(G.nB&&G.S.got.length<G.nB)) return say("warn",ICO.bat(),G.nB>1?"Faltan baterías":"Falta la batería","Primero las baterías, después la estrella");
+  const g=goalLeft(G.map,G.S), toStar=hasE(G.map)?", después a la estrella":"";
+  if(g.bat) return say("warn",ICO.bat(),G.nB>1?"Faltan baterías":"Falta la batería","Primero las baterías, después la estrella");
+  if(g.red) return say("warn",ICO.brush("#FF5A62"),g.red>1?`Faltan pintar ${g.red} rojas`:"Falta pintar 1 roja",`Pintá todas las rojas${toStar}`);
+  if(g.green) return say("warn",ICO.music("#11986A"),g.green>1?`Faltan bailar en ${g.green} verdes`:"Falta bailar en 1 verde","En cada verde, ¡a bailar!");
+  if(g.need) return say("warn",ICO.brush("#7E3DB0"),g.need>1?`Faltan pintar ${g.need} celdas`:"Falta pintar 1 celda",`Tenés que pintar ${G.map.need}${toStar}`);
   say("warn",ICO.question(),"No llegó todavía","¿Qué bloque falta?");
 }
 function celebrate(gained){
