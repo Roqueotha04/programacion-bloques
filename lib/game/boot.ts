@@ -1,0 +1,7 @@
+"use client";
+
+import { boot as bootUi } from "./ui";
+
+export function boot() {
+  bootUi();
+}
