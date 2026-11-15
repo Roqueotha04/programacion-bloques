@@ -6,7 +6,7 @@ import { PARTS, GROUPS, MISSIONS, CHALLENGES } from "./data";
 import {
   ACTS, DIRS, MAXSTEPS, cellColor, cellsOf, countB, countBlocks, find,
   fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, limitFor, optFor,
-  partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
+  chOf, gateTxt, partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
   tryAct, tryMove, walk,
 } from "./engine";
 import { freshSave, isProfe, saveKey } from "./save";
@@ -25,12 +25,13 @@ export function boot() {
   const KEY=saveKey();
   const FRESH=freshSave;  
   let SAVE=FRESH();  
-  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) SAVE=Object.assign(SAVE,s); }catch(e){}  
+  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) SAVE=Object.assign(SAVE,s); }catch(e){}
+  if(!Array.isArray(SAVE.codes)) SAVE.codes=[];  
   function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id).concat(CHALLENGES.map(c=>c.id)); SAVE.owned=["robi","gato","astro","dino","rey"]; } }  
   /* el desafío de cada parte se abre al terminar (con al menos 1 estrella) todos sus niveles */  
   function chOpen(ch){ return PROFE||partDone(SAVE.stars,ch.part); }  
   applyProfe();  
-  function groupsNow(){ const gs=groupState(SAVE.stars); if(PROFE) gs.forEach(s=>s.open=true); return gs; }  
+  function groupsNow(){ const gs=groupState(SAVE.stars,SAVE.codes); if(PROFE) gs.forEach(s=>s.open=true); return gs; }  
   function persist(){ try{ localStorage.setItem(KEY,JSON.stringify(SAVE)); }catch(e){} }  
   const earned=()=>Object.values(SAVE.stars).reduce((a,b)=>a+b,0);  
   const wallet=()=>earned()-SAVE.spent;  
@@ -188,7 +189,7 @@ export function boot() {
   function miniMap(rows,s=14){ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},${s}px);--ms:${s}px">`;  
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }  
   function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():ICO.ifq(); }  
-  function lockWhy(st){ return st.gate?`Primero terminá ${st.gate}`:st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }  
+  function lockWhy(st){ return st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }  
   function renderMenu(){  
     $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();  
     $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`;  
@@ -197,14 +198,15 @@ export function boot() {
       /* una card por parte; cada grupo de niveles se abre por separado */  
       const sts=GS.filter(s=>s.g.part===P.id), ms=MISSIONS.filter(m=>m.part===P.id), got=ms.reduce((a,m)=>a+(SAVE.stars[m.id]||0),0);  
       h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+  
-        `<span class="gdot">${partIco(P.id)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+  
-        `<span class="gprog">${starIco(true)} ${got} / ${ms.length*3}</span></div><div class="cards">`;  
+        `<span class="gdot">${partIco(P.id)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+
+        (PROFE&&P.code?`<span class="profe">Código: ${P.code}</span>`:"")+
+        `<span class="gprog">${starIco(true)} ${got} / ${ms.length*3}</span></div><div class="cards">`;
       for(const st of sts){  
         const g=st.g, isNew=st.open&&!SAVE.seen.includes(g.id);  
         if(isNew){ SAVE.seen.push(g.id); fresh=true; }  
-        const need=st.gate?`Terminá la Parte ${PARTS.find(p=>p.id===g.part).after.filter(p=>!partDone(SAVE.stars,p)).join(" y ")}`:st.prevLeft?"Terminá los anteriores":`Juntá ${g.need}${starIco(true)}`;  
-        h+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;  
-          return `<button class="card${k===3?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}" style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+  
+        const need=st.gate?gateTxt(SAVE.stars,st.gate):st.needCode?"Pedile el código a tu profe":st.prevLeft?"Terminá los anteriores":`Juntá ${g.need}${starIco(true)}`;
+        h+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;
+          return `<button class="card${k===3?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}"${st.needCode?` data-code="${st.needCode}"`:""} style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+
             (st.open?`<div class="stars">${starRow(k)}</div>`:`<span class="need">${need}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`; }).join("");  
       }  
       h+=`</div></section>`;  
@@ -233,9 +235,40 @@ export function boot() {
       `<span class="chsub">3 niveles seguidos · con cronómetro</span>`+  
       (open?`<div class="chrow"><span class="stars">${starRow(k)}</span>${best!=null?`<span class="chbest">${ICO.clock()}Récord ${fmtTime(best)}</span>`:""}</div>`  
            :`<span class="need">${ICO.lock("#9A5A00")}${why}</span>`)+  
-      `</div><div class="chmaps">${ch.levels.map(m=>miniMap(m.rows,9)).join("")}</div></button>`;  
-  }  
-  /* borrar progreso (para un alumno nuevo): hay que tocar dos veces */  
+      `</div><div class="chmaps">${ch.levels.map(m=>miniMap(m.rows,9)).join("")}</div></button>`;
+  }
+  /* ventana emergente (aviso del desafío y código del profe) */
+  function openModal(html){ closeModal();
+    const d=document.createElement("div"); d.id="modal"; d.className="mback";
+    d.innerHTML=`<div class="mbox" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(d);
+    d.addEventListener("click",e=>{ if(e.target===d) closeModal(); }); return d; }
+  function closeModal(){ const d=$("modal"); if(d) d.remove(); }
+  addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+  /* al terminar el último nivel de una parte: invitar a jugar su desafío */
+  function chModal(ch){
+    const more=PARTS.some(p=>p.after.includes(ch.part));
+    const d=openModal(`<span class="mico">${ICO.clock()}</span><h2>¡Terminaste la ${partName(ch.part)}!</h2>`+
+      `<p>Ahora jugá el <b>${ch.title}</b>${more?" para abrir la parte siguiente":""}.</p>`+
+      `<div class="mbtns"><button class="mbtn alt" data-later>Después</button><button class="mbtn" data-go>Jugar desafío${ICO.next()}</button></div>`);
+    d.querySelector("[data-go]").onclick=()=>{ closeModal(); startChallenge(ch); };
+    d.querySelector("[data-later]").onclick=()=>{ closeModal(); const el=document.querySelector(`.chcard[data-ch="${ch.id}"]`);
+      if(el){ el.scrollIntoView({block:"center",behavior:RM.matches?"auto":"smooth"}); bumpEl(el,"hey"); } };
+  }
+  /* código del profe para abrir una parte */
+  const normCode=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"").toLowerCase();
+  function askCode(pid){ const P=PARTS.find(p=>p.id===pid);
+    const d=openModal(`<span class="mico">${ICO.lock("#FFC21A")}</span><h2>${partName(pid)}</h2>`+
+      `<p>Pedile el código a tu profe para abrir esta parte.</p>`+
+      `<input class="minput" id="codeIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Código" aria-label="Código">`+
+      `<div class="mbtns"><button class="mbtn alt" data-later>Cancelar</button><button class="mbtn" data-go>Abrir${ICO.next()}</button></div>`);
+    const inp=d.querySelector("#codeIn"); setTimeout(()=>inp.focus(),60);
+    const go=()=>{ if(normCode(inp.value)===normCode(P.code)){ if(!SAVE.codes.includes(pid)) SAVE.codes.push(pid); persist(); closeModal(); renderMenu(); }
+      else { bumpEl(inp,"no"); SND.nope(); inp.select(); toast(ICO.lock("#FFC21A"),"Ese código no es"); } };
+    d.querySelector("[data-go]").onclick=go; inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
+    d.querySelector("[data-later]").onclick=closeModal;
+  }
+
+  /* borrar progreso (para un alumno nuevo): hay que tocar dos veces */
   let resetT=null;  
   function resetResetBtn(){ clearTimeout(resetT); const b=$("resetBtn"); b.classList.remove("ask"); b.innerHTML=ICO.trash("currentColor")+"Borrar progreso"; }  
   function askReset(){ const b=$("resetBtn");  
@@ -250,7 +283,8 @@ export function boot() {
       return startChallenge(CHALLENGES.find(c=>c.id===x.dataset.ch)); }  
     const c=e.target.closest(".card"); if(!c) return;  
     if(c.id==="makeBtn") return openEditor();  
-    if(c.classList.contains("locked")){ bumpEl(c,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),c.dataset.why); }  
+    if(c.classList.contains("locked")){ if(c.dataset.code) return askCode(+c.dataset.code);
+      bumpEl(c,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),c.dataset.why); }  
     const mp=c.dataset.id==="custom"?SAVE.custom:MISSIONS.find(x=>x.id===c.dataset.id); if(mp) startPlay(mp);  
   });  
     
@@ -531,25 +565,30 @@ export function boot() {
     if(res.k==="win"&&G.map.ch) return chLevelWin(res);  
     if(res.k==="win"){  
       const count=used(), usedRep=hasRepeat(G.prog), k=starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);  
-      let gained=0, opened=[];  
-      if(G.map.id!=="custom"){ const old=SAVE.stars[G.map.id]||0;  
-        if(k>old){ const before=groupsNow(); SAVE.stars[G.map.id]=k; gained=k-old; persist(); renderTopStars();  
-          opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g.title); } }  
-      let sub;  
-      if(G.map.cls===2&&!usedRep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;  
-      else if(G.S.wrong) sub=`${ICO.brush("#7E3DB0")} Pintaste ${G.S.wrong>1?G.S.wrong+" celdas que no eran rojas":"una celda que no era roja"}${G.tools.includes("n")?" · Guardá el pincel en las blancas":""}`;  
-      else if(G.opt!=null&&count>G.opt) sub=`${ICO.blocks()} Se puede con <b>${G.opt}</b> bloques`;  
-      else sub=G.map.need?"¡Llegó pintando!":"¡Programa perfecto!";  
-      if(G.hint&&k<3) sub+=" · Sin pista ganás 3 estrellas";  
-      if(res.left) sub+=" · Sobraron bloques";  
-      const idx=MISSIONS.indexOf(G.map), nxt=MISSIONS[idx+1], gs=nxt&&groupsNow().find(s=>s.g.id===nxt.grp);  
-      let extra=`<div class="bigstars">${starRow(k)}</div>`;  
-      if(opened.length) extra+=`<div class="unl">${ICO.unlock()} ¡Desbloqueaste «${opened.join("» y «")}»!</div>`;  
-      if(idx>=0&&gs&&gs.open) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;  
-      say("ok",ICO.star(),hasE(G.map)?"¡Llegó!":"¡Listo!",sub,extra);  
-      celebrate(gained);  
-      if(opened.length) setTimeout(()=>{ SND.unlock(); confetti(); },1600);  
-      return;  
+      let gained=0, opened=[];
+      const map=G.map, part=map.id!=="custom"&&map.part, wasDone=part&&partDone(SAVE.stars,part);
+      if(G.map.id!=="custom"){ const old=SAVE.stars[G.map.id]||0;
+        if(k>old){ const before=groupsNow(); SAVE.stars[G.map.id]=k; gained=k-old; persist(); renderTopStars();
+          opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g.title); } }
+      let sub;
+      if(G.map.cls===2&&!usedRep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
+      else if(G.S.wrong) sub=`${ICO.brush("#7E3DB0")} Pintaste ${G.S.wrong>1?G.S.wrong+" celdas que no eran rojas":"una celda que no era roja"}${G.tools.includes("n")?" · Guardá el pincel en las blancas":""}`;
+      else if(G.opt!=null&&count>G.opt) sub=`${ICO.blocks()} Se puede con <b>${G.opt}</b> bloques`;
+      else sub=G.map.need?"¡Llegó pintando!":"¡Programa perfecto!";
+      if(G.hint&&k<3) sub+=" · Sin pista ganás 3 estrellas";
+      if(res.left) sub+=" · Sobraron bloques";
+      const idx=MISSIONS.indexOf(G.map), nxt=MISSIONS[idx+1], gs=nxt&&groupsNow().find(s=>s.g.id===nxt.grp);
+      let extra=`<div class="bigstars">${starRow(k)}</div>`;
+      if(opened.length) extra+=`<div class="unl">${ICO.unlock()} ¡Desbloqueaste «${opened.join("» y «")}»!</div>`;
+      /* se acaba de terminar la parte y falta su desafío: volver al menú e invitar a jugarlo */
+      const ch=part&&!wasDone&&partDone(SAVE.stars,part)&&chOf(part), toCh=ch&&!SAVE.stars[ch.id];
+      if(toCh) extra+=`<div class="unl">${ICO.clock()} ¡Se abrió el ${ch.title}!</div>`;
+      else if(idx>=0&&gs&&gs.open) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;
+      say("ok",ICO.star(),hasE(G.map)?"¡Llegó!":"¡Listo!",sub,extra);
+      celebrate(gained);
+      if(toCh) setTimeout(()=>{ if(SCREEN!=="game"||G.map!==map) return; stopRun(); renderMenu(); show("menu"); chModal(ch); },2800);
+      if(opened.length) setTimeout(()=>{ SND.unlock(); confetti(); },1600);
+      return;
     }  
     if(res.k==="crash"){ const el=last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err");  
       say("err",ICO.burst(),res.why==="out"?"¡Ahí no hay camino!":"¡Chocó!","Mirá el bloque rojo"); return; }  

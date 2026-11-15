@@ -15,7 +15,6 @@ const eslintConfig = defineConfig([
     "lib/game/data.ts",
     "lib/game/engine.ts",
     "lib/game/ui.ts",
-    "index.legacy.html",
   ]),
 ]);
 

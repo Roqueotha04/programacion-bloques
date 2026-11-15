@@ -19,5 +19,6 @@ export function freshSave() {
     skin: "robi",
     color: "cel",
     seen: ["A"],
+    codes: [],
   };
 }

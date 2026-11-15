@@ -111,16 +111,25 @@ export function starsFor(map,count,usedRep,opt,hint,wrong){
    los demás al terminar el grupo anterior y juntar las estrellas pedidas (de esa parte) */
 export function partDone(stars,p){ return MISSIONS.filter(m=>m.part===p).every(m=>stars[m.id]); }
 export function partName(p){ return `Parte ${p} · ${PARTS.find(x=>x.id===p).title}`; }
-export function groupState(stars){
+/* una parte está «superada» cuando tiene todos sus niveles y además su desafío extra (al menos 1 estrella) */
+export function chOf(p){ return CHALLENGES.find(c=>c.part===p); }
+export function partCleared(stars,p){ const ch=chOf(p); return partDone(stars,p)&&(!ch||!!stars[ch.id]); }
+/* qué le falta a cada parte previa: terminar sus niveles o pasar su desafío */
+export function gateTxt(stars,parts,long){ const t=parts.map(p=>partDone(stars,p)?`pasá el ${chOf(p).title}`:`terminá la ${long?partName(p):"Parte "+p}`).join(" y ");
+  return t[0].toUpperCase()+t.slice(1); }
+/* codes: partes cuyo código (PARTS[].code) ya se ingresó en esta compu */
+export function groupState(stars,codes=[]){
   let prev=null;
   return GROUPS.map(g=>{
     if(prev&&prev.g.part!==g.part) prev=null;
     const ms=MISSIONS.filter(m=>m.grp===g.id), done=ms.filter(m=>stars[m.id]).length;
     const earned=MISSIONS.filter(m=>m.part===g.part).reduce((a,m)=>a+(stars[m.id]||0),0);
-    let open, prevLeft=0, gate=null;
-    if(!prev){ const miss=PARTS.find(p=>p.id===g.part).after.filter(p=>!partDone(stars,p)); open=!miss.length; if(!open) gate=miss.map(partName).join(" y "); }
-    else { prevLeft=prev.ms.length-prev.done; open=prev.open&&prevLeft===0&&earned>=g.need; }
-    return prev={g,ms,done,open,prevLeft,prevTitle:prev&&prev.g.title,gate,earned}; });
+    let open, prevLeft=0, gate=null, needCode=null;
+    if(!prev){ const P=PARTS.find(p=>p.id===g.part), miss=P.after.filter(p=>!partCleared(stars,p)); open=!miss.length;
+      if(!open) gate=miss;
+      else if(P.code&&!codes.includes(P.id)){ open=false; needCode=P.id; } }
+    else { gate=prev.gate; needCode=prev.needCode; prevLeft=prev.ms.length-prev.done; open=prev.open&&prevLeft===0&&earned>=g.need; }
+    return prev={g,ms,done,open,prevLeft,prevTitle:prev&&prev.g.title,gate,needCode,earned}; });
 }
 export function parseSol(s){ let i=0;
   function list(){ const out=[];

@@ -1,9 +1,11 @@
 // @ts-nocheck
 /* Código extraído del juego original. No reescribir en React. */
+/* partes = cards del menú. after: partes que hay que superar (niveles + desafío extra) para abrirla.
+   code: código que da el profe para abrirla (sin importar mayúsculas, espacios ni tildes) */
 export const PARTS=[
  {id:1,title:"Secuencia",sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
  {id:2,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
- {id:3,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[1]},
+ {id:3,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[1],code:"genIArepetir"},
  {id:4,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,3]}
 ];
 /* cls: reglas (1 = meta de bloques, 2 = máximo de bloques).
