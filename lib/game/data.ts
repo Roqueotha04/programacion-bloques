@@ -5,14 +5,11 @@
 export const PARTS=[
  {id:1,title:"Secuencia",sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
  {id:2,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
- {id:3,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[1],code:"genIArepetir"},
- {id:4,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,3]},
- /* ===== Parte 5 Bailar (inicio) ===== */
- {id:5,title:"Bailar",sub:"pintar, bailar y repetir",c:"#EC4899",l:"#FCE0EF",after:[2]},
- /* ===== Parte 5 Bailar (fin) ===== */
- /* ===== Parte 6 Funciones (inicio) ===== */
- {id:6,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[2]}
- /* ===== Parte 6 Funciones (fin) ===== */
+ {id:3,title:"Bailar",sub:"pintar, bailar y juntar baterías",c:"#EC4899",l:"#FCE0EF",after:[2]},
+ {id:4,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[3],code:"genIArepetir"},
+ {id:5,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[2]},
+ /* la parte 6 (Mundos) se agrega más abajo; la 7 (Si) va última */
+ {id:7,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,4]}
 ];
 /* cls: reglas (1 = meta de bloques, 2 = máximo de bloques).
    tools: bloques extra (r repetir, n pincel, p pintar de un toque, b bailar, i si).
@@ -23,31 +20,32 @@ export const GROUPS=[
  {id:"C",part:1,cls:1,tools:"",title:"Dos baterías",sub:"juntá las dos",need:16,c:"#8B6CF0",l:"#E6DFFF"},
  {id:"G",part:2,cls:1,tools:"n",title:"Llegar pintando",sub:"el pincel pinta todo por donde pasa",need:0,c:"#A35BD6",l:"#F0E1FF"},
  {id:"H",part:2,cls:1,tools:"n",title:"Solo las rojas",sub:"guardá el pincel en las blancas",need:6,c:"#FF4F7A",l:"#FFDCE5"},
- {id:"D",part:3,cls:2,tools:"r",title:"Repetir",sub:"pocos bloques, muchos pasos",need:0,c:"#FF9A2E",l:"#FFE2C2"},
- {id:"E",part:3,cls:2,tools:"r",title:"Repetir con batería",sub:"repetir y juntar",need:8,c:"#FF6FB5",l:"#FFDCEC"},
- {id:"F",part:3,cls:2,tools:"r",title:"Repetir con 2 baterías",sub:"el gran desafío",need:14,c:"#E64C55",l:"#FFD9DB"},
- {id:"J",part:4,cls:2,tools:"rpi",strict:true,title:"Si es roja",sub:"pintá solo las rojas",need:0,c:"#14B8A6",l:"#CCF5EF"},
- {id:"K",part:4,cls:2,tools:"rpbi",strict:true,title:"Rojo y verde",sub:"rojas: pintar · verdes: bailar",need:6,c:"#0EA5E9",l:"#D3F0FC"},
- /* ===== Parte 5 Bailar (inicio) ===== */
- {id:"L",part:5,cls:1,tools:"b",strict:true,title:"Bailar",sub:"bailá en la celda verde",need:0,c:"#EC4899",l:"#FCE0EF"},
- {id:"M",part:5,cls:1,tools:"pb",strict:true,title:"Pintar y bailar",sub:"rojas: pintar · verdes: bailar",need:2,c:"#D946EF",l:"#F8DDFB"},
- {id:"N",part:5,cls:2,tools:"rpb",strict:true,title:"Repetir simple",sub:"repetí el baile",need:5,c:"#6366F1",l:"#E0E1FF"},
- /* ===== Parte 5 Bailar (fin) ===== */
- /* ===== Parte 6 Funciones (inicio) ===== */
- {id:"O",part:6,cls:3,tools:"rf",title:"Primeras funciones",sub:"un grupo de pasos con nombre",need:0,c:"#5B6CF0",l:"#E3E6FF"},
- {id:"P",part:6,cls:3,tools:"rpbf",strict:true,title:"Funciones y colores",sub:"repetir, pintar y bailar con funciones",need:6,c:"#8B6CF0",l:"#E6DFFF"},
- {id:"Q",part:6,cls:3,tools:"rpbf",strict:true,title:"Dos funciones",sub:"una función puede llamar a otra",need:12,c:"#3E6FA8",l:"#D7E6F8"}
- /* ===== Parte 6 Funciones (fin) ===== */
+ {id:"D",part:4,cls:2,tools:"r",title:"Repetir",sub:"pocos bloques, muchos pasos",need:0,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"E",part:4,cls:2,tools:"r",title:"Repetir con batería",sub:"repetir y juntar",need:8,c:"#FF6FB5",l:"#FFDCEC"},
+ {id:"F",part:4,cls:2,tools:"r",title:"Repetir con 2 baterías",sub:"el gran desafío",need:14,c:"#E64C55",l:"#FFD9DB"},
+ {id:"J",part:7,cls:2,tools:"rpi",strict:true,title:"Si es roja",sub:"pintá solo las rojas",need:0,c:"#14B8A6",l:"#CCF5EF"},
+ {id:"K",part:7,cls:2,tools:"rpbi",strict:true,title:"Rojo y verde",sub:"rojas: pintar · verdes: bailar",need:6,c:"#0EA5E9",l:"#D3F0FC"},
+ /* ===== Bailar (inicio) ===== */
+ {id:"L",part:3,cls:1,tools:"b",strict:true,title:"Bailar",sub:"bailá en la celda verde",need:0,c:"#EC4899",l:"#FCE0EF"},
+ {id:"M",part:3,cls:1,tools:"pb",strict:true,title:"Pintar y bailar",sub:"rojas: pintar · verdes: bailar",need:3,c:"#D946EF",l:"#F8DDFB"},
+ {id:"W",part:3,cls:1,tools:"pb",strict:true,title:"Con batería",sub:"pintá, bailá y juntá la batería",need:8,c:"#F472B6",l:"#FFE0EE"},
+ {id:"R",part:4,cls:2,tools:"rpb",strict:true,title:"Repetir, pintar y bailar",sub:"repetí el baile y la pintura",need:12,c:"#6366F1",l:"#E0E1FF"},
+ /* ===== Bailar (fin) ===== */
+ /* ===== Funciones (inicio) ===== */
+ {id:"O",part:5,cls:3,tools:"rf",title:"Primeras funciones",sub:"un grupo de pasos con nombre",need:0,c:"#5B6CF0",l:"#E3E6FF"},
+ {id:"P",part:5,cls:3,tools:"rpbf",strict:true,title:"Funciones y colores",sub:"repetir, pintar y bailar con funciones",need:6,c:"#8B6CF0",l:"#E6DFFF"},
+ {id:"Q",part:5,cls:3,tools:"rpbf",strict:true,title:"Dos funciones",sub:"una función puede llamar a otra",need:12,c:"#3E6FA8",l:"#D7E6F8"}
+ /* ===== Funciones (fin) ===== */
 ];
-/* ===== Parte 7 Mundos (inicio) ===== */
+/* ===== Mundos (inicio) ===== */
 /* el mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
    reveal: se muestran las miniaturas de los mundos antes de correr. conds: condiciones del bloque si. pool+show: se sortean show mundos del pool */
-PARTS.push({id:7,title:"Mundos",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[2,3]});
+PARTS.push({id:6,title:"Mundos",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[2,4]});
 GROUPS.push(
- {id:"S",part:7,cls:2,tools:"rpbie",strict:true,title:"El mapa cambia",sub:"las celdas cambian de lugar",need:0,c:"#6366F1",l:"#E0E1FF"},
- {id:"T",part:7,cls:2,tools:"rie",strict:true,title:"Paredes",sub:"el robot siente las paredes",need:6,c:"#0EA5E9",l:"#D3F0FC"},
- {id:"U",part:7,cls:2,tools:"rpbie",strict:true,title:"Mundos sorpresa",sub:"cada vez salen mundos distintos",need:12,c:"#EC4899",l:"#FFDCEC"});
-/* ===== Parte 7 Mundos (fin) ===== */
+ {id:"S",part:6,cls:2,tools:"rpbie",strict:true,title:"El mapa cambia",sub:"las celdas cambian de lugar",need:0,c:"#6366F1",l:"#E0E1FF"},
+ {id:"T",part:6,cls:2,tools:"rie",strict:true,title:"Paredes",sub:"el robot siente las paredes",need:6,c:"#0EA5E9",l:"#D3F0FC"},
+ {id:"U",part:6,cls:2,tools:"rpbie",strict:true,title:"Mundos sorpresa",sub:"cada vez salen mundos distintos",need:12,c:"#EC4899",l:"#FFDCEC"});
+/* ===== Mundos (fin) ===== */
 export const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
  {id:"a2",grp:"A",title:"La esquina",rows:[".....","#....",".##E.",".##..","R...."],sol:"r r r u u"},
@@ -71,10 +69,10 @@ export const MISSIONS=[
  {id:"d2",grp:"D",title:"La vuelta grande",max:5,rows:["R......",".#####.",".#...#.",".#.#.#.",".#...#.",".#####.","......E"],sol:"6(r) 6(d)"},
  {id:"d3",grp:"D",title:"La escalera",max:4,rows:["...#E","..#..",".#..#","#..#.","R.#.."],sol:"4(r u)"},
  {id:"d4",grp:"D",title:"Pasillo y escalera",max:6,rows:[".....#E","....#..","####..#","R....#."],sol:"3(r) 3(r u)"},
- {id:"e1",grp:"E",title:"Ida y vuelta",max:7,rows:["R.....B",".######",".#.....",".#.##..","E#....."],sol:"6(r) 6(l) 4(d)"},
+ {id:"e1",grp:"E",tools:"rp",strict:true,title:"Ida y vuelta pintando",max:7,rows:["R.....X",".######",".#.....",".#.##..","E#....."],sol:"6(r) p 6(l) 4(d)"},
  {id:"e2",grp:"E",title:"Escalera a la batería",max:6,rows:["##.#...","#..B..E","##..#.#","#..#..#","R.#...."],sol:"3(r u) 3(r)"},
- {id:"e3",grp:"E",title:"La montaña",max:7,rows:["R.####E","#..#...","##.....","###B.##"],sol:"3(r d) 3(r u)"},
- {id:"f1",grp:"F",title:"Dos puntas",max:7,rows:["B..R..B","######.","######.","#.....E"],sol:"3(l) 6(r) 3(d)"},
+ {id:"e3",grp:"E",tools:"rb",strict:true,title:"La montaña bailarina",max:7,rows:["R.####E","#..#...","##.....","###V.##"],sol:"3(r d) b 3(r u)"},
+ {id:"f1",grp:"F",tools:"rb",strict:true,title:"Dos puntas y baile",max:7,rows:["B..R..V","######.","######.","#.....E"],sol:"3(l) 6(r) b 3(d)"},
  {id:"f2",grp:"F",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"},
  {id:"j1",grp:"J",title:"Solo las rojas",max:5,rows:["#.##.#.#","RX.XX.XE","#.#..#.#"],sol:"7(r ?x(p))"},
  {id:"j2",grp:"J",title:"Escalera roja",max:7,rows:["####XE","###X.#","##..##","#X.###","R.####"],sol:"4(r u ?x(p)) r"},
@@ -82,15 +80,19 @@ export const MISSIONS=[
  {id:"k1",grp:"K",title:"A bailar",max:5,rows:["##.#.##","R.VV.VE","#.##..#"],sol:"6(r ?v(b))"},
  {id:"k2",grp:"K",title:"Rojo y verde",max:7,rows:["#.#..#.#","RXV.XXVE","#..#.#.."],sol:"7(r ?x(p) ?v(b))"},
  {id:"k3",grp:"K",title:"Escalera de colores",max:8,rows:["R.####","#X.###","##V.##","###..#","####X.","#####E"],sol:"5(r d ?x(p) ?v(b))"},
- /* ===== Parte 5 Bailar (inicio) ===== */
+ /* ===== Bailar (inicio) ===== */
  {id:"l1",grp:"L",title:"El primer baile",rows:["#####","#...#","R.V.E","#...#","#####"],sol:"r r b r r"},
+ {id:"l2",grp:"L",title:"Dos bailes",rows:["#.###","R.V.#","#.#V.","###.E"],sol:"r r b r d b d r"},
  {id:"m1",grp:"M",title:"Pintar y bailar",rows:["#####","RXV.E","#####"],sol:"r p r b r r"},
- {id:"m2",grp:"M",title:"Dos y dos",rows:["RXV..","###VX","####E"],sol:"r p r b r d b r p d"},
- {id:"n1",grp:"N",title:"Pasillo de baile",max:5,rows:["#######","R....VE","#######"],sol:"5(r) b r"},
- {id:"n2",grp:"N",title:"Baile cada dos",max:6,rows:["######","R.V.VE","######"],sol:"2(r r b) r"},
- {id:"n3",grp:"N",title:"Pintar y bailar",max:7,rows:["######","RXVXVE","######"],sol:"2(r p r b) r"},
- /* ===== Parte 5 Bailar (fin) ===== */
- /* ===== Parte 6 Funciones (inicio) =====
+ {id:"m2",grp:"M",title:"Roja y verde",rows:["R.X.#","#.#V.","#...E"],sol:"r r p r d b d r"},
+ {id:"m3",grp:"M",title:"Dos y dos",rows:["R.X#...","#.V.#.#","#.#X.V.","...#.#E"],sol:"r r p d b r d p r r b r d"},
+ {id:"m4",grp:"M",title:"La pista de baile",rows:["R.X#.","#.V.#","..#XE","#V..."],sol:"r r p d b l d d b r r u p r"},
+ {id:"w1",grp:"W",title:"Baile con batería",rows:["R.#..","#.V.B","#.#.#","..#.E"],sol:"r d r b r r l d d r"},
+ {id:"w2",grp:"W",title:"La fiesta",rows:["R.X#.","#.#V.","#B.XE","#.#V."],sol:"r r p l d d r r u b d d b u p r"},
+ {id:"r4",grp:"R",title:"Escalera de baile",max:8,rows:["####.E","###.V#","##.X##","#.V###","RX####"],sol:"2(r p u r b u) r"},
+ {id:"r5",grp:"R",title:"Dos pasillos",max:10,rows:["RXVXV","####V","####V","####E"],sol:"2(r p r b) 2(d b) d"},
+ /* ===== Bailar (fin) ===== */
+ /* ===== Funciones (inicio) =====
     cls 3: máximo de bloques (el «al tocar» cuenta) y hay que usar una función. sol: «A=(r r u); A A» define y llama.
     pre: cuerpos ya armados; lock: funciones que no se pueden editar; fns: cuántas funciones hay (1 por defecto) */
  {id:"o1",grp:"O",title:"Llamá a la función",max:7,pre:{A:"r r u"},lock:["A"],rows:["######E","####...","##...##","R..####"],sol:"A=(r r u); A A A"},
@@ -102,9 +104,9 @@ export const MISSIONS=[
  {id:"q1",grp:"Q",title:"Arreglá la función",max:11,pre:{A:"d p"},rows:["R####",".####","X.###","#.###","#X..#","###.#","###XE"],sol:"A=(d d p); A r A r r A r"},
  {id:"q2",grp:"Q",title:"Una llama a otra",max:10,fns:2,rows:["RX####","#.X.X#","####.X","#####E"],sol:"A=(r p); B=(A d A); B r B d"},
  {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"}
- /* ===== Parte 6 Funciones (fin) ===== */
-].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict}); });
-/* ===== Parte 7 Mundos (inicio) ===== */
+ /* ===== Funciones (fin) ===== */
+].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:m.tools??g.tools,strict:m.strict??!!g.strict}); });
+/* ===== Mundos (inicio) ===== */
 const MUNDOS=[
  {id:"s1",grp:"S",title:"Las rojas cambian",max:5,reveal:true,conds:["x"],sol:"7(r ?x(p))",
   worlds:[
@@ -151,9 +153,13 @@ const MUNDOS=[
     ["########","########","RX..XX.E","....####","#####.##"]]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds; return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict}); });
 MISSIONS.push(...MUNDOS);
-/* ===== Parte 7 Mundos (fin) ===== */
+/* ===== Mundos (fin) ===== */
+/* orden: por número de parte (Secuencia, Pintar, Bailar, Repetir, Funciones, Mundos, Si); el sort es estable */
+const byPart=(a,b)=>a.part-b.part;
+PARTS.sort((a,b)=>a.id-b.id); GROUPS.sort(byPart); MISSIONS.sort(byPart);
 function numberMissions(){ PARTS.forEach(p=>MISSIONS.filter(m=>m.part===p.id).forEach((m,i)=>m.num=i+1)); } /* numeración dentro de cada parte */
 numberMissions();
+export const NORMAL_COUNT={}; PARTS.forEach(p=>NORMAL_COUNT[p.id]=MISSIONS.filter(m=>m.part===p.id).length); /* niveles por parte del juego normal */
 /* desafíos extra: 3 niveles seguidos con cronómetro (no hay límite de tiempo, solo se mide).
    Estrellas por el tiempo total: hasta t3 segundos = 3, hasta t2 = 2, más = 1.
    El reloj se pausa entre nivel y nivel. Se abre al terminar todos los niveles de la parte. */
@@ -166,29 +172,29 @@ export const CHALLENGES=[
    {title:"Rojas en fila",rows:["R.XX.","#.#X.","XX...","E...."],sol:"r r n r d f d l l n l d"},
    {title:"Rojas y estrella",rows:["..X#E","XX#..","R..XX","##..."],sol:"u n r f u r n f l d d r r n r f u u"},
    {title:"La gran pintada",rows:["..#.B","XXX..","R.#.#","#....","EXX.."],sol:"u n r r f r u r d l d d d l n l l"}]},
- {id:"x2",part:3,cls:2,tools:"r",title:"Desafío de repetir",t3:150,t2:240,levels:[
+ {id:"x2",part:4,cls:2,tools:"r",title:"Desafío de repetir",t3:150,t2:240,levels:[
    {title:"Escalones dobles",max:5,rows:["R..####","##...##","####...","######E"],sol:"3(r r d)"},
    {title:"Subir y bajar",max:7,rows:["####B.###","###....##","##..##..#","#..####..","R.######E"],sol:"4(r u) 4(r d)"},
    {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"}]},
- {id:"x5",part:4,cls:2,tools:"rpbi",strict:true,title:"Desafío del si",t3:150,t2:240,levels:[
+ {id:"x5",part:7,cls:2,tools:"rpbi",strict:true,title:"Desafío del si",t3:150,t2:240,levels:[
    {title:"Pasillo de colores",max:7,rows:["#.#..#.#.#","RXV.XX.VXE","#..#.#..#."],sol:"9(r ?x(p) ?v(b))"},
    {title:"Escalera de colores",max:8,rows:["####E","###X.","##X.#","#V.##","R.###"],sol:"4(r u ?x(p) ?v(b))"},
    {title:"Dos pasillos",max:10,rows:["RX.VX####","####.####","####.V.XX","########.","########E"],sol:"2(4(r ?x(p) ?v(b)) 2(d))"}]},
- /* ===== Parte 5 Bailar (inicio) ===== */
- {id:"x6",part:5,cls:2,tools:"rpb",strict:true,title:"Desafío de bailar",t3:150,t2:240,levels:[
-   {title:"Baile en fila",max:6,rows:["#########","R.V.V.VE.","#########"],sol:"3(r r b) r"},
-   {title:"Escalera de baile",max:9,rows:["####VE","###X.#","##V.##","#X.###","R.####"],sol:"2(r u p r u b) r"},
-   {title:"Dos pasillos",max:10,rows:["RXVXV","####V","####V","####E"],sol:"2(r p r b) 2(d b) d"}]},
- /* ===== Parte 5 Bailar (fin) ===== */
- /* ===== Parte 6 Funciones (inicio) ===== */
- {id:"x7",part:6,cls:3,tools:"rpbf",strict:true,title:"Desafío de funciones",t3:150,t2:240,levels:[
+ /* ===== Bailar (inicio) ===== */
+ {id:"x6",part:3,cls:1,tools:"pb",strict:true,title:"Desafío de bailar",t3:150,t2:240,levels:[
+   {title:"Zigzag de baile",rows:["R.V.#.","#.#.V.","#..#.E"],sol:"r r b r d r b d r"},
+   {title:"Batería y baile",rows:["R.X.#","#.#V.","#B..E"],sol:"r d d u u r p r d b d r"},
+   {title:"La gran fiesta",rows:["R.#B..","#X#.#V","#V..X.","#.#.#E"],sol:"r d p d b r r u u d d r p r u b d d"}]},
+ /* ===== Bailar (fin) ===== */
+ /* ===== Funciones (inicio) ===== */
+ {id:"x7",part:5,cls:3,tools:"rpbf",strict:true,title:"Desafío de funciones",t3:150,t2:240,levels:[
    {title:"Pintar con función",max:10,rows:["EX..X..##","######X.R"],sol:"A=(l l p); A u A l A l"},
    {title:"Bailar con función",max:10,rows:["R.V######","##..V..VE"],sol:"A=(r r b); A d A r A r"},
    {title:"Colores con función",max:12,rows:["####.#XE","##..V.V#","R.V#####"],sol:"A=(r r b); 2(A u) d A u p r"}]}
- /* ===== Parte 6 Funciones (fin) ===== */
+ /* ===== Funciones (fin) ===== */
 ];
-/* ===== Parte 7 Mundos (inicio) ===== */
-CHALLENGES.push({id:"x8",part:7,cls:2,tools:"rpbie",strict:true,title:"Desafío de mundos",t3:150,t2:240,levels:[
+/* ===== Mundos (inicio) ===== */
+CHALLENGES.push({id:"x8",part:6,cls:2,tools:"rpbie",strict:true,title:"Desafío de mundos",t3:150,t2:240,levels:[
    {title:"Pasillo cambiante",max:5,reveal:true,conds:["x"],sol:"8(r ?x(p))",
     worlds:[
     [".........","#########","RXX..X.XE","#########","#.##.##.#"],
@@ -205,14 +211,22 @@ CHALLENGES.push({id:"x8",part:7,cls:2,tools:"rpbie",strict:true,title:"Desafío 
     ["########","###.####","R.###..E","#.....##",".##..#.#"],
     ["########","#####...","R#....#E","...#####","#####.##"]]}]});
 CHALLENGES.filter(c=>c.id==="x8").forEach(c=>c.levels.forEach(m=>m.rows=m.worlds[0]));
-/* ===== Parte 7 Mundos (fin) ===== */
+/* ===== Mundos (fin) ===== */
+CHALLENGES.sort(byPart);
 CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
-/* edición chicos (?chicos, 6 a 8 años): solo estos niveles (Secuencia 3,4,5,6,7,9 y Pintar 4 a 8),
-   las partes sin niveles desaparecen y los desafíos dan extra segundos más para cada estrella.
-   need: estrellas que pide cada grupo en esta edición (2 por nivel anterior de la parte) */
-export const KIDS={missions:["a3","a4","b1","b2","b3","c1","h1","h2","h3","h4","h5","l1","m1","m2","n1","n2","n3"],need:{B:4,C:10,H:0,M:2,N:6},extra:30};
+/* edición chicos (?chicos, 6 a 8 años): solo estos niveles (Secuencia 3,4,5,6,7,9, Pintar 4 a 8, Bailar menos el más largo, y de
+   Repetir los 4 primeros, «Dos puntas» no, el 9 sí, más los de repetir con baile y pintura), las partes sin niveles desaparecen y los desafíos
+   dan extra segundos más para cada estrella. need: estrellas que pide cada grupo en esta edición (2 por nivel anterior de la parte).
+   EXTRA: niveles que solo existen en esta edición (el pasillo simple de baile), van justo después del nivel `after`.
+   REGLA: en cada parte los chicos tienen menos o igual cantidad de niveles que el juego normal (lo controla selfTest con NORMAL_COUNT) */
+export const KIDS_EXTRA=[
+  {after:"f2",m:{id:"r2",grp:"R",title:"Baile cada dos",max:6,rows:["##########","R.V.V.V.VE","##########"],sol:"4(r r b) r"}}
+];
+export const KIDS={missions:["a3","a4","b1","b2","b3","c1","h1","h2","h3","h4","h5","l1","l2","m1","m2","m3","w1","w2","d1","d2","d3","d4","f2","r2","r4","r5"],need:{B:4,C:10,H:0,F:8,R:10},extra:30};
 export function applyKids(){
   const keep=(arr,f)=>arr.splice(0,arr.length,...arr.filter(f));
+  KIDS_EXTRA.forEach(({after,m})=>{ const g=GROUPS.find(x=>x.id===m.grp), i=MISSIONS.findIndex(x=>x.id===after);
+    MISSIONS.splice(i+1,0,Object.assign({},m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict})); });
   keep(MISSIONS,m=>KIDS.missions.includes(m.id));
   keep(GROUPS,g=>MISSIONS.some(m=>m.grp===g.id));
   keep(PARTS,p=>GROUPS.some(g=>g.part===p.id));

@@ -1,6 +1,6 @@
 // @ts-nocheck
 /* Código extraído del juego original. No reescribir en React. */
-import { PARTS, GROUPS, MISSIONS, CHALLENGES } from "./data";
+import { PARTS, GROUPS, MISSIONS, CHALLENGES, NORMAL_COUNT } from "./data";
 
 export function timeStars(ch,sec){ return sec<=ch.t3?3:sec<=ch.t2?2:1; }
 export function fmtTime(sec){ sec=Math.floor(sec); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
@@ -214,5 +214,7 @@ export function selfTest(){
     return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1&&!m.need?" seguidos:"+run:""}${cond?" sin si: "+noIf().k:""}${m.worlds?" "+worldsCheck(m).info:""}`}; });
   /* con 2 estrellas en todo lo anterior de la parte alcanza para abrir cada grupo */
   PARTS.forEach(p=>{ let before=0; GROUPS.filter(g=>g.part===p.id).forEach(g=>{ const ok=g.need<=before*2; res.push({id:g.id,title:"Grupo "+g.title,ok,info:`pide ${g.need}, máx ${before*3}`}); before+=MISSIONS.filter(m=>m.grp===g.id).length; }); });
+  /* regla: en cada parte los chicos hacen menos o igual cantidad de niveles que el juego normal */
+  PARTS.forEach(p=>{ const n=MISSIONS.filter(m=>m.part===p.id).length; res.push({id:"cant"+p.id,title:"Cantidad de niveles de la parte "+p.id,ok:n<=NORMAL_COUNT[p.id],info:`${n} niveles (juego normal: ${NORMAL_COUNT[p.id]})`}); });
   return res;
 }

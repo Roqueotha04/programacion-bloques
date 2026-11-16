@@ -10,18 +10,51 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Programa con GENI
 
-Juego para el aula: el alumno arma un programa arrastrando bloques y lleva a GENI hasta la estrella. No hay cuentas ni menús nuevos. La única variante por edad es la edición chicos (`?chicos`). El producto es este juego, en español.
+Juego para el aula: el alumno arma un programa arrastrando bloques y lleva a GENI hasta la estrella. No hay cuentas ni menús nuevos. El producto es este juego, en español.
 
-## Qué hace el juego
+## Partes
 
-- Siete partes: Secuencia, Pintar, Repetir, Si, Bailar (6 a 8 años), Funciones (9 a 12) y Mundos (13 a 15). Cada una tiene grupos de niveles y un desafío extra con cronómetro. Funciones: el alumno define funciones con nombre libre y las llama (`call`, `cls 3`, `walk(..., funcs)`). Mundos: cada nivel trae varios `worlds` y el programa tiene que ganar en todos (bloque `si no`, condiciones de pared, `selfTest` verifica que no se pueda memorizar).
-- Estrellas (1–3) según bloques usados, pista y errores. Progreso en `localStorage` (`robot-bloques-v2`; con `?profe` usa `robot-bloques-profe`).
+Siete partes, siempre en este orden (el número de parte es el orden del menú; `data.ts` ordena partes, grupos, niveles y desafíos por número de parte):
+
+| N.º | Parte | Se abre con | Qué enseña |
+| --- | --- | --- | --- |
+| 1 | Secuencia | — | Mover el robot, baterías. |
+| 2 | Pintar | Parte 1 | Pincel (usar y guardar). |
+| 3 | Bailar | Parte 2 | Pintar de un toque y bailar (rojas: pintar, verdes: bailar), con baterías. Sin repetir. |
+| 4 | Repetir | Parte 3 + código del profe (`genIArepetir`) | Bloque repetir; incluye niveles de repetir con baile y pintura. |
+| 5 | Funciones | Parte 2 | Funciones con nombre libre: se definen y se llaman. |
+| 6 | Mundos | Partes 2 y 4 | Cada nivel trae varios mapas y el programa tiene que ganar en todos (`si`, `si no`, paredes). |
+| 7 | Si | Partes 2 y 4 | Condicional por color de celda. Siempre es la última. |
+
+- Cada parte tiene grupos de niveles y un desafío extra con cronómetro (3 niveles seguidos). El desafío **no cuenta** como nivel de la parte.
+- Una parte se supera con todos sus niveles **y** su desafío extra (al menos 1 estrella). Al terminar el último nivel de una parte se invita a jugar el desafío.
+- Edades pensadas (solo orientativo, no hay selector): 6 a 8 → Secuencia, Pintar, Bailar, Repetir; 9 a 12 → Funciones; 13 a 15 → Mundos.
+
+## Edición chicos (`?chicos`, 6 a 8 años)
+
+- Es **la única variante por edad** y la única URL de edición. No agregues otras URLs de edición salvo que te lo pidan.
+- `applyKids()` en `data.ts` deja solo los niveles listados en `KIDS.missions`, saca las partes que quedan sin niveles (Funciones, Mundos, Si) y suma 30 s a los desafíos. Sus partes 3 y 4 son Bailar y Repetir. Guarda en `robot-bloques-chicos`. Se combina con `?profe` y `?test`.
+- `KIDS.need` fija las estrellas que pide cada grupo en esta edición (2 por nivel anterior de la parte).
+- `KIDS_EXTRA` son niveles que solo existen en esta edición (van justo después del nivel `after`): hoy `r1` y `r2`, los pasillos simples de Repetir.
+- **Regla de cantidad: en cada parte, los chicos de 6 a 8 hacen menos o igual cantidad de niveles que el resto, nunca más.** Los niveles exclusivos de `KIDS_EXTRA` cuentan. Lo que se agrega o se saca para el juego normal **no** se le agrega o saca automáticamente a los chicos: la lista `KIDS.missions` se decide aparte. `selfTest` lo controla (`NORMAL_COUNT` en `data.ts`: niveles por parte del juego normal) y falla si los chicos pasan al resto en alguna parte.
+- Los ids de nivel son únicos en todo el juego (en chicos un id repetido trae a otra parte).
+
+## Reglas del juego
+
+- Estrellas (1–3) según bloques usados, pista y errores. Progreso en `localStorage` (`robot-bloques-v2`; con `?profe` usa `robot-bloques-profe`). Las estrellas se guardan por id de nivel y el código del profe por número de parte (`SAVE.codes`): **no renombres ids de nivel ni renumeres partes sin migrar el guardado** (hay una migración en `ui.ts`: el código de Repetir pasó de la parte 3 a la 4).
 - Taller: diseños, caras (guiño, enojado, cool) y dos colores (cuerpo y detalle). Editor de mapa propio, borrar progreso (doble toque).
 - `?profe` abre todo y muestra códigos. `?test` corre `selfTest()` del motor.
-- `?chicos` (6 a 8 años): `applyKids()` en `data.ts` deja solo los niveles de `KIDS` (Secuencia 3,4,5,6,7,9, Pintar 4 a 8 y Bailar completo), saca Repetir, Si, Funciones y Mundos, y suma 30 s a los desafíos. Guarda en `robot-bloques-chicos`. Se combina con `?profe` y `?test`.
-- Desbloqueo: una parte se supera con todos sus niveles **y** su desafío extra (al menos 1 estrella). Parte 3 pide el código del profe (`genIArepetir`). Al terminar el último nivel de una parte se invita a jugar el desafío.
+- Pantallas: menú, juego, editor, taller. Se muestran y ocultan con `.hidden` en el DOM. No son rutas de Next.js.
 
-Pantallas: menú, juego, editor, taller. Se muestran y ocultan con `.hidden` en el DOM. No son rutas de Next.js.
+## Cómo se arman los niveles
+
+- `data.ts`: `PARTS`, `GROUPS` (cada grupo fija `cls`, `tools`, `strict`, `need`), `MISSIONS`, `CHALLENGES`. Los niveles heredan `cls/tools/strict/part` de su grupo.
+- `cls 1`: meta de bloques; la solución `sol` tiene que ser el camino mínimo (`shortest()`) y sin más de 3 movimientos iguales seguidos. `cls 2`: máximo de bloques (`max`) y hay que usar repetir. `cls 3`: máximo de bloques y hay que usar una función.
+- `tools`: `r` repetir, `n` pincel, `p` pintar de un toque, `b` bailar, `i` si, `e` si no, `f` funciones. `strict`: pintar o bailar en la celda equivocada es error.
+- Notación de `sol` (`parseSol` en `engine.ts`): `u d l r` mover, `p b n f` acciones, `N(...)` repetir, `?x(...)` si, `!(...)` si no, `A=(...)` define función y `A` la llama.
+- Funciones: bloque `call`, `walk(list,test,prefix,funcs)`, nombre libre del alumno (siempre escapado al mostrarlo). Una función solo llama a otra anterior (B llama a A). No se guardan en `localStorage`.
+- Mundos: `worlds` (el mundo 0 es `rows`), `pool`/`show` para sortear, `reveal` para mostrar los mundos antes de correr.
+- `selfTest()` valida todo: la solución gana, cabe en el máximo, y además que la función sea necesaria (cls 3), que sin `si` falle y que ningún camino fijo sirva en todos los mundos (Mundos). Cada grupo respeta `need <= 2 × niveles anteriores de la parte`.
 
 ## Arquitectura (no romperla)
 
@@ -33,7 +66,7 @@ Next.js es la cáscara. El juego sigue siendo JS de DOM, no un rewrite en React.
 | `components/game/*` | Markup estático con los **mismos `id`** del original. |
 | `lib/game/ui.ts` | Menú, arrastre, run, tienda, editor. Se bootea **una sola vez**. |
 | `lib/game/engine.ts` | Simulación pura, sin DOM. |
-| `lib/game/data.ts` | `PARTS`, `GROUPS`, `MISSIONS`, `CHALLENGES`. |
+| `lib/game/data.ts` | `PARTS`, `GROUPS`, `MISSIONS`, `CHALLENGES`, `KIDS`. |
 | `lib/game/save.ts` | Claves y `freshSave()`. |
 | `app/game.css` | Estilo del juego. Tailwind no se aplica: su reset cambia botones y títulos. |
 
@@ -44,8 +77,9 @@ Next.js es la cáscara. El juego sigue siendo JS de DOM, no un rewrite en React.
 ## Cómo trabajar
 
 - Buenas prácticas de **este** Next.js (App Router, archivos en `app/`). Antes de APIs nuevas, leé `node_modules/next/dist/docs/`. Mantené el estilo actual: cáscara React mínima, juego en `lib/game`, CSS propio, español.
-- Después de cada feature: `npm run build`. Tiene que terminar bien. Si hay `?test`, el recuento de `selfTest` tiene que seguir verde.
-- **Nunca** levantes el proyecto (`next dev`, `npm run dev`, `next start`). No es un paso de verificación.
+- Después de cada feature: `npm run build`. Tiene que terminar bien. El recuento de `selfTest` tiene que seguir verde, en el juego normal **y** en `?chicos`.
+- **Nunca** levantes el proyecto (`next dev`, `npm run dev`, `next start`). No es un paso de verificación. Para correr `selfTest` sin servidor: transpilá `data.ts` y `engine.ts` con el `typescript` del repo en una carpeta temporal y llamá a `selfTest()` con Node (probalo también con `applyKids()` aplicado).
+- Si usás subagentes o worktrees, creá los worktrees desde el estado actual del árbol (los cambios sin commitear no están en `HEAD`).
 - No dejes HTML suelto en la raíz (`index.html`, `index.legacy.html`). Vercel lo toma como sitio estático, busca `/index.html` y da 404. El deploy es Next.js (`vercel.json`).
 - No agregues usuarios, i18n, ni pantallas que el juego no tenga. Las variantes por edad van por URL, no por selector ni rutas.
 - No uses Tailwind en el juego. No conviertas las pantallas en rutas.
