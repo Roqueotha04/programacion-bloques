@@ -14,7 +14,7 @@ Juego para el aula: el alumno arma un programa arrastrando bloques y lleva a GEN
 
 ## Partes
 
-Siete partes, siempre en este orden (el número de parte es el orden del menú; `data.ts` ordena partes, grupos, niveles y desafíos por número de parte):
+Partes, siempre en este orden (**Mundos y Si están comentadas en `data.ts` de momento: no se ven**; el extra «Funciones avanzadas» ocupa la parte 6) (el número de parte es el orden del menú; `data.ts` ordena partes, grupos, niveles y desafíos por número de parte):
 
 | N.º | Parte | Se abre con | Qué enseña |
 | --- | --- | --- | --- |
@@ -23,9 +23,10 @@ Siete partes, siempre en este orden (el número de parte es el orden del menú; 
 | 3 | Bailar | Parte 2 | Pintar de un toque y bailar (rojas: pintar, verdes: bailar), con baterías. Sin repetir. |
 | 4 | Repetir | Parte 3 + código del profe (`genIArepetir`) | Bloque repetir; incluye niveles de repetir con baile y pintura. |
 | 5 | Funciones | Parte 2 | Funciones con nombre libre: se definen y se llaman. |
-| 6 | Mundos | Partes 2 y 4 | Cada nivel trae varios mapas y el programa tiene que ganar en todos (`si`, `si no`, paredes). |
-| 7 | Si | Partes 2 y 4 | Condicional por color de celda. Siempre es la última. |
+| ~~6~~ | Mundos *(oculta)* | Partes 2 y 4 | Cada nivel trae varios mapas y el programa tiene que ganar en todos (`si`, `si no`, paredes). |
+| ~~7~~ | Si *(oculta)* | Partes 2 y 4 | Condicional por color de celda. Siempre es la última. |
 
+- **Parte 6 «Funciones avanzadas» (`extra:true`)**: no cuenta para abrir otras partes. Se abre al superar la parte 5 y no está en `?chicos`. Son niveles `adv` (grupos `Y`, `Z` y `N`): hay que ganar con una función que se llama a sí misma (la recursión corta al llegar a la estrella). Dan hasta **3 estrellas** como todos (`starsAdv`: llegar con recursión, meta de bloques, camino más corto). **En cualquier nivel** (menos «Mi mapa») más de `MAXACT` (30) acciones, o 400 eventos, devuelve `boom`: GENI se marea y explota. `selfTest` valida que cada solución use recursión, el `boom` y que ganar sin recursión no cuenta. Los ids `v1`–`v9` no se renombran. Mundos y Si (partes 6 y 7 anteriores) y sus desafíos `x5` y `x8` están comentados en `data.ts`.
 - Cada parte tiene grupos de niveles y un desafío extra con cronómetro (3 niveles seguidos). El desafío **no cuenta** como nivel de la parte.
 - Una parte se supera con todos sus niveles **y** su desafío extra (al menos 1 estrella). Al terminar el último nivel de una parte se invita a jugar el desafío.
 - Edades pensadas (solo orientativo, no hay selector): 6 a 8 → Secuencia, Pintar, Bailar, Repetir; 9 a 12 → Funciones; 13 a 15 → Mundos.
@@ -42,6 +43,7 @@ Siete partes, siempre en este orden (el número de parte es el orden del menú; 
 ## Reglas del juego
 
 - Estrellas (1–3) según bloques usados, pista y errores. Progreso en `localStorage` (`robot-bloques-v2`; con `?profe` usa `robot-bloques-profe`). Las estrellas se guardan por id de nivel y el código del profe por número de parte (`SAVE.codes`): **no renombres ids de nivel ni renumeres partes sin migrar el guardado** (hay una migración en `ui.ts`: el código de Repetir pasó de la parte 3 a la 4).
+- **Códigos** (botón «Código» arriba a la izquierda del menú): `CLASS_CODES` en `data.ts`. `nivel1-clase2` y `nivel2-clase2` marcan Secuencia y Pintar (niveles y desafío) con 3 estrellas; `nivel3-clase2` marca Secuencia, Pintar y Repetir (Bailar queda sin hacer). Las estrellas se acreditan al taller y repetir el código no suma dos veces. Los tres dan por ingresado el código de Repetir (así se hacen Bailar y Repetir de corrido). Funciones pide `funcionesGENia`. El mismo cuadro acepta los códigos de cada parte.
 - Taller: diseños, caras (guiño, enojado, cool) y dos colores (cuerpo y detalle). Editor de mapa propio, borrar progreso (doble toque).
 - `?profe` abre todo y muestra códigos. `?test` corre `selfTest()` del motor.
 - Pantallas: menú, juego, editor, taller. Se muestran y ocultan con `.hidden` en el DOM. No son rutas de Next.js.

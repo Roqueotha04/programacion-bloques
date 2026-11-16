@@ -1,6 +1,7 @@
 export function TopBar() {
   return (
     <header className="top">
+      <button className="tbtn" id="codeBtn" title="Poner un código" />
       <button className="tbtn hidden" id="backBtn" />
       <div className="logo" id="logo">
         <svg

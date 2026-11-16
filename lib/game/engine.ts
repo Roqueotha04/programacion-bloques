@@ -6,6 +6,8 @@ export function timeStars(ch,sec){ return sec<=ch.t3?3:sec<=ch.t2?2:1; }
 export function fmtTime(sec){ sec=Math.floor(sec); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
 export const DIRS={u:[-1,0],d:[1,0],l:[0,-1],r:[0,1]};
 export const MAXSTEPS=400, MAXB=30;
+/* en cualquier nivel (menos el mapa propio): si el robot pasa de MAXACT acciones (mover, pintar, bailar...) o de MAXSTEPS eventos, GENI explota. Un nivel puede subir su tope con maxAct */
+export const MAXACT=30;
 
 export function find(rows,ch){ for(let r=0;r<rows.length;r++){ const c=rows[r].indexOf(ch); if(c>=0) return [r,c]; } return null; }
 export function countB(rows){ return rows.join("").split("B").length-1; }
@@ -99,15 +101,16 @@ export function shortest(map,S){
 /* recorre el programa: "loop" al empezar cada vuelta de un repetir, "if" al preguntar, y una acción por cada bloque.
    test(color) se consulta en el momento, así el si ve la celda donde está el robot */
 /* funcs: {A:[...],B:[...]} cuerpos de las funciones. «call» emite {t:"call",addr,f} y recorre el cuerpo con dirección ["A",i,...]
-   (dentro de una función prefix[0] es su letra). Una función solo puede llamar a otra anterior (B llama a A, A no llama a nadie):
-   así no hay recursión ni bucles. El call que no cumple la regla se emite igual pero no se expande */
+   (dentro de una función prefix[0] es su letra). Una función puede llamar a una anterior o a sí misma (B llama a A o a B, A solo a A).
+   La autollamada no termina sola: la simulación corta al llegar a la estrella o al pasarse del tope (el generador es perezoso).
+   El call que no cumple la regla se emite igual pero no se expande */
 export function* walk(list,test,prefix=[],funcs=null){
   const ifr=[]; /* respuesta de cada si de esta lista: el «si no» mira el bloque anterior */
   for(let i=0;i<list.length;i++){ const b=list[i], addr=prefix.concat(i);
     if(b.t==="move") yield {t:"move",addr,dir:b.dir};
     else if(ACTS[b.t]) yield {t:b.t,addr};
     else if(b.t==="call"){ yield {t:"call",addr,f:b.f}; const cur=typeof prefix[0]==="string"?prefix[0]:null;
-      if(funcs&&funcs[b.f]&&(cur===null||b.f<cur)) yield* walk(funcs[b.f],test,[b.f],funcs); }
+      if(funcs&&funcs[b.f]&&(cur===null||b.f<=cur)) yield* walk(funcs[b.f],test,[b.f],funcs); }
     else if(b.t==="if"){ const ok=test(b.c); ifr[i]=ok; yield {t:"if",addr,ok}; if(ok) yield* walk(b.body,test,addr,funcs); }
     else if(b.t==="else"){ const ok=i>0&&list[i-1].t==="if"&&ifr[i-1]===false; yield {t:"else",addr,ok}; if(ok) yield* walk(b.body,test,addr,funcs); }
     else for(let k=0;k<b.n;k++){ yield {t:"loop",addr,k,n:b.n}; yield* walk(b.body,test,addr,funcs); } }
@@ -117,8 +120,11 @@ export function countBlocks(list){ return list.reduce((a,b)=>a+1+(b.body?countBl
 export function countProgram(prog,funcs){ return countBlocks(prog)+Object.values(funcs||{}).reduce((a,l)=>a+countBlocks(l),0); }
 export function hasCall(list){ return list.some(b=>b.t==="call"||(b.body&&hasCall(b.body))); }
 /* el mismo programa con cada call reemplazado por el cuerpo de su función */
-export function inlineCalls(list,funcs){ return list.flatMap(b=>b.t==="call"?inlineCalls(funcs[b.f]||[],funcs):b.body?[{...b,body:inlineCalls(b.body,funcs)}]:[b]); }
+/* si una función ya se está expandiendo (autollamada) el call queda como está: así no se cuelga con la recursión */
+export function inlineCalls(list,funcs,stack=[]){ return list.flatMap(b=>b.t==="call"?(stack.includes(b.f)?[b]:inlineCalls(funcs[b.f]||[],funcs,stack.concat(b.f))):b.body?[{...b,body:inlineCalls(b.body,funcs,stack)}]:[b]); }
 export function hasRepeat(list){ return list.some(b=>b.t==="repeat"); }
+/* repetir en el programa o en cualquier función (con repetir adentro de otro bloque también) */
+export function hasRepeatAll(list,funcs){ const rp=l=>l.some(b=>b.t==="repeat"||(b.body&&rp(b.body))); return rp(list)||Object.values(funcs||{}).some(rp); }
 export function hasIf(list){ return list.some(b=>b.t==="if"||b.t==="else"||(b.body&&hasIf(b.body))); }
 /* opt y límites cuentan el bloque «al tocar» */
 export function optFor(map,path){ return map.cls>=2?map.max:map.need?null:(path?path.length+1:null); }
@@ -127,6 +133,11 @@ export function starsFor(map,count,usedRep,opt,hint,wrong){
   let k=map.cls>=2?(usedRep?3:2):(opt==null||count<=opt?3:2);
   if(wrong) k=Math.min(k,2); if(hint) k--; return Math.max(1,k);
 }
+/* niveles avanzados (map.adv), hasta 3 estrellas como todos: 1 llegó con recursión, +1 dentro de la meta de bloques (goal) y con repetir
+   si el nivel lo pide (rep), +1 por el camino más corto (acts = acciones hechas, opt = largo del camino) */
+export function starsAdv(map,{count,rep,acts,opt}){
+  return 1+(count<=map.goal&&(!map.rep||rep)?1:0)+(opt!=null&&acts<=opt?1:0); }
+export const maxStars=m=>3; /* todos los niveles dan hasta 3 estrellas */
 /* grupos: cada parte tiene su cadena. El primero se abre al terminar las partes «after»;
    los demás al terminar el grupo anterior y juntar las estrellas pedidas (de esa parte) */
 export function partDone(stars,p){ return MISSIONS.filter(m=>m.part===p).every(m=>stars[m.id]); }
@@ -168,11 +179,16 @@ export function parseSolF(s){ let i=0; const funcs={};
     return out; }
   const prog=list(); return {prog,funcs}; }
 export function parseSol(s){ return parseSolF(s).prog; }
-export function simulate(map,prog,funcs=null){ let S=startState(map), n=0;
-  for(const ev of walk(prog,c=>sense(map,S,c),[],funcs)){ if(++n>MAXSTEPS) return {k:"long"};
-    if(ev.t==="move"){ const res=tryMove(map,S,ev.dir); if(res.k==="crash") return res; S=res.S; if(res.k==="win") return res; }
+/* devuelve k: win (con acts = acciones hechas y rec = alguna función se llamó a sí misma), crash, bad, end
+   o boom (se pasó de MAXACT acciones o de MAXSTEPS eventos: bucle infinito, repetir de más, etc.) */
+export function simulate(map,prog,funcs=null){ let S=startState(map), n=0, acts=0, rec=false; const lim=map.cls===0?Infinity:(map.maxAct||MAXACT);
+  for(const ev of walk(prog,c=>sense(map,S,c),[],funcs)){ if(++n>MAXSTEPS) return {k:"boom"};
+    if(ev.t==="call"){ if(typeof ev.addr[0]==="string"&&ev.addr[0]===ev.f) rec=true; continue; }
+    if((ev.t==="move"||ACTS[ev.t])&&++acts>lim) return {k:"boom"};
+    /* (el conteo de acciones ahora es para todos los niveles) */
+    if(ev.t==="move"){ const res=tryMove(map,S,ev.dir); if(res.k==="crash") return res; S=res.S; if(res.k==="win") return {...res,acts,rec}; }
     else if(ACTS[ev.t]){ const res=tryAct(map,S,ACTS[ev.t]); if(res.k==="bad") return res; S=res.S; } }
-  return !hasE(map)&&goalMet(map,S)?{k:"win",S}:{k:"end",S}; }
+  return !hasE(map)&&goalMet(map,S)?{k:"win",S,acts,rec}:{k:"end",S}; }
 export function maxRun(list){ const s=[...walk(list,()=>false)].filter(e=>e.t!=="loop"&&e.t!=="if"&&e.t!=="else"&&e.t!=="call").map(e=>e.t==="move"?e.dir:ACTS[e.t]).join(""); return s?Math.max(...s.match(/(.)*/g).map(x=>x.length)):0; }
 /* el mismo programa sin los si (todo lo de adentro siempre): en los niveles de Si tiene que fallar */
 export function stripIf(list){ return list.flatMap(b=>b.t==="if"||b.t==="else"?stripIf(b.body):b.body?[{...b,body:stripIf(b.body)}]:[b]); }
@@ -204,14 +220,24 @@ export function selfTest(){
   const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>{ const {prog:sol,funcs:fn}=parseSolF(m.sol), sim=m.worlds?simulateAll(m,sol,undefined,fn):simulate(m,sol,fn), path=shortest(m,startState(m)), cnt=countProgram(sol,fn)+1, used=m.cls===3?hasCall(sol):hasRepeat(sol);
     const opt=optFor(m,path), lim=limitFor(m,opt), run=maxRun(sol), cond=m.tools.includes("i");
     /* todos los niveles terminan en la estrella: se gana al llegar con todo hecho */
-    let ok=hasE(m)&&sim.k==="win"&&!!path&&cnt<=lim&&starsFor(m,cnt,used,opt,false,sim.S&&sim.S.wrong)===3;
+    const best=m.adv?starsAdv(m,{count:cnt,rep:hasRepeatAll(sol,fn),acts:sim.acts,opt:path&&path.length})===3:starsFor(m,cnt,used,opt,false,sim.S&&sim.S.wrong)===3;
+    let ok=hasE(m)&&sim.k==="win"&&!!path&&cnt<=lim&&best;
     if(m.cls===1) ok=ok&&!used&&(m.need||(cnt===opt&&run<=3)); else ok=ok&&used;
-    /* cls 3: la versión sin funciones (call -> cuerpo) tiene que pasarse del máximo, si no la función no hace falta */
-    if(m.cls===3) ok=ok&&m.tools.includes("f")&&countBlocks(inlineCalls(sol,fn))+1>lim;
+    /* cls 3: la versión sin funciones (call -> cuerpo) tiene que pasarse del máximo, si no la función no hace falta.
+       Niveles adv: la solución tiene que ganar con una función que se llama a sí misma, sin crear funciones sin usar y sin pasarse del tope de acciones */
+    if(m.adv) ok=ok&&m.tools.includes("f")&&sim.rec===true&&cnt<=m.max&&m.goal<=m.max&&!m.pre&&(!m.rep||hasRepeatAll(sol,fn))&&sim.acts<=(m.maxAct||MAXACT);
+    else if(m.cls===3) ok=ok&&m.tools.includes("f")&&countBlocks(inlineCalls(sol,fn))+1>lim;
     const noIf=()=>m.worlds?simulateAll(m,stripIf(sol),undefined,fn):simulate(m,stripIf(sol),fn);
     if(cond) ok=ok&&hasIf(sol)&&noIf().k!=="win";
     if(m.worlds) ok=ok&&worldsCheck(m).ok;
     return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1&&!m.need?" seguidos:"+run:""}${cond?" sin si: "+noIf().k:""}${m.worlds?" "+worldsCheck(m).info:""}`}; });
+  /* recursión: un bucle infinito explota (por acciones y por eventos), y ganar sin que una función se llame a sí misma no cuenta (rec=false) */
+  const loopMap={rows:["..R..E"],adv:true,cls:3,tools:"pf",strict:true};
+  const boomA=parseSolF("A=(l r A); A"), boomB=parseSolF("A=(A); A");
+  const longMap={rows:["R"+".".repeat(58)+"E"],cls:1,tools:"r"}, rpt=parseSolF("10(10(r))");  res.push({id:"boom",title:"Bucle infinito o repetir de más: GENI explota",ok:simulate(loopMap,boomA.prog,boomA.funcs).k==="boom"&&simulate(loopMap,boomB.prog,boomB.funcs).k==="boom"&&simulate(longMap,rpt.prog,{}).k==="boom"&&simulate({...longMap,cls:0},rpt.prog,{}).k!=="boom",info:`A=(l r A), A=(A), 10(10(r)) en un pasillo largo; más de ${MAXACT} acciones (el mapa propio no tiene tope)`});
+  const adv0=MISSIONS.find(m=>m.adv);
+  if(adv0){ const p=shortest(adv0,startState(adv0)), flat=p&&p.map(([,,x])=>{ const k=Object.keys(ACTS).find(q=>ACTS[q]===x); return k?{t:k}:{t:"move",dir:x}; }), r=flat&&simulate(adv0,flat,{});
+    res.push({id:"norec",title:"Ganar sin recursión no cuenta",ok:!!r&&r.k==="win"&&r.rec===false,info:"sim:"+(r?r.k:"-")+" rec:"+(r&&r.rec)}); }
   /* con 2 estrellas en todo lo anterior de la parte alcanza para abrir cada grupo */
   PARTS.forEach(p=>{ let before=0; GROUPS.filter(g=>g.part===p.id).forEach(g=>{ const ok=g.need<=before*2; res.push({id:g.id,title:"Grupo "+g.title,ok,info:`pide ${g.need}, máx ${before*3}`}); before+=MISSIONS.filter(m=>m.grp===g.id).length; }); });
   /* regla: en cada parte los chicos hacen menos o igual cantidad de niveles que el juego normal */

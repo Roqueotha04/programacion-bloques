@@ -2,10 +2,10 @@
 /* Código extraído del juego original. No reescribir en React. */
 "use client";
 
-import { PARTS, GROUPS, MISSIONS, CHALLENGES, applyKids } from "./data";
+import { PARTS, GROUPS, MISSIONS, CHALLENGES, CLASS_CODES, applyKids } from "./data";
 import {
-  ACTS, DIRS, MAXSTEPS, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
-  fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, limitFor, optFor,
+  ACTS, DIRS, MAXSTEPS, MAXACT, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
+  fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, hasRepeatAll, limitFor, maxStars, optFor, starsAdv,
   chOf, gateTxt, partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
   tryAct, tryMove, walk,
 } from "./engine";
@@ -100,7 +100,7 @@ export function boot() {
   function batSVG(){ return `<svg class="bat" viewBox="0 0 100 100"><rect x="41" y="10" width="18" height="9" rx="2.5" fill="#0D3049"/><rect x="27" y="17" width="46" height="72" rx="11" fill="#fff" stroke="#0D3049" stroke-width="3.5"/>  
    <rect x="35" y="26" width="30" height="15" rx="4" fill="#1EC48C"/><rect x="35" y="45" width="30" height="15" rx="4" fill="#1EC48C"/><rect x="35" y="64" width="30" height="16" rx="4" fill="#1EC48C"/></svg>`; }  
   function starIco(on,dim="#D6E6F2"){ return `<svg viewBox="0 0 100 100"><polygon points="${starPts(46,50,53)}" fill="${on?"#FFC21A":dim}" stroke="${on?"#0D3049":"none"}" stroke-width="4" stroke-linejoin="round"/></svg>`; }  
-  function starRow(k,dim){ return [0,1,2].map(i=>starIco(i<k,dim)).join(""); }  
+  function starRow(k,dim,n=3){ return Array.from({length:n},(_,i)=>starIco(i<k,dim)).join(""); }  
   const ICO={  
     arrow:d=>`<svg viewBox="0 0 32 32"><g transform="rotate(${{u:0,r:90,d:180,l:270}[d]} 16 16)"><path d="M16 3 29 16h-8v13H11V16H3z" fill="#fff" stroke="rgba(0,0,0,.12)" stroke-width="1.5" stroke-linejoin="round"/></g></svg>`,  
     repeat:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M6.5 15a9.5 9.5 0 0 1 16.3-6.6M25.5 17a9.5 9.5 0 0 1-16.3 6.6" fill="none" stroke="${c}" stroke-width="3.4" stroke-linecap="round"/><path d="M24 3v6.5h-6.5M8 29v-6.5h6.5" fill="none" stroke="${c}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,  
@@ -134,7 +134,7 @@ export function boot() {
   };  
   $("ico3").innerHTML=ICO.pencil(); $("walletIco").innerHTML=starIco(true);  
   $("icoRun").innerHTML=ICO.flag(); $("icoStep").innerHTML=ICO.step(); $("icoStop").innerHTML=ICO.restart(); $("icoHint").innerHTML=ICO.bulb();  
-  $("trash").innerHTML=ICO.trash(); $("backBtn").innerHTML=ICO.back()+"<span>Misiones</span>";  
+  $("codeBtn").innerHTML=ICO.lock("#fff")+"<span>Código</span>"; $("trash").innerHTML=ICO.trash(); $("backBtn").innerHTML=ICO.back()+"<span>Misiones</span>";  
   $("edPlay").innerHTML=ICO.flag()+"Jugar este mapa";  
   $("shopBtn").innerHTML=ICO.palette()+"<span>Taller del robot</span>";  
   $("resetBtn").innerHTML=ICO.trash("currentColor")+"Borrar progreso";  
@@ -157,7 +157,8 @@ export function boot() {
     dance:()=>[784,988,784,1175].forEach((f,i)=>tone(f,.1,"square",.05,i*.1)), nope:()=>{tone(300,.1,"triangle",.1);tone(240,.14,"triangle",.1,.09)},  
     unlock:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.2,"triangle",.11,i*.09)),  
     buy:()=>[988,1319,1568].forEach((f,i)=>tone(f,.16,"square",.05,i*.08)),  
-    win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.22,"triangle",.12,i*.11)), fail:()=>{tone(330,.18,"triangle");tone(262,.28,"triangle",.12,.16)} };  
+    dizzy:()=>[392,330,392,311,370,294,349,262].forEach((f,i)=>tone(f,.2,"sine",.1,i*.15)),
+    boom:()=>{ tone(60,.9,"sawtooth",.2); tone(90,.7,"square",.1,.02); [220,170,130,90,60].forEach((f,i)=>tone(f,.3,"sawtooth",.14,i*.06)); tone(1400,.25,"square",.05,.01); tone(800,.4,"triangle",.07,.1); }, win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.22,"triangle",.12,i*.11)), fail:()=>{tone(330,.18,"triangle");tone(262,.28,"triangle",.12,.16)} };  
     
   /* ================= efectos: confeti, chispas, textos y estrellas que vuelan ================= */  
   const FX={P:[],on:false};  
@@ -203,17 +204,17 @@ export function boot() {
   function show(id){ SCREEN=id; ["menu","game","editor","shop"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); scrollTo(0,0);  
     if(id!=="game"&&CH) endChallenge(); /* salir del juego cancela el desafío en curso */  
     const inCh=id==="game"&&!!(G&&G.map.ch);  
-    $("backBtn").classList.toggle("hidden",id==="menu"); $("logo").classList.toggle("hidden",id!=="menu");  
+    $("backBtn").classList.toggle("hidden",id==="menu"); $("codeBtn").classList.toggle("hidden",id!=="menu"); $("logo").classList.toggle("hidden",id!=="menu");  
     $("tTitle").classList.toggle("hidden",id==="menu"); $("tStars").classList.toggle("hidden",id!=="game"||inCh); $("tTimer").classList.toggle("hidden",!inCh); }  
   function setTop(num,name){ $("tNum").innerHTML=num; $("tName").textContent=name; }  
-  function renderTopStars(){ const k=G&&G.map.id!=="custom"?(SAVE.stars[G.map.id]||0):0; $("tStars").innerHTML=starRow(k,"rgba(255,255,255,.45)"); }  
+  function renderTopStars(){ const k=G&&G.map.id!=="custom"?(SAVE.stars[G.map.id]||0):0; $("tStars").innerHTML=starRow(k,"rgba(255,255,255,.45)",G?maxStars(G.map):3); }  
   $("backBtn").onclick=()=>{ if(SCREEN==="game") stopRun(); renderMenu(); show("menu"); };  
   $("wallet").onclick=()=>openShop();  
     
   /* ================= menú ================= */  
-  function miniMap(rows,s=14){ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},${s}px);--ms:${s}px">`;  
+  function miniMap(rows,s=14){ if(s===14) s=Math.max(5,Math.min(14,Math.floor((144-6-2*(rows[0].length-1))/rows[0].length))); /* en las tarjetas, los mapas largos se achican para no salirse */ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},${s}px);--ms:${s}px">`;  
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }  
-  function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===6?ICO.blocks():ICO.ifq(); }  
+  function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===6?ICO.repeat():ICO.ifq(); }  
   function lockWhy(st){ return st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }  
   function renderMenu(){  
     $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();  
@@ -223,16 +224,16 @@ export function boot() {
       /* una card por parte; cada grupo de niveles se abre por separado */  
       const sts=GS.filter(s=>s.g.part===P.id), ms=MISSIONS.filter(m=>m.part===P.id), got=ms.reduce((a,m)=>a+(SAVE.stars[m.id]||0),0);  
       h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+  
-        `<span class="gdot">${partIco(P.id)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+
+        `<span class="gdot">${partIco(P.id)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+(P.extra&&ms.length&&ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m))?`<span class="plat">${starIco(true)}Platino</span>`:"")+
         (PROFE&&P.code?`<span class="profe">Código: ${P.code}</span>`:"")+
-        `<span class="gprog">${starIco(true)} ${got} / ${ms.length*3}</span></div><div class="cards">`;
+        `<span class="gprog">${starIco(true)} ${got} / ${ms.reduce((a,m)=>a+maxStars(m),0)}</span></div><div class="cards">`;
       for(const st of sts){  
         const g=st.g, isNew=st.open&&!SAVE.seen.includes(g.id);  
         if(isNew){ SAVE.seen.push(g.id); fresh=true; }  
         const need=st.gate?gateTxt(SAVE.stars,st.gate):st.needCode?"Pedile el código a tu profe":st.prevLeft?"Terminá los anteriores":`Juntá ${g.need}${starIco(true)}`;
         h+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;
-          return `<button class="card${k===3?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}"${st.needCode?` data-code="${st.needCode}"`:""} style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+
-            (st.open?`<div class="stars">${starRow(k)}</div>`:`<span class="need">${need}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`; }).join("");  
+          return `<button class="card${k>=maxStars(m)?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}"${st.needCode?` data-code="${st.needCode}"`:""} style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+
+            (st.open?`<div class="stars">${starRow(k,undefined,maxStars(m))}</div>`:`<span class="need">${need}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`; }).join("");  
       }  
       h+=`</div></section>`;  
     }  
@@ -293,6 +294,30 @@ export function boot() {
     d.querySelector("[data-later]").onclick=closeModal;
   }
 
+  /* botón «Código» (arriba a la izquierda): un código de clase marca partes como superadas (3 estrellas, que se acreditan al taller)
+     y abre Repetir; también sirve el código de cada parte (genIArepetir, funcionesGENia). Repetir un código no suma dos veces */
+  function applyClassCode(cc){ let gained=0; const set=id=>{ const old=SAVE.stars[id]||0; if(old<3){ gained+=3-old; SAVE.stars[id]=3; } };
+    cc.parts.filter(p=>PARTS.some(x=>x.id===p)).forEach(p=>{ MISSIONS.filter(m=>m.part===p).forEach(m=>set(m.id)); CHALLENGES.filter(c=>c.part===p).forEach(c=>set(c.id)); });
+    (cc.unlock||[]).filter(p=>PARTS.some(x=>x.id===p)&&!SAVE.codes.includes(p)).forEach(p=>SAVE.codes.push(p));
+    return gained; }
+  function openCodes(){
+    const d=openModal(`<span class="mico">${ICO.lock("#FFC21A")}</span><h2>Poné tu código</h2>`+
+      `<p>Escribí el código que te dio tu profe.</p>`+
+      (PROFE?`<p>${CLASS_CODES.map(c=>escH(c.code)).concat(PARTS.filter(p=>p.code).map(p=>escH(p.code))).join(" · ")}</p>`:"")+
+      `<input class="minput" id="codeIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Código" aria-label="Código">`+
+      `<div class="mbtns"><button class="mbtn alt" data-later>Cancelar</button><button class="mbtn" data-go>Listo${ICO.next()}</button></div>`);
+    const inp=d.querySelector("#codeIn"); setTimeout(()=>inp.focus(),60);
+    const go=()=>{ const v=normCode(inp.value); if(!v) return;
+      const cc=CLASS_CODES.find(c=>normCode(c.code)===v), P=PARTS.find(p=>p.code&&normCode(p.code)===v);
+      if(cc){ const gained=applyClassCode(cc); persist(); closeModal(); renderMenu();
+        toast(ICO.unlock(),gained?`¡Código aceptado! +${gained} estrellas para el Taller`:"Ese código ya estaba usado"); }
+      else if(P){ const had=SAVE.codes.includes(P.id); if(!had) SAVE.codes.push(P.id); persist(); closeModal(); renderMenu();
+        toast(ICO.unlock(),had?"Esa parte ya estaba abierta":`¡Abriste la ${partName(P.id)}!`); }
+      else { bumpEl(inp,"no"); SND.nope(); inp.select(); toast(ICO.lock("#FFC21A"),"Ese código no es"); } };
+    d.querySelector("[data-go]").onclick=go; inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
+    d.querySelector("[data-later]").onclick=closeModal;
+  }
+  $("codeBtn").onclick=openCodes;
   /* borrar progreso (para un alumno nuevo): hay que tocar dos veces */
   let resetT=null;  
   function resetResetBtn(){ clearTimeout(resetT); const b=$("resetBtn"); b.classList.remove("ask"); b.innerHTML=ICO.trash("currentColor")+"Borrar progreso"; }  
@@ -316,7 +341,7 @@ export function boot() {
   /* ================= tablero ================= */  
   function buildBoard(holder,rows,withRobot,availW,availH,intro){  
     const n=rows.length, m=rows[0].length;  
-    const cs=Math.max(34,Math.min(80,Math.floor(Math.min((availW-6)/m,(availH-6)/n))-3));  
+    const cs=Math.max(20,Math.min(80,Math.floor(Math.min((availW-6)/m,(availH-6)/n))-3));  
     holder.style.setProperty("--cs",cs+"px");  
     let h=`<div class="cells${intro?" intro":""}" style="grid-template-columns:repeat(${m},var(--cs))">`;  
     for(let r=0;r<n;r++) for(let c=0;c<m;c++){ const ch=rows[r][c];  
@@ -339,6 +364,7 @@ export function boot() {
     G={map,rows:map.rows,n:map.rows.length,m:map.rows[0].length,nB:countB(map.rows),nX:cellsOf(map.rows,"X").length,nV:cellsOf(map.rows,"V").length,  
        prog:PROGS[map.id],funcs:FUNCS[map.id],names:NAMES[map.id],fids,fn:fids.length>0,lock:map.lock||[],run:0,busy:false,ctx:null,S,tools,rep:tools.includes("r"),opt,max:limitFor(map,opt),hint:false};  
     /* mundos: wm = mapa del mundo que se está jugando, worlds = filas de los mundos de este intento, wi = mundo actual (null si no corre) */
+    G.tries=0; G.pathLen=(shortest(map,S)||[]).length; /* adv: intentos fallidos y largo del camino más corto, para las estrellas */
     G.wm=map; G.worlds=map.worlds?pickWorlds(map):null; G.wi=null; G.keepW=false; G.conds=map.conds||(tools.includes("b")?["x","v"]:["x"]);
   
     setTop(map.num||ICO.pencil(),map.ch?`Desafío · Nivel ${map.num} de 3`:map.title); renderTopStars();  
@@ -347,6 +373,7 @@ export function boot() {
     const lim=`Podés usar hasta ${G.max} bloques`, toStar=hasE(map)?", después a la estrella":"";  
     if(map.ch&&map.num===1){ const ch=CHALLENGES.find(c=>c.id===map.ch);  
       say("",ICO.clock(),"El reloj mide cuánto tardás",`3 estrellas: menos de ${fmtTime(ch.t3)} · 2 estrellas: menos de ${fmtTime(ch.t2)}`); }  
+    else if(map.adv) say("",ICO.blocks(),"¡Una función que se llama a sí misma!",`Creá tu función y llamala adentro de ella misma: se repite hasta llegar a la estrella${G.nX||G.nV?" · Pintá las rojas y bailá en las verdes":""} · ${lim}`);
     else if(map.worlds) say("",ICO.ifq("#6366F1"),"¡El mapa cambia!",`Tu programa tiene que funcionar en todos${map.reveal?" · Mirá los mundos de abajo":""} · ${lim}`);
     else if((G.nV||G.nX)&&!tools.includes("i")&&!tools.includes("n")) say("",ICO.music("#11986A"),G.nX?"Pintá las rojas y bailá en las verdes":G.nV>1?"¡Bailá en las celdas verdes!":"¡Bailá en la celda verde!",`Después, a la estrella${map.cls===2?" · "+lim:""}`);
     else if(G.fn) say("",ICO.blocks(),G.fids.every(f=>G.lock.includes(f))?"¡Llamá a la función para ahorrar bloques!":"¡Creá una función y llamala varias veces!",lim);
@@ -375,11 +402,11 @@ export function boot() {
   function resetRobot(){
     if(G.worlds&&!G.keepW){ const back=G.wi>0; G.wi=null; if(back) return setWorld(0); }
     G.S=startState(G.wm); G.trail=0; G.lastGot=null; clearHint();  
-    $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced"));  
+    $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","scorch"));  
     $("gBoard").classList.remove("win","bump");  
     document.querySelectorAll("#canvas .on, #canvas .err").forEach(b=>b.classList.remove("on","err"));  
     document.querySelectorAll("#canvas .running, #canvas .yes, #canvas .nope").forEach(b=>b.classList.remove("running","yes","nope"));  
-    $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen"); placeNow();  
+    $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen","boom","dizzy"); $("bot").querySelectorAll(".dz").forEach(e=>e.remove()); $("gBoard").classList.remove("kaboom"); placeNow();  
   }  
   function renderStatus(){  
     let h="";  
@@ -465,7 +492,7 @@ export function boot() {
   }  
   const splitA=a=>{ a=String(a); const k=a.indexOf(":"), t=k<0?a:a.slice(k+1); return {f:k<0?null:a.slice(0,k),path:t===""?[]:t.split(".").map(Number)}; }; /* "A:0.1" = función A, bloque 0.1; sin letra = programa */
   const joinA=(f,path)=>f?f+":"+path.join("."):path.join(".");
-  const badCall=(b,f)=>f&&(b.t==="call"?!(b.f<f):b.body&&b.body.some(x=>badCall(x,f))); /* una función solo llama a otra anterior (B a A) */
+  const badCall=(b,f)=>f&&(b.t==="call"?!(G.map.adv?b.f<=f:b.f<f):b.body&&b.body.some(x=>badCall(x,f))); /* una función solo llama a otra anterior (B a A); en los niveles avanzados también a sí misma */
   function getList(f,path){ let l=f?G.funcs[f]:G.prog; for(const i of path) l=l[i].body; return l; }
   function removeAt(f,addr){ return getList(f,addr.slice(0,-1)).splice(addr[addr.length-1],1)[0]; }
   function insertAt(f,path,i,b){ getList(f,path).splice(i,0,b); }
@@ -511,7 +538,7 @@ export function boot() {
     d.ghost.remove(); document.body.classList.remove("dragging"); $("trash").classList.remove("hot"); $("pal").classList.remove("drop");  
     let at=null;  
     if(d.zone==="drop"&&d.pt&&!badCall(d.block,d.pt.f)){ insertAt(d.pt.f,d.pt.path,d.pt.i,d.block); at=joinA(d.pt.f,d.pt.path.concat(d.pt.i)); SND.snap(); }
-    else if(d.zone==="drop"&&d.pt){ SND.nope(); say("warn",ICO.blocks(),"Ahí no se puede llamar a esa función","Una función solo llama a las anteriores"); if(!d.inPal) insertAt(d.from.f,d.from.path,d.from.i,d.block); }  
+    else if(d.zone==="drop"&&d.pt){ SND.nope(); say("warn",ICO.blocks(),"Ahí no se puede llamar a esa función",G.map.adv?"Una función puede llamarse a sí misma o llamar a las anteriores":"Una función solo llama a las anteriores"); if(!d.inPal) insertAt(d.from.f,d.from.path,d.from.i,d.block); }  
     else if(d.zone==="del"){ if(!d.inPal){ SND.trash(); const [x,y]=center($("trash")); burst(x,y,["#FF5A62","#FF9A2E","#5F7F96"],10,4); } }  
     else if(!d.inPal) insertAt(d.from.f,d.from.path,d.from.i,d.block);  
     changed(); if(at!=null) freshAt(at);  
@@ -574,11 +601,12 @@ export function boot() {
     if(wi>0){ setWorld(wi); await sleep(600); if(id!==G.run) return; }
     const it=walk(G.prog,c=>sense(G.wm,G.S,c),[],G.funcs); let n=0; res={k:"end"};
     for(let nx=it.next();!nx.done;nx=it.next()){ const ev=nx.value;  
-      if(++n>MAXSTEPS){ res={k:"long"}; break; }  
+      if(++n>MAXSTEPS){ res={k:"boom"}; break; }  
       const addr=typeof ev.addr[0]==="string"?ev.addr[0]+":"+ev.addr.slice(1).join("."):ev.addr.join(".");  
       if(ev.t==="loop"){ setLap(addr,ev.k+1,ev.n); SND.loop(); if(!ctx.stepMode){ await sleep(T()*.25); if(id!==G.run) return; } continue; }  
       if(ev.t==="if"||ev.t==="else"){ askIf(addr,ev.ok); if(!ctx.stepMode){ await sleep(T()*.35); if(id!==G.run) return; } continue; }  
-      if(ev.t==="call"){ light(addr); SND.loop(); if(!ctx.stepMode){ await sleep(T()*.35); if(id!==G.run) return; } continue; }
+      if(ev.t==="call"){ if(typeof ev.addr[0]==="string"&&ev.addr[0]===ev.f) ctx.rec=true; /* se llamó a sí misma */ light(addr); SND.loop(); if(!ctx.stepMode){ await sleep(T()*.35); if(id!==G.run) return; } continue; }
+      if(G.map.cls!==0&&ctx.moves>=(G.map.maxAct||MAXACT)){ res={k:"boom"}; break; } /* demasiadas acciones (bucle infinito, repetir de más): GENI explota. El mapa propio (cls 0) no tiene tope */
       light(addr); last=addr;  
       let r;  
       if(ev.t==="move"){ r=tryMove(G.wm,G.S,ev.dir); await animate(r,ev.dir); }  
@@ -588,7 +616,7 @@ export function boot() {
       if(r.k!=="ok"){ res=r; break; }  
       if(ctx.stepMode){ say("",ICO.step(),`Paso ${ctx.moves}`,"Tocá Paso para seguir o Ir para terminar"); await waitStep(); if(id!==G.run) return; }  
     }  
-    if(res.k==="win"){ let nx; do{ nx=it.next(); }while(!nx.done&&(nx.value.t==="loop"||nx.value.t==="if"||nx.value.t==="else"||nx.value.t==="call")); res.left=!nx.done; }  
+    if(res.k==="win"){ let nx, g=0; do{ nx=it.next(); }while(++g<MAXSTEPS&&!nx.done&&(nx.value.t==="loop"||nx.value.t==="if"||nx.value.t==="else"||nx.value.t==="call")); res.left=!nx.done; res.acts=ctx.moves; res.rec=!!ctx.rec; }  
     /* sin estrella en el mapa: se gana al terminar el programa con todo pintado */  
     if(res.k==="end"&&!hasE(G.wm)&&goalMet(G.wm,G.S)) res={k:"win"};  
     if(res.k!=="win"){ res.world=wi; break; }
@@ -634,16 +662,21 @@ export function boot() {
   function finish(res,last){ if(G.worlds&&res.k!=="win"&&res.world!=null){ G.pre=`¡Falló en el mundo ${res.world+1}!`; try{ return finish0(res,last); } finally{ G.pre=""; } } return finish0(res,last); }
   function finish0(res,last){  
     document.querySelectorAll("#canvas .on").forEach(x=>x.classList.remove("on"));  
+    /* niveles avanzados: ganar sin que una función se llame a sí misma no cuenta; un bucle infinito hace explotar a GENI */
+    if(res.k==="win"&&G.map.adv&&!res.rec){ G.tries++; SND.fail(); return say("warn",ICO.question(),"¡Llegó, pero sin recursión!","En este nivel una función tiene que llamarse a sí misma"); }
+    if(res.k!=="win"&&G.map.adv) G.tries++;
+    if(res.k==="boom") return explode();
     if(res.k==="win"&&G.map.ch) return chLevelWin(res);  
     if(res.k==="win"){  
-      const count=used(), usedRep=G.map.cls===3?hasCall(G.prog):hasRepeat(G.prog), k=starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);  
+      const count=used(), usedRep=G.map.cls===3?hasCall(G.prog):hasRepeat(G.prog), k=G.map.adv?starsAdv(G.map,{count,rep:hasRepeatAll(G.prog,G.funcs),acts:res.acts,opt:G.pathLen}):starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);  
       let gained=0, opened=[];
       const map=G.map, part=map.id!=="custom"&&map.part, wasDone=part&&partDone(SAVE.stars,part);
       if(G.map.id!=="custom"){ const old=SAVE.stars[G.map.id]||0;
         if(k>old){ const before=groupsNow(); SAVE.stars[G.map.id]=k; gained=k-old; persist(); renderTopStars();
           opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g.title); } }
       let sub;
-      if(G.map.cls===3&&!usedRep) sub=`${ICO.blocks()} ¿Probás con una función?`;
+      if(G.map.adv){ const m=G.map; sub=count>m.goal?`${ICO.blocks()} Se puede con <b>${m.goal}</b> bloques`:m.rep&&!hasRepeatAll(G.prog,G.funcs)?`${ICO.repeat("#D9780F")} Probá usar repetir para ganar 3 estrellas`:res.acts>G.pathLen?"Se puede con menos pasos":"¡Recursión perfecta!"; }
+      else if(G.map.cls===3&&!usedRep) sub=`${ICO.blocks()} ¿Probás con una función?`;
       else if(G.map.cls===2&&!usedRep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
       else if(G.S.wrong) sub=`${ICO.brush("#7E3DB0")} Pintaste ${G.S.wrong>1?G.S.wrong+" celdas que no eran rojas":"una celda que no era roja"}${G.tools.includes("n")?" · Guardá el pincel en las blancas":""}`;
       else if(G.opt!=null&&count>G.opt) sub=`${ICO.blocks()} Se puede con <b>${G.opt}</b> bloques`;
@@ -651,7 +684,7 @@ export function boot() {
       if(G.hint&&k<3) sub+=" · Sin pista ganás 3 estrellas";
       if(res.left) sub+=" · Sobraron bloques";
       const idx=MISSIONS.indexOf(G.map), nxt=MISSIONS[idx+1], gs=nxt&&groupsNow().find(s=>s.g.id===nxt.grp);
-      let extra=`<div class="bigstars">${starRow(k)}</div>`;
+      let extra=`<div class="bigstars">${starRow(k,undefined,maxStars(G.map))}</div>`;
       if(opened.length) extra+=`<div class="unl">${ICO.unlock()} ¡Desbloqueaste «${opened.join("» y «")}»!</div>`;
       /* se acaba de terminar la parte y falta su desafío: volver al menú e invitar a jugarlo */
       const ch=part&&!wasDone&&partDone(SAVE.stars,part)&&chOf(part), toCh=ch&&!SAVE.stars[ch.id];
@@ -677,6 +710,20 @@ export function boot() {
     if(g.need) return say("warn",ICO.brush("#7E3DB0"),g.need>1?`Faltan pintar ${g.need} celdas`:"Falta pintar 1 celda",`Tenés que pintar ${G.map.need}${toStar}`);  
     say("warn",ICO.question(),"No llegó todavía","¿Qué bloque falta?");  
   }  
+  /* demasiados movimientos (bucle infinito, repetir de más): GENI se marea (da vueltas con estrellas girando), explota en grande y recién después aparece el mensaje.
+     Si se toca Parar/Cambiar el programa a mitad (G.run cambia) la animación se corta. */
+  function explode(){ const id=G.run, bot=$("bot"), k=RM.matches?.25:1, alive=()=>G&&G.run===id&&SCREEN==="game";
+    setBusy(true); bot.classList.remove("shake");
+    bot.insertAdjacentHTML("beforeend",'<span class="dz" aria-hidden="true"><i>★</i><i>★</i><i>★</i></span>'); bot.classList.add("dizzy"); SND.dizzy();
+    setTimeout(()=>{ if(!alive()) return; const dz=bot.querySelector(".dz"); if(dz) dz.remove(); bot.classList.remove("dizzy"); void bot.offsetWidth; bot.classList.add("boom"); },1250*k);
+    setTimeout(()=>{ if(!alive()) return; const [x,y]=center(bot); SND.boom();
+      const fl=document.createElement("div"); fl.className="fxflash"; document.body.appendChild(fl); setTimeout(()=>fl.remove(),700);
+      burst(x,y,["#FFFFFF","#FFF3C4","#FFC21A"],46,13); burst(x,y,["#FF5A62","#FF9A2E","#FFC21A"],56,10);
+      setTimeout(()=>burst(x,y,["#0D3049","#5F7F96","#FF9A2E","#FFFFFF"],40,7),130);
+      floatText(x,y-34,"¡BOOM!","#FF5A62"); const g=$("gBoard"); g.classList.remove("kaboom"); void g.offsetWidth; g.classList.add("kaboom");
+      const c=cellEl(G.S.r,G.S.c); if(c) c.classList.add("scorch"); },1900*k);
+    setTimeout(()=>{ if(!alive()) return; setBusy(false); $("gBoard").classList.remove("kaboom");
+      say("err",ICO.burst(),"¡GENI explotó!",G.map.adv?"Tu función no termina nunca: ¿llega a la estrella?":`Hizo más de ${G.map.maxAct||MAXACT} movimientos. Revisá tu programa: ¿repite de más o da vueltas?`); },2750*k); }
   function celebrate(gained){  
     SND.win(); confetti(); $("gBoard").classList.add("win");  
     const bot=$("bot"); bot.classList.add("happy"); setTimeout(()=>bot.classList.remove("happy"),2100);  
@@ -705,7 +752,7 @@ export function boot() {
     if(k>old) SAVE.stars[ch.id]=k; if(rec) SAVE.best[ch.id]=sec; persist();  
     let sub=k<3?`Para ${k+1} estrellas: menos de ${fmtTime(k===2?ch.t3:ch.t2)}`:"¡Tiempo perfecto!";  
     if(!rec) sub+=` · Tu récord: ${fmtTime(prev)}`;  
-    let extra=`<div class="bigstars">${starRow(k)}</div>`;  
+    let extra=`<div class="bigstars">${starRow(k,undefined,maxStars(G.map))}</div>`;  
     if(rec&&prev!=null) extra+=`<div class="unl">${ICO.clock()} ¡Nuevo récord!</div>`;  
     extra+=`<button class="nextbtn" data-chagain>Jugar otra vez${ICO.next()}</button>`;  
     say("ok",ICO.star(),`¡Desafío completo en ${fmtTime(sec)}!`,sub,extra);  

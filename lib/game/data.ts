@@ -7,9 +7,9 @@ export const PARTS=[
  {id:2,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
  {id:3,title:"Bailar",sub:"pintar, bailar y juntar baterías",c:"#EC4899",l:"#FCE0EF",after:[2]},
  {id:4,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[3],code:"genIArepetir"},
- {id:5,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[2]},
- /* la parte 6 (Mundos) se agrega más abajo; la 7 (Si) va última */
- {id:7,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,4]}
+ {id:5,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[2],code:"funcionesGENia"},
+//  /* la parte 6 (Mundos) se agrega más abajo; la 7 (Si) va última */
+//  {id:7,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,4]}
 ];
 /* cls: reglas (1 = meta de bloques, 2 = máximo de bloques).
    tools: bloques extra (r repetir, n pincel, p pintar de un toque, b bailar, i si).
@@ -23,8 +23,8 @@ export const GROUPS=[
  {id:"D",part:4,cls:2,tools:"r",title:"Repetir",sub:"pocos bloques, muchos pasos",need:0,c:"#FF9A2E",l:"#FFE2C2"},
  {id:"E",part:4,cls:2,tools:"r",title:"Repetir con batería",sub:"repetir y juntar",need:8,c:"#FF6FB5",l:"#FFDCEC"},
  {id:"F",part:4,cls:2,tools:"r",title:"Repetir con 2 baterías",sub:"el gran desafío",need:14,c:"#E64C55",l:"#FFD9DB"},
- {id:"J",part:7,cls:2,tools:"rpi",strict:true,title:"Si es roja",sub:"pintá solo las rojas",need:0,c:"#14B8A6",l:"#CCF5EF"},
- {id:"K",part:7,cls:2,tools:"rpbi",strict:true,title:"Rojo y verde",sub:"rojas: pintar · verdes: bailar",need:6,c:"#0EA5E9",l:"#D3F0FC"},
+//  {id:"J",part:7,cls:2,tools:"rpi",strict:true,title:"Si es roja",sub:"pintá solo las rojas",need:0,c:"#14B8A6",l:"#CCF5EF"},
+//  {id:"K",part:7,cls:2,tools:"rpbi",strict:true,title:"Rojo y verde",sub:"rojas: pintar · verdes: bailar",need:6,c:"#0EA5E9",l:"#D3F0FC"},
  /* ===== Bailar (inicio) ===== */
  {id:"L",part:3,cls:1,tools:"b",strict:true,title:"Bailar",sub:"bailá en la celda verde",need:0,c:"#EC4899",l:"#FCE0EF"},
  {id:"M",part:3,cls:1,tools:"pb",strict:true,title:"Pintar y bailar",sub:"rojas: pintar · verdes: bailar",need:3,c:"#D946EF",l:"#F8DDFB"},
@@ -37,15 +37,24 @@ export const GROUPS=[
  {id:"Q",part:5,cls:3,tools:"rpbf",strict:true,title:"Dos funciones",sub:"una función puede llamar a otra",need:12,c:"#3E6FA8",l:"#D7E6F8"}
  /* ===== Funciones (fin) ===== */
 ];
-/* ===== Mundos (inicio) ===== */
-/* el mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
-   reveal: se muestran las miniaturas de los mundos antes de correr. conds: condiciones del bloque si. pool+show: se sortean show mundos del pool */
-PARTS.push({id:6,title:"Mundos",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[2,4]});
+/* ===== Funciones avanzadas (inicio) ===== */
+/* PARTE 6: funciones avanzadas (recursión). Se abre al superar la parte 5, no cuenta para abrir otras partes. No está en la edición chicos.
+   (Mundos y Si, antes partes 6 y 7, están comentadas de momento) */
+PARTS.push({id:6,title:"Funciones avanzadas",sub:"una función que se llama a sí misma",c:"#7C3AED",l:"#EDE4FF",after:[5],extra:true});
 GROUPS.push(
- {id:"S",part:6,cls:2,tools:"rpbie",strict:true,title:"El mapa cambia",sub:"las celdas cambian de lugar",need:0,c:"#6366F1",l:"#E0E1FF"},
- {id:"T",part:6,cls:2,tools:"rie",strict:true,title:"Paredes",sub:"el robot siente las paredes",need:6,c:"#0EA5E9",l:"#D3F0FC"},
- {id:"U",part:6,cls:2,tools:"rpbie",strict:true,title:"Mundos sorpresa",sub:"cada vez salen mundos distintos",need:12,c:"#EC4899",l:"#FFDCEC"});
-/* ===== Mundos (fin) ===== */
+ {id:"Y",part:6,cls:3,adv:true,tools:"pf",strict:true,title:"Se llama a sí misma",sub:"la función se repite hasta llegar a la estrella",need:0,c:"#7C3AED",l:"#EDE4FF"},
+ {id:"Z",part:6,cls:3,adv:true,tools:"rpbf",strict:true,title:"Recursión con todo",sub:"repetir, pintar y bailar",need:6,c:"#C026D3",l:"#FAE1FD"},
+ {id:"N",part:6,cls:3,adv:true,tools:"rpbf",strict:true,title:"Para pensar",sub:"un arranque, dos carriles y una serpiente",need:10,c:"#0EA5E9",l:"#D3F0FC"});
+/* ===== Funciones avanzadas (fin) ===== */
+// /* ===== Mundos (inicio) ===== */
+// /* el mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
+//    reveal: se muestran las miniaturas de los mundos antes de correr. conds: condiciones del bloque si. pool+show: se sortean show mundos del pool */
+// PARTS.push({id:6,title:"Mundos",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[2,4]});
+// GROUPS.push(
+//  {id:"S",part:6,cls:2,tools:"rpbie",strict:true,title:"El mapa cambia",sub:"las celdas cambian de lugar",need:0,c:"#6366F1",l:"#E0E1FF"},
+//  {id:"T",part:6,cls:2,tools:"rie",strict:true,title:"Paredes",sub:"el robot siente las paredes",need:6,c:"#0EA5E9",l:"#D3F0FC"},
+//  {id:"U",part:6,cls:2,tools:"rpbie",strict:true,title:"Mundos sorpresa",sub:"cada vez salen mundos distintos",need:12,c:"#EC4899",l:"#FFDCEC"});
+// /* ===== Mundos (fin) ===== */
 export const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
  {id:"a2",grp:"A",title:"La esquina",rows:[".....","#....",".##E.",".##..","R...."],sol:"r r r u u"},
@@ -74,12 +83,12 @@ export const MISSIONS=[
  {id:"e3",grp:"E",tools:"rb",strict:true,title:"La montaña bailarina",max:7,rows:["R.####E","#..#...","##.....","###V.##"],sol:"3(r d) b 3(r u)"},
  {id:"f1",grp:"F",tools:"rb",strict:true,title:"Dos puntas y baile",max:7,rows:["B..R..V","######.","######.","#.....E"],sol:"3(l) 6(r) b 3(d)"},
  {id:"f2",grp:"F",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"},
- {id:"j1",grp:"J",title:"Solo las rojas",max:5,rows:["#.##.#.#","RX.XX.XE","#.#..#.#"],sol:"7(r ?x(p))"},
- {id:"j2",grp:"J",title:"Escalera roja",max:7,rows:["####XE","###X.#","##..##","#X.###","R.####"],sol:"4(r u ?x(p)) r"},
- {id:"j3",grp:"J",title:"Bajar y doblar",max:9,rows:["R#....","X#.#..","X#...#",".#.#..","X#....","..XX.E"],sol:"5(d ?x(p)) 5(r ?x(p))"},
- {id:"k1",grp:"K",title:"A bailar",max:5,rows:["##.#.##","R.VV.VE","#.##..#"],sol:"6(r ?v(b))"},
- {id:"k2",grp:"K",title:"Rojo y verde",max:7,rows:["#.#..#.#","RXV.XXVE","#..#.#.."],sol:"7(r ?x(p) ?v(b))"},
- {id:"k3",grp:"K",title:"Escalera de colores",max:8,rows:["R.####","#X.###","##V.##","###..#","####X.","#####E"],sol:"5(r d ?x(p) ?v(b))"},
+//  {id:"j1",grp:"J",title:"Solo las rojas",max:5,rows:["#.##.#.#","RX.XX.XE","#.#..#.#"],sol:"7(r ?x(p))"},
+//  {id:"j2",grp:"J",title:"Escalera roja",max:7,rows:["####XE","###X.#","##..##","#X.###","R.####"],sol:"4(r u ?x(p)) r"},
+//  {id:"j3",grp:"J",title:"Bajar y doblar",max:9,rows:["R#....","X#.#..","X#...#",".#.#..","X#....","..XX.E"],sol:"5(d ?x(p)) 5(r ?x(p))"},
+//  {id:"k1",grp:"K",title:"A bailar",max:5,rows:["##.#.##","R.VV.VE","#.##..#"],sol:"6(r ?v(b))"},
+//  {id:"k2",grp:"K",title:"Rojo y verde",max:7,rows:["#.#..#.#","RXV.XXVE","#..#.#.."],sol:"7(r ?x(p) ?v(b))"},
+//  {id:"k3",grp:"K",title:"Escalera de colores",max:8,rows:["R.####","#X.###","##V.##","###..#","####X.","#####E"],sol:"5(r d ?x(p) ?v(b))"},
  /* ===== Bailar (inicio) ===== */
  {id:"l1",grp:"L",title:"El primer baile",rows:["#####","#...#","R.V.E","#...#","#####"],sol:"r r b r r"},
  {id:"l2",grp:"L",title:"Dos bailes",rows:["#.###","R.V.#","#.#V.","###.E"],sol:"r r b r d b d r"},
@@ -103,57 +112,73 @@ export const MISSIONS=[
  {id:"p3",grp:"P",title:"La función que baila",max:10,rows:["######V.R","EV..V..##"],sol:"A=(l l b); A d A l A l"},
  {id:"q1",grp:"Q",title:"Arreglá la función",max:11,pre:{A:"d p"},rows:["R####",".####","X.###","#.###","#X..#","###.#","###XE"],sol:"A=(d d p); A r A r r A r"},
  {id:"q2",grp:"Q",title:"Una llama a otra",max:10,fns:2,rows:["RX####","#.X.X#","####.X","#####E"],sol:"A=(r p); B=(A d A); B r B d"},
- {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"}
+ {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"},
  /* ===== Funciones (fin) ===== */
-].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:m.tools??g.tools,strict:m.strict??!!g.strict}); });
-/* ===== Mundos (inicio) ===== */
-const MUNDOS=[
- {id:"s1",grp:"S",title:"Las rojas cambian",max:5,reveal:true,conds:["x"],sol:"7(r ?x(p))",
-  worlds:[
-    ["########","########","RX.XX..E","########",".##.##.#"],
-    ["########","########","R.X..XXE","########","##.##.##"]]},
- {id:"s2",grp:"S",title:"Rojas y verdes",max:7,reveal:true,conds:["x","v"],sol:"7(r ?x(p) ?v(b))",
-  worlds:[
-    ["########","########","RXV.XV.E","########",".##.##.#"],
-    ["########","########","R.XVV.XE","########","##.##.##"],
-    ["........","########","RVX.X.VE","########","#.##.##."]]},
- {id:"s3",grp:"S",title:"Escalera sorpresa",max:8,reveal:false,conds:["x","v"],sol:"5(r d ?x(p) ?v(b))",
-  worlds:[
-    ["R.####","#X.###","##V.#.","###X.#",".###..","##.##E"],
-    ["R.####","#V.##.",".#X.##","###..#","##.#X.",".##.#E"],
-    ["R.#...","#..#.#","##X.##","..#V.#","#.##V.","#.###E"]]},
- {id:"t1",grp:"T",title:"Pasillo con codos",max:6,reveal:true,conds:["wr","nr","wd","nd"],sol:"10(?wr(d) !(r))",
-  worlds:[
-    ["R.######","#...##.#","###...##","#####..E"],
-    ["R...####","###.####",".##....#","######.E"],
-    ["R####...",".....###","####....","....###E"]]},
- {id:"t2",grp:"T",title:"Gravedad",max:6,reveal:true,conds:["wr","nr","wd","nd"],sol:"10(?wd(r) !(d))",
-  worlds:[
-    ["R######",".##.##.","...####","##.....",".#####E"],
-    ["R..####","##.##.#",".#.####","##.....","######E"],
-    ["R#.....","..##.##","#..#.##",".#..###","#.#...E"]]},
- {id:"t3",grp:"T",title:"Arriba o abajo",max:9,reveal:false,conds:["wr","nr","wd","nd","wu","nu"],sol:"11(?wr(?wd(u) !(d)) !(r))",
-  worlds:[
-    ["###...##","#...#..#","R.####.E","########",".##.##.#"],
-    ["########","##.##.##","R#####.E",".......#","##..####"],
-    ["###.....","...#####","R#...##E","#.##....","#.######"]]},
- {id:"u1",grp:"U",title:"Mundo sorpresa",max:10,reveal:false,conds:["x","v","wr","nr","wd","nd"],show:3,sol:"10(?wr(d) !(r) ?x(p) ?v(b))",
-  worlds:[
-    ["R.######","#V#.##.#","#X######","#.V.XX.E"],
-    ["R.######","#.######","#VXV..##","#####XXE"],
-    ["R#......",".######.","V.XV.XX#","######.E"],
-    ["RV######","#.VXX...","#######X","#######E"],
-    ["RV######","#..#####",".#.XXVX#","######.E"]]},
- {id:"u2",grp:"U",title:"La gran sorpresa",max:11,reveal:false,conds:["x","wr","nr","wd","nd","wu","nu"],show:3,sol:"11(?wr(?wd(u) !(d)) !(r) ?x(p))",
-  worlds:[
-    ["########","########","R#.X..XE",".X.#..##","###.##.#"],
-    ["########","##.##.##","R.#.###E","#..###X.","##...XX#"],
-    [".###.XX#","#..X.#..","R.#####E","##.....#","#.##.##."],
-    ["########","..XX.X..","R###..#E","########",".##.##.#"],
-    ["########","########","RX..XX.E","....####","#####.##"]]}
-].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds; return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict}); });
-MISSIONS.push(...MUNDOS);
-/* ===== Mundos (fin) ===== */
+ /* ===== Funciones avanzadas (inicio) =====
+    adv: hay que ganar con una función que se llama a sí misma (la recursión termina al llegar a la estrella). El alumno crea las
+    funciones desde cero (sin pre). goal: bloques de la meta (la 2.ª estrella), max = goal + 2.
+    rep: el nivel pide usar repetir para la 2.ª estrella. Estrellas (hasta 3, como todos): 1 llegó con recursión, +1 dentro de la meta
+    de bloques (y con repetir si el nivel lo pide), +1 por el camino más corto */
+ {id:"v1",grp:"Y",title:"El eco",goal:5,max:7,rows:["###########","R.........E","###########"],sol:"A=(r r A); A"},
+ {id:"v2",grp:"Y",title:"La escalera sin fin",goal:5,max:7,rows:["R.#####","#..####","##..###","###..##","####..#","#####.E"],sol:"A=(r d A); A"},
+ {id:"v3",grp:"Y",title:"El collar rojo",goal:6,max:8,rows:["###########","RX.X.X.X.XE","###########"],sol:"A=(r p r A); A"},
+ {id:"v4",grp:"Z",title:"Escalera de fiesta",goal:6,max:8,rows:["RV#####","#.V####","##.V###","###.V##","####.V#","#####.E"],sol:"A=(r b d A); A"},
+ {id:"v5",grp:"Z",title:"La ola",goal:7,max:9,rep:true,rows:["R...#########","###X...######","######X...###","#########X..E"],sol:"A=(3(r) d p A); A"},
+ {id:"v6",grp:"Z",title:"Gran final recursivo",goal:9,max:11,rep:true,fns:2,rows:["RXX#####","##VXX###","####VXX#","######VE"],sol:"A=(r p); B=(2(A) d b B); B"},
+ /* arranque irregular y después la recursión; dos carriles (hay que descubrir el ciclo); serpiente: repetir adentro de la recursión */
+ {id:"v7",grp:"N",title:"Primero el arranque",goal:10,max:12,rows:["R..########","##.########","##..X######","####..X####","######..X##","########..E"],sol:"r r d A; A=(d r r p A)"},
+ {id:"v8",grp:"N",title:"Dos carriles",goal:12,max:14,rows:["RX...X...XE","...V...V..."],sol:"r A; A=(p r r d b r r u A)"},
+ {id:"v9",grp:"N",title:"La serpiente",goal:13,max:15,rep:true,rows:["RXX","##.","XX.",".##",".XX","##.","EX."],sol:"C=(2(r p) 2(d) 2(l p) 2(d) C); C"}
+ /* ===== Funciones avanzadas (fin) ===== */
+].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:m.tools??g.tools,strict:m.strict??!!g.strict,adv:!!g.adv}); });
+// /* ===== Mundos (inicio) ===== */
+// const MUNDOS=[
+//  {id:"s1",grp:"S",title:"Las rojas cambian",max:5,reveal:true,conds:["x"],sol:"7(r ?x(p))",
+//   worlds:[
+//     ["########","########","RX.XX..E","########",".##.##.#"],
+//     ["########","########","R.X..XXE","########","##.##.##"]]},
+//  {id:"s2",grp:"S",title:"Rojas y verdes",max:7,reveal:true,conds:["x","v"],sol:"7(r ?x(p) ?v(b))",
+//   worlds:[
+//     ["########","########","RXV.XV.E","########",".##.##.#"],
+//     ["########","########","R.XVV.XE","########","##.##.##"],
+//     ["........","########","RVX.X.VE","########","#.##.##."]]},
+//  {id:"s3",grp:"S",title:"Escalera sorpresa",max:8,reveal:false,conds:["x","v"],sol:"5(r d ?x(p) ?v(b))",
+//   worlds:[
+//     ["R.####","#X.###","##V.#.","###X.#",".###..","##.##E"],
+//     ["R.####","#V.##.",".#X.##","###..#","##.#X.",".##.#E"],
+//     ["R.#...","#..#.#","##X.##","..#V.#","#.##V.","#.###E"]]},
+//  {id:"t1",grp:"T",title:"Pasillo con codos",max:6,reveal:true,conds:["wr","nr","wd","nd"],sol:"10(?wr(d) !(r))",
+//   worlds:[
+//     ["R.######","#...##.#","###...##","#####..E"],
+//     ["R...####","###.####",".##....#","######.E"],
+//     ["R####...",".....###","####....","....###E"]]},
+//  {id:"t2",grp:"T",title:"Gravedad",max:6,reveal:true,conds:["wr","nr","wd","nd"],sol:"10(?wd(r) !(d))",
+//   worlds:[
+//     ["R######",".##.##.","...####","##.....",".#####E"],
+//     ["R..####","##.##.#",".#.####","##.....","######E"],
+//     ["R#.....","..##.##","#..#.##",".#..###","#.#...E"]]},
+//  {id:"t3",grp:"T",title:"Arriba o abajo",max:9,reveal:false,conds:["wr","nr","wd","nd","wu","nu"],sol:"11(?wr(?wd(u) !(d)) !(r))",
+//   worlds:[
+//     ["###...##","#...#..#","R.####.E","########",".##.##.#"],
+//     ["########","##.##.##","R#####.E",".......#","##..####"],
+//     ["###.....","...#####","R#...##E","#.##....","#.######"]]},
+//  {id:"u1",grp:"U",title:"Mundo sorpresa",max:10,reveal:false,conds:["x","v","wr","nr","wd","nd"],show:3,sol:"10(?wr(d) !(r) ?x(p) ?v(b))",
+//   worlds:[
+//     ["R.######","#V#.##.#","#X######","#.V.XX.E"],
+//     ["R.######","#.######","#VXV..##","#####XXE"],
+//     ["R#......",".######.","V.XV.XX#","######.E"],
+//     ["RV######","#.VXX...","#######X","#######E"],
+//     ["RV######","#..#####",".#.XXVX#","######.E"]]},
+//  {id:"u2",grp:"U",title:"La gran sorpresa",max:11,reveal:false,conds:["x","wr","nr","wd","nd","wu","nu"],show:3,sol:"11(?wr(?wd(u) !(d)) !(r) ?x(p))",
+//   worlds:[
+//     ["########","########","R#.X..XE",".X.#..##","###.##.#"],
+//     ["########","##.##.##","R.#.###E","#..###X.","##...XX#"],
+//     [".###.XX#","#..X.#..","R.#####E","##.....#","#.##.##."],
+//     ["########","..XX.X..","R###..#E","########",".##.##.#"],
+//     ["########","########","RX..XX.E","....####","#####.##"]]}
+// ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds; return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict}); });
+// MISSIONS.push(...MUNDOS);
+// /* ===== Mundos (fin) ===== */
 /* orden: por número de parte (Secuencia, Pintar, Bailar, Repetir, Funciones, Mundos, Si); el sort es estable */
 const byPart=(a,b)=>a.part-b.part;
 PARTS.sort((a,b)=>a.id-b.id); GROUPS.sort(byPart); MISSIONS.sort(byPart);
@@ -176,10 +201,10 @@ export const CHALLENGES=[
    {title:"Escalones dobles",max:5,rows:["R..####","##...##","####...","######E"],sol:"3(r r d)"},
    {title:"Subir y bajar",max:7,rows:["####B.###","###....##","##..##..#","#..####..","R.######E"],sol:"4(r u) 4(r d)"},
    {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"}]},
- {id:"x5",part:7,cls:2,tools:"rpbi",strict:true,title:"Desafío del si",t3:150,t2:240,levels:[
-   {title:"Pasillo de colores",max:7,rows:["#.#..#.#.#","RXV.XX.VXE","#..#.#..#."],sol:"9(r ?x(p) ?v(b))"},
-   {title:"Escalera de colores",max:8,rows:["####E","###X.","##X.#","#V.##","R.###"],sol:"4(r u ?x(p) ?v(b))"},
-   {title:"Dos pasillos",max:10,rows:["RX.VX####","####.####","####.V.XX","########.","########E"],sol:"2(4(r ?x(p) ?v(b)) 2(d))"}]},
+//  {id:"x5",part:7,cls:2,tools:"rpbi",strict:true,title:"Desafío del si",t3:150,t2:240,levels:[
+//    {title:"Pasillo de colores",max:7,rows:["#.#..#.#.#","RXV.XX.VXE","#..#.#..#."],sol:"9(r ?x(p) ?v(b))"},
+//    {title:"Escalera de colores",max:8,rows:["####E","###X.","##X.#","#V.##","R.###"],sol:"4(r u ?x(p) ?v(b))"},
+//    {title:"Dos pasillos",max:10,rows:["RX.VX####","####.####","####.V.XX","########.","########E"],sol:"2(4(r ?x(p) ?v(b)) 2(d))"}]},
  /* ===== Bailar (inicio) ===== */
  {id:"x6",part:3,cls:1,tools:"pb",strict:true,title:"Desafío de bailar",t3:150,t2:240,levels:[
    {title:"Zigzag de baile",rows:["R.V.#.","#.#.V.","#..#.E"],sol:"r r b r d r b d r"},
@@ -193,25 +218,25 @@ export const CHALLENGES=[
    {title:"Colores con función",max:12,rows:["####.#XE","##..V.V#","R.V#####"],sol:"A=(r r b); 2(A u) d A u p r"}]}
  /* ===== Funciones (fin) ===== */
 ];
-/* ===== Mundos (inicio) ===== */
-CHALLENGES.push({id:"x8",part:6,cls:2,tools:"rpbie",strict:true,title:"Desafío de mundos",t3:150,t2:240,levels:[
-   {title:"Pasillo cambiante",max:5,reveal:true,conds:["x"],sol:"8(r ?x(p))",
-    worlds:[
-    [".........","#########","RXX..X.XE","#########","#.##.##.#"],
-    ["#########","#########","R..XX..XE","#########",".##.##.##"],
-    ["#########","#########","RX.X.X..E","#########","##.##.##."]]},
-   {title:"Verdes en la bajada",max:8,reveal:true,conds:["wd","nd","v"],sol:"10(?wd(r) !(d) ?v(b))",
-    worlds:[
-    ["R.V####","##.##.#",".#.####","##V....","######E"],
-    ["R###...","..V.###","###.###","..#V.##","#.##..E"],
-    ["R######","V##.##.","..#####","#...V.#",".####.E"]]},
-   {title:"Subir o bajar",max:9,reveal:false,conds:["wr","nr","wd","nd","wu","nu"],sol:"11(?wr(?nd(d) !(u)) !(r))",
-    worlds:[
-    ["###.....","...#.###","R#..##.E","#.#....#","#.#####."],
-    ["########","###.####","R.###..E","#.....##",".##..#.#"],
-    ["########","#####...","R#....#E","...#####","#####.##"]]}]});
-CHALLENGES.filter(c=>c.id==="x8").forEach(c=>c.levels.forEach(m=>m.rows=m.worlds[0]));
-/* ===== Mundos (fin) ===== */
+// /* ===== Mundos (inicio) ===== */
+// CHALLENGES.push({id:"x8",part:6,cls:2,tools:"rpbie",strict:true,title:"Desafío de mundos",t3:150,t2:240,levels:[
+//    {title:"Pasillo cambiante",max:5,reveal:true,conds:["x"],sol:"8(r ?x(p))",
+//     worlds:[
+//     [".........","#########","RXX..X.XE","#########","#.##.##.#"],
+//     ["#########","#########","R..XX..XE","#########",".##.##.##"],
+//     ["#########","#########","RX.X.X..E","#########","##.##.##."]]},
+//    {title:"Verdes en la bajada",max:8,reveal:true,conds:["wd","nd","v"],sol:"10(?wd(r) !(d) ?v(b))",
+//     worlds:[
+//     ["R.V####","##.##.#",".#.####","##V....","######E"],
+//     ["R###...","..V.###","###.###","..#V.##","#.##..E"],
+//     ["R######","V##.##.","..#####","#...V.#",".####.E"]]},
+//    {title:"Subir o bajar",max:9,reveal:false,conds:["wr","nr","wd","nd","wu","nu"],sol:"11(?wr(?nd(d) !(u)) !(r))",
+//     worlds:[
+//     ["###.....","...#.###","R#..##.E","#.#....#","#.#####."],
+//     ["########","###.####","R.###..E","#.....##",".##..#.#"],
+//     ["########","#####...","R#....#E","...#####","#####.##"]]}]});
+// CHALLENGES.filter(c=>c.id==="x8").forEach(c=>c.levels.forEach(m=>m.rows=m.worlds[0]));
+// /* ===== Mundos (fin) ===== */
 CHALLENGES.sort(byPart);
 CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
 /* edición chicos (?chicos, 6 a 8 años): solo estos niveles (Secuencia 3,4,5,6,7,9, Pintar 4 a 8, Bailar menos el más largo, y de
@@ -219,6 +244,14 @@ CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i
    dan extra segundos más para cada estrella. need: estrellas que pide cada grupo en esta edición (2 por nivel anterior de la parte).
    EXTRA: niveles que solo existen en esta edición (el pasillo simple de baile), van justo después del nivel `after`.
    REGLA: en cada parte los chicos tienen menos o igual cantidad de niveles que el juego normal (lo controla selfTest con NORMAL_COUNT) */
+/* códigos de clase (botón «Código» del menú): marcan como superadas, con 3 estrellas, todas las partes de `parts` (niveles y desafío extra).
+   Las estrellas cuentan para comprar en el taller. unlock: partes cuyo código del profe se da por ingresado (Repetir: así se hace Bailar y Repetir de corrido).
+   Los códigos de cada parte (PARTS[].code: genIArepetir, funcionesGENia) también se aceptan ahí. Se ignoran las partes que no existen en la edición */
+export const CLASS_CODES=[
+  {code:"nivel1-clase2",parts:[1,2],unlock:[4]},
+  {code:"nivel2-clase2",parts:[1,2],unlock:[4]},
+  {code:"nivel3-clase2",parts:[1,2,4],unlock:[4]}
+];
 export const KIDS_EXTRA=[
   {after:"f2",m:{id:"r2",grp:"R",title:"Baile cada dos",max:6,rows:["##########","R.V.V.V.VE","##########"],sol:"4(r r b) r"}}
 ];

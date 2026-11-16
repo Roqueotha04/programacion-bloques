@@ -37,6 +37,7 @@ h1,h2,h3,h4{ margin:0; font-weight:700; }
 }
 .top::after{ content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 22px); }
 .top .grow{ flex:1; }
+.plat{ display:inline-flex; align-items:center; gap:4px; background:linear-gradient(#EDE4FF,#C9B6FF); color:#3B1A8C; font-size:14px; padding:4px 12px 4px 8px; border-radius:999px; box-shadow:0 3px 0 #9F86E8; } .plat svg{ width:18px; height:18px; }
 .profe{ background:#FFC21A; color:#4A3300; font-size:14px; padding:4px 12px; border-radius:999px; box-shadow:0 3px 0 #DDA312; }
 .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:21px; }
 .logo svg{ width:42px; height:42px; overflow:visible; }
@@ -360,6 +361,24 @@ body.busy .canvas .blk{ cursor:default; }
 .robot.moving .bob{ animation:squish var(--t) ease-in-out; }
 @keyframes squish{ 30%{ transform:scale(1.08,.92) translateY(4%); } 70%{ transform:scale(.95,1.06) translateY(-6%); } }
 .robot.shake .bob{ animation:shake .35s; }
+/* bucle infinito (niveles de recursión): GENI se marea (da vueltas y le giran estrellas) y después explota en grande */
+.robot.dizzy .bob{ animation:dizzy 1.2s ease-in-out forwards; }
+.robot .dz{ position:absolute; left:50%; top:-2%; width:0; height:0; z-index:4; animation:dzspin .85s linear infinite; }
+.robot .dz i{ position:absolute; font:normal 20px/1 sans-serif; color:#FFC21A; text-shadow:0 0 5px #fff,0 2px 0 #DDA312; }
+.robot .dz i:nth-child(1){ left:calc(var(--cs)*.30); top:-8px; } .robot .dz i:nth-child(2){ left:calc(var(--cs)*-.30 - 14px); top:-8px; } .robot .dz i:nth-child(3){ left:-8px; top:calc(var(--cs)*-.14 - 8px); }
+.robot.boom .bob{ animation:boom .95s ease-in forwards; } .robot.boom .shadow{ opacity:0; }
+.robot.boom::after{ content:""; position:absolute; inset:-170%; border-radius:50%; background:radial-gradient(circle,#FFFFFF 0,#FFF3C4 14%,#FFC21A 34%,#FF7A2E 52%,#FF5A62 64%,rgba(255,90,98,0) 72%); transform:scale(0); opacity:0; animation:blast .7s cubic-bezier(.1,.7,.3,1) .62s forwards; pointer-events:none; z-index:5; }
+.robot.boom::before{ content:""; position:absolute; inset:-120%; border-radius:50%; border:6px solid #FFF3C4; transform:scale(0); opacity:0; animation:ring .8s ease-out .7s forwards; pointer-events:none; z-index:5; }
+@keyframes dizzy{ 0%{ transform:rotate(0); } 12%{ transform:translateX(-7%) rotate(-14deg); } 26%{ transform:translateX(7%) rotate(15deg); } 40%{ transform:translateX(-9%) rotate(-20deg) scale(1.03); } 54%{ transform:translateX(9%) rotate(22deg) scale(1.05); } 68%{ transform:translateX(-6%) rotate(-26deg) scale(1.08); filter:saturate(1.5); } 84%{ transform:translateX(5%) rotate(28deg) scale(1.1); filter:saturate(1.8); } 100%{ transform:rotate(0) scale(1.12); filter:saturate(2); } }
+@keyframes dzspin{ to{ transform:rotate(360deg); } }
+@keyframes boom{ 0%{ transform:scale(1.12); } 15%{ transform:scale(1.35) rotate(-8deg); filter:brightness(1.4) saturate(2); } 30%{ transform:scale(1.6) rotate(8deg); filter:brightness(1.8) saturate(2.4); } 48%{ transform:scale(1.9) rotate(-10deg); filter:brightness(2.6) saturate(2.6); } 66%{ transform:scale(2.3) rotate(10deg); filter:brightness(4); opacity:1; } 100%{ transform:scale(3); filter:brightness(5); opacity:0; } }
+@keyframes blast{ 0%{ transform:scale(0); opacity:1; } 60%{ opacity:1; } 100%{ transform:scale(1.9); opacity:0; } }
+@keyframes ring{ 0%{ transform:scale(.1); opacity:.95; } 100%{ transform:scale(2.2); opacity:0; } }
+.fxflash{ position:fixed; inset:0; z-index:80; pointer-events:none; background:radial-gradient(circle,#FFFFFF 0,#FFE9A8 45%,#FFB347 100%); animation:fxflash .6s ease-out forwards; }
+@keyframes fxflash{ 0%{ opacity:0; } 12%{ opacity:.9; } 100%{ opacity:0; } }
+.cells.kaboom{ animation:kaboom .6s ease-out; }
+@keyframes kaboom{ 0%,100%{ transform:translate(0,0); } 10%{ transform:translate(-14px,8px) rotate(-1.2deg); } 25%{ transform:translate(13px,-9px) rotate(1deg); } 40%{ transform:translate(-10px,-6px); } 55%{ transform:translate(8px,6px); } 75%{ transform:translate(-4px,2px); } }
+.cell.scorch{ background-image:radial-gradient(circle,#3A2A1E 0,#5B4331 38%,rgba(91,67,49,.25) 62%,transparent 75%); }
 .robot.happy .bob{ animation:dance .7s ease-in-out 3; }
 @keyframes dance{ 25%{ transform:translateY(-26%) rotate(-14deg); } 50%{ transform:translateY(0) rotate(0); } 75%{ transform:translateY(-26%) rotate(14deg); } }
 @keyframes float{ 0%,100%{ transform:translateY(-2%); } 50%{ transform:translateY(3%); } }
@@ -382,7 +401,7 @@ body.busy .canvas .blk{ cursor:default; }
 .msg .ms svg{ width:24px; height:24px; }
 .msg .bigstars{ display:flex; gap:4px; margin-top:6px; }
 .msg .bigstars svg{ width:38px; height:38px; animation:starIn .55s cubic-bezier(.3,1.8,.5,1) backwards; }
-.msg .bigstars svg:nth-child(2){ animation-delay:.15s; } .msg .bigstars svg:nth-child(3){ animation-delay:.3s; }
+.msg .bigstars svg:nth-child(2){ animation-delay:.15s; } .msg .bigstars svg:nth-child(3){ animation-delay:.3s; } .msg .bigstars svg:nth-child(4){ animation-delay:.45s; } .msg .bigstars svg:nth-child(5){ animation-delay:.6s; }
 @keyframes starIn{ from{ transform:scale(0) rotate(-120deg); } }
 .msg .unl{ margin-top:8px; display:inline-flex; align-items:center; gap:6px; background:#FFF6D6; border:1.5px solid var(--star); border-radius:12px; padding:4px 12px; font-weight:700; font-size:16px; animation:bump .8s ease-in-out 3; }
 .msg .unl svg{ width:22px; height:22px; }
