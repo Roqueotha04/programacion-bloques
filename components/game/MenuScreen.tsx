@@ -1,7 +1,7 @@
 export function MenuScreen() {
   return (
     <main className="menu" id="menu">
-      <section className="hero">
+      <section className="hero" id="hero">
         <svg
           className="bigbot"
           viewBox="-50 -50 100 100"
@@ -26,8 +26,9 @@ export function MenuScreen() {
           </div>
         </div>
       </section>
+      <div id="worlds" />
       <div id="parts" />
-      <div className="sec">
+      <div className="sec" id="sec3">
         <span className="sico" style={{ background: "#DDF6FF" }} id="ico3" />
         <h2>Mapa propio</h2>
         <span className="sub">inventá un mapa y jugalo</span>

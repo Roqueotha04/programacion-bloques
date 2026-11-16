@@ -2,7 +2,7 @@
 /* Código extraído del juego original. No reescribir en React. */
 "use client";
 
-import { PARTS, GROUPS, MISSIONS, CHALLENGES, applyKids } from "./data";
+import { WORLDS, PARTS, GROUPS, MISSIONS, CHALLENGES, applyKids } from "./data";
 import {
   ACTS, DIRS, MAXSTEPS, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
   fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, limitFor, optFor,
@@ -36,11 +36,24 @@ export function boot() {
   else if(!SAVE.faces.includes("normal")) SAVE.faces.unshift("normal");
   if(!["robi","gato","astro","dino","lentes","rayo","caballero","rey"].includes(SAVE.skin)) SAVE.skin="robi";
   if(!Array.isArray(SAVE.codes)) SAVE.codes=[];
+  SAVE.codes=SAVE.codes.map(c=>c===3?4:c); /* Repetir pasó de la parte 3 a la 4: el código ya ingresado sigue valiendo */
   function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id).concat(CHALLENGES.map(c=>c.id)); SAVE.owned=["robi","gato","astro","dino","lentes","rayo","caballero","rey"]; SAVE.faces=["normal","guino","enojado","cool"]; } }
   /* el desafío de cada parte se abre al terminar (con al menos 1 estrella) todos sus niveles */  
-  function chOpen(ch){ return PROFE||partDone(SAVE.stars,ch.part); }  
+  function chOpen(ch){ return PROFE||(partDone(SAVE.stars,ch.part)&&!worldLocked(worldOf(ch.part))); }  
   applyProfe();  
-  function groupsNow(){ const gs=groupState(SAVE.stars,SAVE.codes); if(PROFE) gs.forEach(s=>s.open=true); return gs; }  
+  /* mundos: un mundo se abre al juntar estrellas en otro (WORLDS[].need); ?profe lo abre todo */
+  const worldOf=p=>PARTS.find(x=>x.id===p).world;
+  const worldParts=w=>PARTS.filter(p=>p.world===w);
+  const worldStars=w=>worldParts(w).reduce((a,p)=>a+MISSIONS.filter(m=>m.part===p.id).reduce((b,m)=>b+(SAVE.stars[m.id]||0),0)
+    +CHALLENGES.filter(c=>c.part===p.id).reduce((b,c)=>b+(SAVE.stars[c.id]||0),0),0);
+  const worldMax=w=>worldParts(w).reduce((a,p)=>a+3*(MISSIONS.filter(m=>m.part===p.id).length+CHALLENGES.filter(c=>c.part===p.id).length),0);
+  function worldLocked(w){ const n=WORLDS.find(x=>x.id===w).need; return !PROFE&&!!n&&worldStars(n.from)<n.stars; }
+  function worldWhy(w){ const n=WORLDS.find(x=>x.id===w).need; return `Juntá ${n.stars} estrellas en el Mundo ${n.from} (tenés ${worldStars(n.from)})`; }
+  let WORLD=null; /* mundo abierto en el menú; null = pantalla de mundos */
+  function groupsNow(){ const gs=groupState(SAVE.stars,SAVE.codes);
+    if(PROFE) gs.forEach(s=>s.open=true);
+    else gs.forEach(s=>{ const w=worldOf(s.g.part); if(worldLocked(w)){ s.open=false; s.worldLock=w; } });
+    return gs; }  
   function persist(){ try{ localStorage.setItem(KEY,JSON.stringify(SAVE)); }catch(e){} }  
   const earned=()=>Object.values(SAVE.stars).reduce((a,b)=>a+b,0);  
   const wallet=()=>earned()-SAVE.spent;  
@@ -200,26 +213,27 @@ export function boot() {
     
   /* ================= pantallas ================= */  
   let SCREEN="menu";  
-  function show(id){ SCREEN=id; ["menu","game","editor","shop"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); scrollTo(0,0);  
+  function show(id){ SCREEN=id; document.body.dataset.scr=id; document.body.dataset.world=(id==="menu"||id==="game")&&WORLD?WORLD:""; ["menu","game","editor","shop"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); scrollTo(0,0);  
     if(id!=="game"&&CH) endChallenge(); /* salir del juego cancela el desafío en curso */  
     const inCh=id==="game"&&!!(G&&G.map.ch);  
-    $("backBtn").classList.toggle("hidden",id==="menu"); $("logo").classList.toggle("hidden",id!=="menu");  
-    $("tTitle").classList.toggle("hidden",id==="menu"); $("tStars").classList.toggle("hidden",id!=="game"||inCh); $("tTimer").classList.toggle("hidden",!inCh); }  
+    const inW=id==="menu"&&!!WORLD; if(inW) setTop(WORLD,"Mundo "+WORLD+" · "+WORLDS.find(w=>w.id===WORLD).title);
+    $("backBtn").classList.toggle("hidden",id==="menu"&&!WORLD); $("logo").classList.toggle("hidden",id!=="menu"||inW);  
+    $("tTitle").classList.toggle("hidden",id==="menu"&&!inW); $("tStars").classList.toggle("hidden",id!=="game"||inCh); $("tTimer").classList.toggle("hidden",!inCh); }  
   function setTop(num,name){ $("tNum").innerHTML=num; $("tName").textContent=name; }  
   function renderTopStars(){ const k=G&&G.map.id!=="custom"?(SAVE.stars[G.map.id]||0):0; $("tStars").innerHTML=starRow(k,"rgba(255,255,255,.45)"); }  
-  $("backBtn").onclick=()=>{ if(SCREEN==="game") stopRun(); renderMenu(); show("menu"); };  
+  $("backBtn").onclick=()=>{ if(SCREEN==="game") stopRun(); else if(SCREEN==="menu") WORLD=null; renderMenu(); show("menu"); };  
   $("wallet").onclick=()=>openShop();  
     
   /* ================= menú ================= */  
   function miniMap(rows,s=14){ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},${s}px);--ms:${s}px">`;  
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }  
-  function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===6?ICO.blocks():ICO.ifq(); }  
-  function lockWhy(st){ return st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }  
+  function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.music():p===4?ICO.repeat():p===5?ICO.blocks():p===6?ICO.bulb():ICO.ifq(); }  
+  function lockWhy(st){ return st.worldLock?worldWhy(st.worldLock):st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }  
   function renderMenu(){  
     $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();  
     $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`;  
-    const GS=groupsNow(); let h="", i=0, fresh=false;  
-    for(const P of PARTS){  
+    const GS=groupsNow(); let h="", i=0, fresh=false; const HW={1:"",2:"",3:""}, IW={1:0,2:0,3:0}; /* IW: contador de entrada por mundo, así la animación no espera a las cards de otros mundos */
+    for(const P of PARTS){ h=""; i=IW[P.world];  
       /* una card por parte; cada grupo de niveles se abre por separado */  
       const sts=GS.filter(s=>s.g.part===P.id), ms=MISSIONS.filter(m=>m.part===P.id), got=ms.reduce((a,m)=>a+(SAVE.stars[m.id]||0),0);  
       h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+  
@@ -234,25 +248,40 @@ export function boot() {
           return `<button class="card${k===3?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}"${st.needCode?` data-code="${st.needCode}"`:""} style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+
             (st.open?`<div class="stars">${starRow(k)}</div>`:`<span class="need">${need}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`; }).join("");  
       }  
-      h+=`</div></section>`;  
-    }  
-    /* card aparte: los desafíos extra, para los que terminan antes */  
-    const chGot=CHALLENGES.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0);  
-    h+=`<section class="grp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+  
-      `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos extra</h3><span class="gsub">3 niveles seguidos, con cronómetro</span></div>`+  
-      `<span class="gprog">${starIco(true)} ${chGot} / ${CHALLENGES.length*3}</span></div>`;  
-    for(const ch of CHALLENGES){  
-      const open=chOpen(ch), isNew=open&&!SAVE.seen.includes(ch.id);  
-      if(isNew){ SAVE.seen.push(ch.id); fresh=true; }  
-      h+=chCard(ch,i++,open,isNew);  
-    }  
-    h+=`</section>`;  
-    $("parts").innerHTML=h;  
+      h+=`</div></section>`; HW[P.world]+=h; IW[P.world]=i;
+    }
+    /* en cada mundo, una card aparte con los desafíos extra de sus partes, para los que terminan antes */
+    for(const W of WORLDS){ const chs=CHALLENGES.filter(c=>worldOf(c.part)===W.id); if(!chs.length) continue;
+      const chGot=chs.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0); i=IW[W.id];
+      h=`<section class="grp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+
+        `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos extra</h3><span class="gsub">3 niveles seguidos, con cronómetro</span></div>`+
+        `<span class="gprog">${starIco(true)} ${chGot} / ${chs.length*3}</span></div>`;
+      for(const ch of chs){
+        const open=chOpen(ch), isNew=open&&!SAVE.seen.includes(ch.id);
+        if(isNew){ SAVE.seen.push(ch.id); fresh=true; }
+        h+=chCard(ch,i++,open,isNew);
+      }
+      HW[W.id]+=h+`</section>`; IW[W.id]=i; }
+    i=0; renderWorlds(HW);  
     let c=`<button class="card make" id="makeBtn" style="--i:${i++}"><span class="plus">+</span><h3>Creá tu mapa</h3></button>`;  
     if(SAVE.custom) c+=`<button class="card" data-id="custom" style="--i:${i}">${miniMap(SAVE.custom.rows)}<h3>Mi mapa</h3></button>`;  
-    $("cards3").innerHTML=c;  
+    $("cards3").innerHTML=c;
+    ["hero","worlds","sec3","cards3"].forEach(id=>$(id).classList.toggle("hidden",!!WORLD)); $("parts").classList.toggle("hidden",!WORLD);  
     if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); }  
   }  
+  /* pantalla de mundos (WORLD=null) o página del mundo elegido */
+  const SOON_EV=`<section class="soonev"><div class="evpad"><span class="ek u">${ICO.arrow("u")}</span><span class="ek l">${ICO.arrow("l")}</span><span class="ek d">${ICO.arrow("d")}</span><span class="ek r">${ICO.arrow("r")}</span></div>`+
+    `<div class="evtxt"><span class="evtag">Próximamente</span><h3>Eventos con flechas</h3><p>Cada flecha va a tener su propio programa. El robot junta cosas, las guarda en el inventario y termina cruzando un portal.</p>`+
+    `<div class="evinv"><i></i><i></i><i></i><i></i></div></div><div class="evportal"></div></section>`;
+  function renderWorlds(HW){
+    $("worlds").innerHTML=WORLDS.map(W=>{ const soon=!worldParts(W.id).length, locked=!soon&&worldLocked(W.id), got=worldStars(W.id), max=worldMax(W.id),
+      ico=W.id===1?ICO.blocks():W.id===2?ICO.ifq():ICO.arrow("r"), names=worldParts(W.id).map(p=>`<span class="wchip">${p.title}</span>`).join("");
+      return `<button class="wcard${locked?" locked":""}${soon?" soon":""}" data-w="${W.id}" data-world="${W.id}" data-why="${soon?"Próximamente":locked?worldWhy(W.id):""}" style="--wc:${W.c};--wl:${W.l};--i:${W.id}">`+
+        `<span class="wnum">Mundo ${W.id}</span><span class="wico">${ico}</span><h2>${W.title}</h2><p>${W.sub}</p><div class="wchips">${names}</div>`+
+        (soon?`<span class="need">Próximamente</span>`:locked?`<span class="need">${ICO.lock("#9A5A00")}${worldWhy(W.id)}</span>`:`<span class="gprog">${starIco(true)} ${got} / ${max}</span>`)+`</button>`; }).join("");
+    if(WORLD){ const W=WORLDS.find(w=>w.id===WORLD);
+      $("parts").innerHTML=`<section class="wbanner"><h2>${W.title}</h2><span>${W.sub}</span></section>`+HW[WORLD]+(WORLD===3?SOON_EV:""); }
+  }
   function chCard(ch,i,open,isNew){  
     const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la ${partName(ch.part)}`;  
     return `<button class="chcard${open?"":" locked"}${k===3?" s3":""}${isNew?" new":""}" data-ch="${ch.id}" data-why="${why}" style="--i:${i}">`+  
@@ -302,7 +331,10 @@ export function boot() {
     resetResetBtn(); renderMenu(); SND.trash(); toast(ICO.robot(),"Progreso borrado. ¡A empezar de nuevo!"); }  
   $("menu").addEventListener("click",e=>{  
     if(e.target.closest("#shopBtn")) return openShop();  
-    if(e.target.closest("#resetBtn")) return askReset();  
+    if(e.target.closest("#resetBtn")) return askReset();
+    const wc=e.target.closest(".wcard");
+    if(wc){ if(wc.classList.contains("locked")||wc.classList.contains("soon")){ bumpEl(wc,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),wc.dataset.why); }
+      WORLD=+wc.dataset.w; renderMenu(); return show("menu"); }  
     const x=e.target.closest(".chcard");  
     if(x){ if(x.classList.contains("locked")){ bumpEl(x,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),x.dataset.why); }  
       return startChallenge(CHALLENGES.find(c=>c.id===x.dataset.ch)); }  

@@ -2,14 +2,21 @@
 /* Código extraído del juego original. No reescribir en React. */
 /* partes = cards del menú. after: partes que hay que superar (niveles + desafío extra) para abrirla.
    code: código que da el profe para abrirla (sin importar mayúsculas, espacios ni tildes) */
+/* mundos = páginas del menú. Cada uno agrupa partes (PARTS[].world) y tiene su propio look (data-world en el body, ver game.css).
+   need: el mundo se abre al juntar `stars` estrellas (niveles y desafíos) en el mundo `from`. soon: sin niveles todavía */
+export const WORLDS=[
+ {id:1,title:"Órdenes",sub:"el robot sigue tus órdenes, paso a paso",c:"#3B82F0",l:"#DCE9FF"},
+ {id:2,title:"Decisiones",sub:"el robot mira el mapa y decide solo",c:"#0EA5A4",l:"#CCF5F0",need:{from:1,stars:100}},
+ {id:3,title:"Eventos",sub:"el robot reacciona a lo que pasa",c:"#8B5CF6",l:"#E9DEFF",need:{from:2,stars:15}}
+];
 export const PARTS=[
- {id:1,title:"Secuencia",sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
- {id:2,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
- {id:3,title:"Bailar",sub:"pintar, bailar y juntar baterías",c:"#EC4899",l:"#FCE0EF",after:[2]},
- {id:4,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[3],code:"genIArepetir"},
- {id:5,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[2]},
+ {id:1,title:"Secuencia",world:1,sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
+ {id:2,title:"Pintar",world:1,sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
+ {id:3,title:"Bailar",world:1,sub:"pintar, bailar y juntar baterías",c:"#EC4899",l:"#FCE0EF",after:[2]},
+ {id:4,title:"Repetir",world:1,sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[3],code:"genIArepetir"},
+ {id:5,title:"Funciones",world:1,sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[2]},
  /* la parte 6 (Mundos) se agrega más abajo; la 7 (Si) va última */
- {id:7,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,4]}
+ {id:7,world:3,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,4]}
 ];
 /* cls: reglas (1 = meta de bloques, 2 = máximo de bloques).
    tools: bloques extra (r repetir, n pincel, p pintar de un toque, b bailar, i si).
@@ -40,7 +47,7 @@ export const GROUPS=[
 /* ===== Mundos (inicio) ===== */
 /* el mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
    reveal: se muestran las miniaturas de los mundos antes de correr. conds: condiciones del bloque si. pool+show: se sortean show mundos del pool */
-PARTS.push({id:6,title:"Mundos",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[2,4]});
+PARTS.push({id:6,world:2,title:"Condicional",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[2,4]});
 GROUPS.push(
  {id:"S",part:6,cls:2,tools:"rpbie",strict:true,title:"El mapa cambia",sub:"las celdas cambian de lugar",need:0,c:"#6366F1",l:"#E0E1FF"},
  {id:"T",part:6,cls:2,tools:"rie",strict:true,title:"Paredes",sub:"el robot siente las paredes",need:6,c:"#0EA5E9",l:"#D3F0FC"},
