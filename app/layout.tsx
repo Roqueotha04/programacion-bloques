@@ -3,9 +3,9 @@ import "./globals.css";
 import "./game.css";
 
 export const metadata: Metadata = {
-  title: "Programación por bloques",
+  title: "Programa con GENI",
   description:
-    "Arrastrá los bloques, armá el programa y llevá al robot hasta la estrella.",
+    "Arrastrá los bloques, armá el programa y llevá a GENI hasta la estrella.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

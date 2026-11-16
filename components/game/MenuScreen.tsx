@@ -10,9 +10,9 @@ export function MenuScreen() {
           aria-hidden="true"
         />
         <div className="htxt">
-          <h1 id="heroTitle" aria-label="Programación por bloques" />
+          <h1 id="heroTitle" aria-label="Programa con GENI" />
           <p>
-            Arrastrá los bloques, armá el programa y llevá al robot hasta la
+            Arrastrá los bloques, armá el programa y llevá a GENI hasta la
             estrella.
           </p>
           <div className="herobtns">

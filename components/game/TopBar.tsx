@@ -9,7 +9,7 @@ export function TopBar() {
           data-look="r"
           aria-hidden="true"
         />
-        <span>Programación por bloques</span>
+        <span>Programa con GENI</span>
       </div>
       <div className="ttitle hidden" id="tTitle">
         <span className="badge" id="tNum" />

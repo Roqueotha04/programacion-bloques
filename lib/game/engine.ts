@@ -56,6 +56,14 @@ export function tryAct(map,S,a){
 /* color de la celda del robot para el bloque si: "x" roja sin pintar, "v" verde */
 export function cellColor(map,S){ const ch=map.rows[S.r][S.c]; return ch==="X"&&!S.pnt.includes(S.r+","+S.c)?"x":ch==="V"?"v":""; }
 
+/* sensor del bloque si: "x" roja sin pintar, "v" verde (como cellColor) y de pared por dirección absoluta:
+   "wu","wd","wl","wr" = hay pared o borde de ese lado; "nu","nd","nl","nr" = NO hay pared de ese lado */
+export function sense(map,S,c){
+  if(c==="x"||c==="v") return cellColor(map,S)===c;
+  const d=DIRS[c[1]]; if(!d) return false;
+  const r=S.r+d[0], k=S.c+d[1], wall=r<0||k<0||r>=map.rows.length||k>=map.rows[0].length||map.rows[r][k]==="#";
+  return c[0]==="n"?!wall:wall; }
+
 /* camino más corto (cada acción = 1 bloque) desde S: junta baterías, pinta rojas, baila en verdes y llega a la estrella si hay.
    Con pincel (tools «n») busca usarlo y guardarlo sin pintar nunca una celda que no sea roja.
    Devuelve [[fila,col,acción],...] (acción: u d l r, n/f pincel, p pintar, b bailar) */
@@ -90,21 +98,33 @@ export function shortest(map,S){
 
 /* recorre el programa: "loop" al empezar cada vuelta de un repetir, "if" al preguntar, y una acción por cada bloque.
    test(color) se consulta en el momento, así el si ve la celda donde está el robot */
-export function* walk(list,test,prefix=[]){
+/* funcs: {A:[...],B:[...]} cuerpos de las funciones. «call» emite {t:"call",addr,f} y recorre el cuerpo con dirección ["A",i,...]
+   (dentro de una función prefix[0] es su letra). Una función solo puede llamar a otra anterior (B llama a A, A no llama a nadie):
+   así no hay recursión ni bucles. El call que no cumple la regla se emite igual pero no se expande */
+export function* walk(list,test,prefix=[],funcs=null){
+  const ifr=[]; /* respuesta de cada si de esta lista: el «si no» mira el bloque anterior */
   for(let i=0;i<list.length;i++){ const b=list[i], addr=prefix.concat(i);
     if(b.t==="move") yield {t:"move",addr,dir:b.dir};
     else if(ACTS[b.t]) yield {t:b.t,addr};
-    else if(b.t==="if"){ const ok=test(b.c); yield {t:"if",addr,ok}; if(ok) yield* walk(b.body,test,addr); }
-    else for(let k=0;k<b.n;k++){ yield {t:"loop",addr,k,n:b.n}; yield* walk(b.body,test,addr); } }
+    else if(b.t==="call"){ yield {t:"call",addr,f:b.f}; const cur=typeof prefix[0]==="string"?prefix[0]:null;
+      if(funcs&&funcs[b.f]&&(cur===null||b.f<cur)) yield* walk(funcs[b.f],test,[b.f],funcs); }
+    else if(b.t==="if"){ const ok=test(b.c); ifr[i]=ok; yield {t:"if",addr,ok}; if(ok) yield* walk(b.body,test,addr,funcs); }
+    else if(b.t==="else"){ const ok=i>0&&list[i-1].t==="if"&&ifr[i-1]===false; yield {t:"else",addr,ok}; if(ok) yield* walk(b.body,test,addr,funcs); }
+    else for(let k=0;k<b.n;k++){ yield {t:"loop",addr,k,n:b.n}; yield* walk(b.body,test,addr,funcs); } }
 }
 export function countBlocks(list){ return list.reduce((a,b)=>a+1+(b.body?countBlocks(b.body):0),0); }
+/* con funciones: cada cuerpo cuenta una sola vez + los bloques del programa (cada call cuenta 1) */
+export function countProgram(prog,funcs){ return countBlocks(prog)+Object.values(funcs||{}).reduce((a,l)=>a+countBlocks(l),0); }
+export function hasCall(list){ return list.some(b=>b.t==="call"||(b.body&&hasCall(b.body))); }
+/* el mismo programa con cada call reemplazado por el cuerpo de su función */
+export function inlineCalls(list,funcs){ return list.flatMap(b=>b.t==="call"?inlineCalls(funcs[b.f]||[],funcs):b.body?[{...b,body:inlineCalls(b.body,funcs)}]:[b]); }
 export function hasRepeat(list){ return list.some(b=>b.t==="repeat"); }
-export function hasIf(list){ return list.some(b=>b.t==="if"||(b.body&&hasIf(b.body))); }
+export function hasIf(list){ return list.some(b=>b.t==="if"||b.t==="else"||(b.body&&hasIf(b.body))); }
 /* opt y límites cuentan el bloque «al tocar» */
-export function optFor(map,path){ return map.cls===2?map.max:map.need?null:(path?path.length+1:null); }
-export function limitFor(map,opt){ return map.cls===2?map.max:map.cls===1&&opt!=null?opt+2:MAXB; }
+export function optFor(map,path){ return map.cls>=2?map.max:map.need?null:(path?path.length+1:null); }
+export function limitFor(map,opt){ return map.cls>=2?map.max:map.cls===1&&opt!=null?opt+2:MAXB; }
 export function starsFor(map,count,usedRep,opt,hint,wrong){
-  let k=map.cls===2?(usedRep?3:2):(opt==null||count<=opt?3:2);
+  let k=map.cls>=2?(usedRep?3:2):(opt==null||count<=opt?3:2);
   if(wrong) k=Math.min(k,2); if(hint) k--; return Math.max(1,k);
 }
 /* grupos: cada parte tiene su cadena. El primero se abre al terminar las partes «after»;
@@ -131,32 +151,67 @@ export function groupState(stars,codes=[]){
     else { gate=prev.gate; needCode=prev.needCode; prevLeft=prev.ms.length-prev.done; open=prev.open&&prevLeft===0&&earned>=g.need; }
     return prev={g,ms,done,open,prevLeft,prevTitle:prev&&prev.g.title,gate,needCode,earned}; });
 }
-export function parseSol(s){ let i=0;
+/* notación de la solución: u d l r mover, p b n f acciones, «N(...)» repetir N veces, «?x(...)» si roja, «?v(...)» si verde,
+   «?wr(...)» si pared a la derecha (condición de 2 letras: w/n = hay/no hay pared + u d l r), «!(...)» si no (del si anterior).
+   Funciones (mayúscula): «A=(r r u)» define A (en cualquier lugar, se separa con «;»), «A» sola la llama.
+   parseSolF devuelve {prog,funcs}; parseSol solo el programa */
+export function parseSolF(s){ let i=0; const funcs={};
   function list(){ const out=[];
     while(i<s.length){ const ch=s[i];
-      if(ch===" "){ i++; continue; }
+      if(ch===" "||ch===";"){ i++; continue; }
+      if(/[A-Z]/.test(ch)){ if(s[i+1]==="="){ i+=3; funcs[ch]=list(); } else { out.push({t:"call",f:ch}); i++; } continue; }
       if(ch===")"){ i++; return out; }
       if(/\d/.test(ch)){ let num=""; while(/\d/.test(s[i])) num+=s[i++]; i++; out.push({t:"repeat",n:+num,body:list()}); }
-      else if(ch==="?"){ const c=s[i+1]; i+=3; out.push({t:"if",c,body:list()}); }
+      else if(ch==="?"){ i++; let c=""; while(s[i]!=="(") c+=s[i++]; i++; out.push({t:"if",c,body:list()}); }
+      else if(ch==="!"){ i+=2; out.push({t:"else",body:list()}); }
       else { const a=Object.keys(ACTS).find(k=>ACTS[k]===ch); out.push(a?{t:a}:{t:"move",dir:ch}); i++; } }
     return out; }
-  return list(); }
-export function simulate(map,prog){ let S=startState(map), n=0;
-  for(const ev of walk(prog,c=>cellColor(map,S)===c)){ if(++n>MAXSTEPS) return {k:"long"};
+  const prog=list(); return {prog,funcs}; }
+export function parseSol(s){ return parseSolF(s).prog; }
+export function simulate(map,prog,funcs=null){ let S=startState(map), n=0;
+  for(const ev of walk(prog,c=>sense(map,S,c),[],funcs)){ if(++n>MAXSTEPS) return {k:"long"};
     if(ev.t==="move"){ const res=tryMove(map,S,ev.dir); if(res.k==="crash") return res; S=res.S; if(res.k==="win") return res; }
     else if(ACTS[ev.t]){ const res=tryAct(map,S,ACTS[ev.t]); if(res.k==="bad") return res; S=res.S; } }
   return !hasE(map)&&goalMet(map,S)?{k:"win",S}:{k:"end",S}; }
-export function maxRun(list){ const s=[...walk(list,()=>false)].filter(e=>e.t!=="loop"&&e.t!=="if").map(e=>e.t==="move"?e.dir:ACTS[e.t]).join(""); return s?Math.max(...s.match(/(.)\1*/g).map(x=>x.length)):0; }
+export function maxRun(list){ const s=[...walk(list,()=>false)].filter(e=>e.t!=="loop"&&e.t!=="if"&&e.t!=="else"&&e.t!=="call").map(e=>e.t==="move"?e.dir:ACTS[e.t]).join(""); return s?Math.max(...s.match(/(.)*/g).map(x=>x.length)):0; }
 /* el mismo programa sin los si (todo lo de adentro siempre): en los niveles de Si tiene que fallar */
-export function stripIf(list){ return list.flatMap(b=>b.t==="if"?stripIf(b.body):b.body?[{...b,body:stripIf(b.body)}]:[b]); }
+export function stripIf(list){ return list.flatMap(b=>b.t==="if"||b.t==="else"?stripIf(b.body):b.body?[{...b,body:stripIf(b.body)}]:[b]); }
+/* ===== Mundos (inicio) ===== */
+/* un mapa puede traer worlds:[rows0,rows1,...] (rows = worlds[0]) y pool (más mundos de los que se muestran, show por intento) */
+export function worldsOf(map){ return map.pool||map.worlds||[map.rows]; }
+export function worldMap(map,rows){ return {...map,rows}; }
+/* mundos de un intento: sin pool, todos en orden; con pool, el 0 más (show-1) distintos sorteados */
+export function pickWorlds(map,rnd=Math.random){ const all=worldsOf(map);
+  if(!map.pool||!map.show||map.show>=all.length) return all;
+  const rest=all.slice(1).map(w=>[rnd(),w]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]), out=[all[0]];
+  for(const w of rest){ if(out.length>=map.show) break; if(!out.some(o=>o.join("")===w.join(""))) out.push(w); }
+  return out; }
+/* corre el programa en cada mundo: gana solo si gana en todos; si falla devuelve el resultado con world:i */
+export function simulateAll(map,prog,list=worldsOf(map),funcs=null){ let wrong=0, S=null;
+  for(let i=0;i<list.length;i++){ const r=simulate(worldMap(map,list[i]),prog,funcs);
+    if(r.k!=="win") return {...r,world:i};
+    S=r.S; wrong=Math.max(wrong,(r.S&&r.S.wrong)||0); }
+  return {k:"win",S:{...S,wrong}}; }
+/* mundos válidos: mismo tamaño, robot, estrella y baterías; y ningún camino fijo (el más corto de cada mundo) sirve en todos */
+function worldsCheck(m){ const ws=worldsOf(m), a=ws[0], info=[]; let ok=ws.length>=2;
+  ws.forEach((w,i)=>{ const same=w.length===a.length&&w.every(r=>r.length===a[0].length)&&find(w,"R")+""===find(a,"R")+""&&find(w,"E")+""===find(a,"E")+""&&countB(w)===countB(a);
+    const mm=worldMap(m,w), path=shortest(mm,startState(mm));
+    let memo=false; if(path){ const flat=path.map(([,,x])=>{ const k=Object.keys(ACTS).find(q=>ACTS[q]===x); return k?{t:k}:{t:"move",dir:x}; }); memo=simulateAll(m,flat,ws).k==="win"; }
+    if(!same||!path||memo) ok=false; if(!same) info.push("w"+i+" distinto"); if(!path) info.push("w"+i+" sin camino"); if(memo) info.push("w"+i+" memorizable"); });
+  return {ok,info:ws.length+" mundos"+(info.length?" ✖ "+info.join(","):"")}; }
+/* ===== Mundos (fin) ===== */
 export function selfTest(){
-  const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>{ const sol=parseSol(m.sol), sim=simulate(m,sol), path=shortest(m,startState(m)), cnt=countBlocks(sol)+1, used=hasRepeat(sol);
+  const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>{ const {prog:sol,funcs:fn}=parseSolF(m.sol), sim=m.worlds?simulateAll(m,sol,undefined,fn):simulate(m,sol,fn), path=shortest(m,startState(m)), cnt=countProgram(sol,fn)+1, used=m.cls===3?hasCall(sol):hasRepeat(sol);
     const opt=optFor(m,path), lim=limitFor(m,opt), run=maxRun(sol), cond=m.tools.includes("i");
     /* todos los niveles terminan en la estrella: se gana al llegar con todo hecho */
     let ok=hasE(m)&&sim.k==="win"&&!!path&&cnt<=lim&&starsFor(m,cnt,used,opt,false,sim.S&&sim.S.wrong)===3;
     if(m.cls===1) ok=ok&&!used&&(m.need||(cnt===opt&&run<=3)); else ok=ok&&used;
-    if(cond) ok=ok&&hasIf(sol)&&simulate(m,stripIf(sol)).k!=="win";
-    return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1&&!m.need?" seguidos:"+run:""}${cond?" sin si: "+simulate(m,stripIf(sol)).k:""}`}; });
+    /* cls 3: la versión sin funciones (call -> cuerpo) tiene que pasarse del máximo, si no la función no hace falta */
+    if(m.cls===3) ok=ok&&m.tools.includes("f")&&countBlocks(inlineCalls(sol,fn))+1>lim;
+    const noIf=()=>m.worlds?simulateAll(m,stripIf(sol),undefined,fn):simulate(m,stripIf(sol),fn);
+    if(cond) ok=ok&&hasIf(sol)&&noIf().k!=="win";
+    if(m.worlds) ok=ok&&worldsCheck(m).ok;
+    return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1&&!m.need?" seguidos:"+run:""}${cond?" sin si: "+noIf().k:""}${m.worlds?" "+worldsCheck(m).info:""}`}; });
   /* con 2 estrellas en todo lo anterior de la parte alcanza para abrir cada grupo */
   PARTS.forEach(p=>{ let before=0; GROUPS.filter(g=>g.part===p.id).forEach(g=>{ const ok=g.need<=before*2; res.push({id:g.id,title:"Grupo "+g.title,ok,info:`pide ${g.need}, máx ${before*3}`}); before+=MISSIONS.filter(m=>m.grp===g.id).length; }); });
   return res;

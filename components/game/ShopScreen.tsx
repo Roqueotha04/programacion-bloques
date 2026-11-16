@@ -10,11 +10,14 @@ export function ShopScreen() {
         <h3>Diseños</h3>
         <div className="skins" id="skins" />
         <p className="tip">
-          Tocá un diseño para comprarlo con estrellas (tocá dos veces para
-          confirmar).
+          Tocá para comprar con estrellas. Dos veces para confirmar.
         </p>
-        <h3>Colores</h3>
-        <div className="swatches" id="swatches" />
+        <h3>Caras</h3>
+        <div className="skins" id="faces" />
+        <h3>Cuerpo</h3>
+        <div className="swatches" id="bodies" />
+        <h3>Detalle</h3>
+        <div className="swatches" id="accents" />
       </div>
     </main>
   );
