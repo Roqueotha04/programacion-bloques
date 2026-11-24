@@ -36,7 +36,7 @@ Partes, siempre en este orden (**Mundos y Si están comentadas en `data.ts` de m
 - Es **la única variante por edad** y la única URL de edición. No agregues otras URLs de edición salvo que te lo pidan.
 - `applyKids()` en `data.ts` deja solo los niveles listados en `KIDS.missions`, saca las partes que quedan sin niveles (Funciones, Mundos, Si) y suma 30 s a los desafíos. Sus partes 3 y 4 son Bailar y Repetir. Guarda en `robot-bloques-chicos`. Se combina con `?profe` y `?test`.
 - `KIDS.need` fija las estrellas que pide cada grupo en esta edición (2 por nivel anterior de la parte).
-- `KIDS_EXTRA` son niveles que solo existen en esta edición (van justo después del nivel `after`): hoy `r1` y `r2`, los pasillos simples de Repetir.
+- `KIDS_EXTRA` son niveles que solo existen en esta edición (van justo después del nivel `after`): hoy `f2` «Repetir adentro», `r2` «Baile cada dos» y `r5` «Dos pasillos» (f2 y r5 salieron del juego normal, que tiene 8 niveles de Repetir).
 - **Regla de cantidad: en cada parte, los chicos de 6 a 8 hacen menos o igual cantidad de niveles que el resto, nunca más.** Los niveles exclusivos de `KIDS_EXTRA` cuentan. Lo que se agrega o se saca para el juego normal **no** se le agrega o saca automáticamente a los chicos: la lista `KIDS.missions` se decide aparte. `selfTest` lo controla (`NORMAL_COUNT` en `data.ts`: niveles por parte del juego normal) y falla si los chicos pasan al resto en alguna parte.
 - Los ids de nivel son únicos en todo el juego (en chicos un id repetido trae a otra parte).
 
