@@ -44,7 +44,7 @@ export function boot() {
   else if(!SAVE.faces.includes("normal")) SAVE.faces.unshift("normal");
   if(!["robi","gato","astro","dino","lentes","rayo","caballero","rey"].includes(SAVE.skin)) SAVE.skin="robi";
   if(!Array.isArray(SAVE.codes)) SAVE.codes=[];
-  function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id).concat(CHALLENGES.map(c=>c.id)); SAVE.owned=["robi","gato","astro","dino","lentes","rayo","caballero","rey"]; SAVE.faces=["normal","guino","enojado","cool"]; } }
+  function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id).concat(CHALLENGES.map(c=>c.id)); SAVE.owned=["robi","gato","chica","astro","dino","princesa","lentes","rayo","caballero","valquiria","rey"]; SAVE.faces=["normal","guino","enojado","cool"]; } }
   /* el desafío de cada parte se abre al terminar (con al menos 1 estrella) todos sus niveles */
   
   function chOpen(ch){ return PROFE||partDone(SAVE.stars,ch.part); }
@@ -66,11 +66,26 @@ export function boot() {
   /* cuerpo: relleno de la cara. detalle: [fuerte, claro, nombre] para aro, cuello y costados */
   const BODIES={gris:["#E4EBF3","Gris"],blanco:["#FFFFFF","Blanco"],cel:["#D7F0FF","Celeste"],ver:["#D8F8EC","Verde"],nar:["#FFE8CC","Naranja"],ros:["#FFD9EC","Rosa"],vio:["#E6DEFF","Violeta"],ama:["#FFF3C4","Amarillo"]};
   const ACCENTS={marino:["#14325C","#C5D9F0","Marino"],cel:["#2FB0F0","#BDE8FF","Celeste"],ver:["#1EC48C","#BFF3DF","Verde"],nar:["#FF9A2E","#FFDDB8","Naranja"],ros:["#FF6FB5","#FFD0E6","Rosa"],vio:["#8B6CF0","#DCD2FF","Violeta"],ama:["#F5B800","#FFEBA6","Amarillo"]};
-  const SKINS=[{id:"robi",name:"GENI",price:0},{id:"gato",name:"Gatobot",price:6},{id:"astro",name:"Astro",price:12},{id:"dino",name:"Dinobot",price:18},{id:"lentes",name:"Lentes",price:24},{id:"rayo",name:"Rayo",price:30},{id:"caballero",name:"Caballero",price:36},{id:"rey",name:"Rey Robot",price:42}];
+  const SKINS=[{id:"robi",name:"GENI",price:0},{id:"gato",name:"Gatobot",price:6},{id:"chica",name:"Chica bot",price:9},{id:"astro",name:"Astro",price:12},{id:"dino",name:"Dinobot",price:18},{id:"princesa",name:"Princess",price:21},{id:"lentes",name:"Lentes",price:24},{id:"rayo",name:"Rayo",price:30},{id:"caballero",name:"Caballero",price:36},{id:"valquiria",name:"Valquiria bot",price:39},{id:"rey",name:"Rey Robot",price:42},
+    {id:"mega",name:"67 BOT",price:0,secret:"mega"},{id:"dios",name:"DIOS BOT",price:0,secret:"dios"}];
+  /* robots secretos: no se compran, se ganan. Los desafíos cuentan solo si se jugaron (mira el mejor tiempo, así los códigos de clase no los regalan) */
+  const all3=ms=>ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m));
+  const chPlayed3=ch=>{ const b=SAVE.best[ch.id]; return b!=null&&timeStars(ch,b)>=3; };
+  const SECRETS={
+    mega:{hint:"sacá 3 estrellas en todos los niveles de Repetir y Repetir avanzado, y en el Desafío de repetir",ok:()=>all3(MISSIONS.filter(m=>m.part===4||m.part===4.5))&&CHALLENGES.filter(c=>c.part===4).every(chPlayed3)},
+    dios:{hint:"sacá 3 estrellas en todos los niveles y todos los desafíos del juego",ok:()=>all3(MISSIONS)&&CHALLENGES.every(chPlayed3)}};
+  function secretOk(s){ return !s.secret||PROFE||SECRETS[s.secret].ok(); }
+  const skinOwned=s=>SAVE.owned.includes(s.id)||(!!s.secret&&secretOk(s));
+  const lockedSecrets=()=>SKINS.filter(s=>s.secret&&!skinOwned(s));
+  const secretMsgs=before=>before.filter(skinOwned).map(s=>`<div class="unl">${ICO.unlock()} ¡Ganaste un robot secreto: ${s.name}! Buscalo en el taller</div>`).join("");
   const FACES=[{id:"normal",name:"Normal",price:0},{id:"guino",name:"Guiño",price:8},{id:"enojado",name:"Enojado",price:12},{id:"cool",name:"Cool",price:16}];
   function robotSVG(o){
     o=Object.assign({skin:SAVE.skin,color:SAVE.color,body:SAVE.body,face:SAVE.face},o||{});
-    const [m,l]=ACCENTS[o.color]||ACCENTS.marino, b=(BODIES[o.body]||BODIES.gris)[0], k="#0D3049", s=o.skin, f=FACES.some(x=>x.id===o.face)?o.face:"normal", sw=`stroke="${k}" stroke-width="2.5" stroke-linejoin="round"`;
+    let [m,l]=ACCENTS[o.color]||ACCENTS.marino, b=(BODIES[o.body]||BODIES.gris)[0], k="#0D3049";
+    const s=o.skin, f=FACES.some(x=>x.id===o.face)?o.face:"normal";
+    if(s==="mega"){ m="#0B0F1A"; l="#22D3FF"; b="#151A27"; k="#22D3FF"; } /* 67 BOT: negro con azul neón, sin importar los colores elegidos */
+    if(s==="dios"){ m="#F1F4F9"; l="#FFD34D"; b="#FFFFFF"; k="#B8901A"; } /* DIOS BOT: blanco y dorado */
+    const sw=`stroke="${k}" stroke-width="2.5" stroke-linejoin="round"`;
     const eye=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="#57E1FF"/>`;
     let pupils=eye(-13,-16,8,12)+eye(5,-16,8,12);
     let mouth=`<path d="M-6 11 Q0 15 6 11" stroke="${m}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
@@ -110,13 +125,44 @@ export function boot() {
     if(s==="rey"){
       back=`<path d="M-32 -4 Q-50 34 -38 40 H38 Q50 34 32 -4Z" fill="#C8102E" ${sw}/>`;
       front=`<path d="M-24 -34 L-28 -62 L-13 -44 L0 -68 L13 -44 L28 -62 L24 -34Z" fill="#FFC21A" ${sw}/><circle cx="0" cy="-50" r="4" fill="#FF5A62" stroke="${k}" stroke-width="1.4"/><circle cx="-13" cy="-43" r="2.8" fill="#57E1FF" stroke="${k}" stroke-width="1.2"/><circle cx="13" cy="-43" r="2.8" fill="#7DFFB2" stroke="${k}" stroke-width="1.2"/>`; }
-    return `<g class="flame"><path d="M-10 30 Q0 52 10 30Z" fill="${l}"/><path d="M-5 30 Q0 43 5 30Z" fill="#fff"/></g>${back}
+    /* chicas: pestañas y cachetes (con la cara normal o guiño) */
+    const lashes=f==="normal"||f==="guino"?`<path d="M-12 -17 L-14 -21 M-9 -17 L-9 -22 M-6 -17 L-4 -21 M6 -17 L4 -21 M9 -17 L9 -22 M12 -17 L14 -21" stroke="#57E1FF" stroke-width="1.6" stroke-linecap="round"/>`:"";
+    const blush=`<circle cx="-20" cy="10" r="4" fill="#FF9CCB" opacity=".85"/><circle cx="20" cy="10" r="4" fill="#FF9CCB" opacity=".85"/>`;
+    if(s==="chica")
+      front=`<path d="M12 -33 L0 -44 L1 -24Z" fill="#FF6FB5" ${sw}/><path d="M12 -33 L25 -43 L23 -23Z" fill="#FF6FB5" ${sw}/><circle cx="12" cy="-33" r="4.5" fill="#FF9CCB" ${sw}/>`+lashes+blush;
+    if(s==="princesa"){
+      back=`<path d="M-31 -12 Q-34 -42 0 -42 Q34 -42 31 -12 Q40 14 36 34 Q28 30 26 18 H-26 Q-28 30 -36 34 Q-40 14 -31 -12Z" fill="#FFC94D" ${sw}/>`;
+      front=`<path d="M-15 -30 L-13 -41 L-6 -34 L0 -45 L6 -34 L13 -41 L15 -30Z" fill="#FFD84D" ${sw}/><circle cx="0" cy="-36" r="3" fill="#FF6FB5" stroke="${k}" stroke-width="1.2"/>`+lashes+blush; }
+    if(s==="valquiria"){
+      const braid=x=>[6,15,24,33].map(y=>`<circle cx="${x}" cy="${y}" r="4.6" fill="#F5B800" stroke="${k}" stroke-width="2"/>`).join("");
+      back=`<path d="M-26 -24 C-44 -30 -52 -46 -46 -60 C-40 -48 -33 -44 -24 -40Z" fill="#fff" ${sw}/><path d="M26 -24 C44 -30 52 -46 46 -60 C40 -48 33 -44 24 -40Z" fill="#fff" ${sw}/>`+
+        `<path d="M-29 -30 Q-39 -37 -41 -49 M-33 -26 Q-45 -32 -47 -43 M29 -30 Q39 -37 41 -49 M33 -26 Q45 -32 47 -43" stroke="${k}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`+braid(-31)+braid(31);
+      front=`<path d="M-29 -10 C-31 -46 31 -46 29 -10 L24 -10 C24 -33 -24 -33 -24 -10Z" fill="#C5CFDD" ${sw}/><path d="M-3 -33 H3 V-20 L0 -17 L-3 -20Z" fill="#C5CFDD" ${sw}/>`+lashes+blush; }
+    if(s==="mega"){
+      mouth=mouth.split(m).join(l);
+      back=`<path d="M-21 -29 L-33 -55 L-9 -33Z" fill="${m}" ${sw}/><path d="M21 -29 L33 -55 L9 -33Z" fill="${m}" ${sw}/><path d="M-27 -36 L-31 -46 M27 -36 L31 -46" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`+
+        `<path d="M-38 -12 L-52 -24 L-46 -2Z" fill="${m}" ${sw}/><path d="M38 -12 L52 -24 L46 -2Z" fill="${m}" ${sw}/>`;
+      front=`<path d="M-24 -27 H24" stroke="${l}" stroke-width="2" stroke-linecap="round"/><path d="M-26 10 L-20 16 M26 10 L20 16" stroke="${l}" stroke-width="2" stroke-linecap="round"/>`+
+        `<path d="M-3 18 L3 18 L0 24Z M-10 22 H-6 M6 22 H10" fill="${l}" stroke="${l}" stroke-width="1.6" stroke-linecap="round"/>`; }
+    if(s==="dios"){
+      pupils=f==="normal"?`<rect x="-15" y="-18" width="11" height="14" rx="4" fill="#FFE680"/><rect x="4" y="-18" width="11" height="14" rx="4" fill="#FFE680"/><circle cx="-9.5" cy="-11" r="2.6" fill="#fff"/><circle cx="9.5" cy="-11" r="2.6" fill="#fff"/>`:pupils.split("#57E1FF").join("#FFE680");
+      mouth="";
+      back=`<ellipse cx="0" cy="-52" rx="21" ry="5.5" fill="none" stroke="#FFD34D" stroke-width="4"/>`+
+        `<path d="M-30 -18 Q-46 -46 -16 -46 Q0 -58 16 -46 Q46 -46 30 -18 Q50 6 40 30 Q30 22 28 10 H-28 Q-30 22 -40 30 Q-50 6 -30 -18Z" fill="#FFFFFF" ${sw}/>`;
+      front=`<path d="M-18 -26 Q-10 -31 -3 -25 M18 -26 Q10 -31 3 -25" stroke="#D4A82A" stroke-width="3.4" fill="none" stroke-linecap="round"/>`+
+        `<path d="M-27 2 Q-30 26 -16 38 Q-10 50 0 44 Q10 50 16 38 Q30 26 27 2 Q14 10 0 8 Q-14 10 -27 2Z" fill="#FFFFFF" ${sw}/>`+
+        `<path d="M-12 18 Q-10 28 -8 34 M0 16 V38 M12 18 Q10 28 8 34" stroke="#D9DEE8" stroke-width="2" fill="none" stroke-linecap="round"/>`+
+        `<path d="M-15 5 Q-8 0 0 5 Q8 0 15 5 Q9 10 0 8 Q-9 10 -15 5Z" fill="#FFFFFF" ${sw}/>`; }
+    const scr=s==="mega"?"#05070D":s==="dios"?"#2B2340":"#0D3049", glow=s==="mega"?"#22D3FF":s==="dios"?"#FFD34D":"";
+    const core=`<g class="flame"><path d="M-10 30 Q0 52 10 30Z" fill="${l}"/><path d="M-5 30 Q0 43 5 30Z" fill="#fff"/></g>${back}
    <rect x="-19" y="14" width="38" height="16" rx="7" fill="${m}" ${sw}/>
    <circle cx="-33" cy="-6" r="8" fill="${m}" ${sw}/><circle cx="33" cy="-6" r="8" fill="${m}" ${sw}/>
    <rect x="-29" y="-32" width="58" height="54" rx="22" fill="${b}" ${sw}/>
-   <rect x="-21" y="-23" width="42" height="26" rx="12" fill="#0D3049"/>
+   <rect x="-21" y="-23" width="42" height="26" rx="12" fill="${scr}"/>
    <g class="pupils">${pupils}</g>
-   ${mouth}${front}`; }
+   ${mouth}${front}`;
+    /* robots secretos: brillo alrededor */
+    return glow?`<defs><filter id="glow-${s}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="${glow}" flood-opacity=".9"/></filter></defs><g filter="url(#glow-${s})">${core}</g>`:core; }
   function rockSVG(){ return `<svg viewBox="0 0 100 100"><polygon points="50,12 86,31 50,50 14,31" fill="#D3DEE8" stroke="#0D3049" stroke-width="3" stroke-linejoin="round"/>
   
    <polygon points="14,31 50,50 50,90 14,71" fill="#9CB0C2" stroke="#0D3049" stroke-width="3" stroke-linejoin="round"/>
@@ -1139,7 +1185,7 @@ export function boot() {
       const count=used(), usedRep=G.map.cls===3?hasCall(G.prog):hasRepeat(G.prog), k=G.map.adv?starsAdv(G.map,{count,rep:hasRepeatAll(G.prog,G.funcs),acts:res.acts,opt:G.pathLen}):starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);
   
       let gained=0, opened=[];
-      const map=G.map, part=map.id!=="custom"&&map.part, wasDone=part&&partDone(SAVE.stars,part);
+      const map=G.map, part=map.id!=="custom"&&map.part, wasDone=part&&partDone(SAVE.stars,part), lockedSec=lockedSecrets();
       if(G.map.id!=="custom"){ const old=SAVE.stars[G.map.id]||0;
         if(k>old){ const before=groupsNow(); SAVE.stars[G.map.id]=k; gained=k-old; persist(); renderTopStars();
           opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g.title); } }
@@ -1155,6 +1201,7 @@ export function boot() {
       const idx=MISSIONS.indexOf(G.map), nxt=MISSIONS[idx+1], gs=nxt&&groupsNow().find(s=>s.g.id===nxt.grp);
       let extra=`<div class="bigstars">${starRow(k,undefined,maxStars(G.map))}</div>`;
       if(opened.length) extra+=`<div class="unl">${ICO.unlock()} ¡Desbloqueaste «${opened.join("» y «")}»!</div>`;
+      extra+=secretMsgs(lockedSec);
       /* se acaba de terminar la parte y falta su desafío: volver al menú e invitar a jugarlo */
       const ch=part&&!wasDone&&partDone(SAVE.stars,part)&&chOf(part), toCh=ch&&!SAVE.stars[ch.id];
       if(toCh) extra+=`<div class="unl">${ICO.clock()} ¡Se abrió el ${ch.title}!</div>`;
@@ -1256,7 +1303,7 @@ export function boot() {
   
     const sec=Math.floor(CH.acc/1000), k=timeStars(ch,sec), old=SAVE.stars[ch.id]||0, prev=SAVE.best[ch.id], rec=prev==null||sec<prev;
   
-    const gained=Math.max(0,k-old);
+    const gained=Math.max(0,k-old), lockedBefore=lockedSecrets();
   
     if(k>old) SAVE.stars[ch.id]=k; if(rec) SAVE.best[ch.id]=sec; persist();
   
@@ -1267,6 +1314,7 @@ export function boot() {
     let extra=`<div class="bigstars">${starRow(k,undefined,maxStars(G.map))}</div>`;
   
     if(rec&&prev!=null) extra+=`<div class="unl">${ICO.clock()} ¡Nuevo récord!</div>`;
+    extra+=secretMsgs(lockedBefore);
   
     extra+=`<button class="nextbtn" data-chagain>Jugar otra vez${ICO.next()}</button>`;
   
@@ -1323,7 +1371,8 @@ export function boot() {
     const face=FACES.find(f=>f.id===SAVE.face);
     $("shopName").textContent=SKINS.find(s=>s.id===SAVE.skin).name+(SAVE.face==="normal"?"":" · "+face.name);
     $("shopStars").innerHTML=starIco(true)+`Tenés <b>${w}</b> estrellas para gastar`;
-    $("skins").innerHTML=SKINS.map((s,i)=>{ const own=SAVE.owned.includes(s.id), on=SAVE.skin===s.id;
+    $("skins").innerHTML=SKINS.map((s,i)=>{ const own=skinOwned(s), on=SAVE.skin===s.id;
+      if(!own&&s.secret) return `<button class="skin secret" data-s="${s.id}" style="--i:${i}"><svg class="prev" viewBox="-50 -50 100 100">${robotSVG({skin:s.id,face:"normal"})}</svg><b>Robot secreto</b><span class="tag">${ICO.lock("#22D3FF")}¿Cómo se gana?</span></button>`;
       return `<button class="skin${on?" on":""}${!own&&w<s.price?" poor":""}" data-s="${s.id}" style="--i:${i}"><svg class="prev" viewBox="-50 -50 100 100" data-look="r">${robotSVG({skin:s.id})}</svg><b>${s.name}</b>${shopTag(on,own,s.id,s.price)}</button>`; }).join("");
     $("faces").innerHTML=FACES.map((s,i)=>{ const own=SAVE.faces.includes(s.id), on=SAVE.face===s.id;
       return `<button class="skin${on?" on":""}${!own&&w<s.price?" poor":""}" data-f="${s.id}" style="--i:${i}"><svg class="prev" viewBox="-50 -50 100 100" data-look="r">${robotSVG({skin:"robi",face:s.id})}</svg><b>${s.name}</b>${shopTag(on,own,s.id,s.price)}</button>`; }).join("");
@@ -1338,7 +1387,9 @@ export function boot() {
     if(ASK!==s.id){ ASK=s.id; SND.pick(); return renderShop(); }
     SAVE.spent+=s.price; ASK=null; apply(s,true); persist(); SND.buy(); renderShop(true); confetti(); }
   $("skins").onclick=e=>{ const b=e.target.closest(".skin"); if(!b) return;
-    buyItem(b,SKINS,s=>SAVE.owned.includes(s.id),(s,bought)=>{ if(!bought&&SAVE.skin===s.id) return; SAVE.skin=s.id; if(bought) SAVE.owned.push(s.id); persist(); if(!bought){ SND.snap(); renderShop(true); } else toast(ICO.unlock(),`¡Nuevo diseño: ${s.name}!`); }); };
+    const sec=SKINS.find(x=>x.id===b.dataset.s&&x.secret&&!skinOwned(x));
+    if(sec){ bumpEl(b,"no"); SND.nope(); return toast(ICO.lock("#22D3FF"),`Robot secreto: ${SECRETS[sec.secret].hint}`); }
+    buyItem(b,SKINS,skinOwned,(s,bought)=>{ if(!bought&&SAVE.skin===s.id) return; SAVE.skin=s.id; if(bought) SAVE.owned.push(s.id); persist(); if(!bought){ SND.snap(); renderShop(true); } else toast(ICO.unlock(),`¡Nuevo diseño: ${s.name}!`); }); };
   $("faces").onclick=e=>{ const b=e.target.closest(".skin"); if(!b) return;
     buyItem(b,FACES,s=>SAVE.faces.includes(s.id),(s,bought)=>{ if(!bought&&SAVE.face===s.id) return; SAVE.face=s.id; if(bought) SAVE.faces.push(s.id); persist(); if(!bought){ SND.snap(); renderShop(true); } else toast(ICO.unlock(),`¡Nueva cara: ${s.name}!`); }); };
   $("bodies").onclick=e=>{ const b=e.target.closest(".sw"); if(!b) return; SAVE.body=b.dataset.b; persist(); SND.add(); renderShop(true); };

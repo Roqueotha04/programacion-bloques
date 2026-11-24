@@ -464,6 +464,9 @@ body.busy .canvas .blk{ cursor:default; }
 .skin .prev{ width:92px; height:92px; overflow:visible; }
 .skin.on{ border-color:var(--ok); box-shadow:0 0 0 4px #CFF5E6; }
 .skin.poor .prev{ filter:grayscale(.6); opacity:.75; }
+.skin.secret{ background:linear-gradient(160deg,#10131C,#1B2436); border-color:#22D3FF; color:#BDF4FF; }
+.skin.secret .prev{ filter:brightness(0) drop-shadow(0 0 4px #22D3FF); }
+.skin.secret .tag{ background:#0B0F1A; border-color:#22D3FF; color:#BDF4FF; }
 .skin .tag{ display:inline-flex; align-items:center; gap:4px; padding:5px 14px; border-radius:999px; font-weight:700; font-size:16px; background:var(--bg2); border:1.5px solid var(--line); }
 .skin .tag svg{ width:22px; height:22px; }
 .skin .tag.buy{ background:linear-gradient(135deg,#FFC21A,#FF9A2E); color:#fff; border-color:transparent; }
