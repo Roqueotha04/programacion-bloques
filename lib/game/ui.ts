@@ -9,7 +9,7 @@ import {
   chOf, gateTxt, partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
   tryAct, tryMove, walk,
 } from "./engine";
-import { parsePy, pyWalk, pyLines, pyMissing, PY_REQ_TIP, blocksToPy, pyHTML } from "./python";
+import { parsePy, pyWalk, pyLines, pyMissing, PY_REQ_TIP, blocksToPy, pyHTML, pyExprText, pyCondText } from "./python";
 import { freshSave, isKids, isProfe, isPython, saveKey } from "./save";
 
 let booted = false;
@@ -889,21 +889,56 @@ export function boot() {
   }
   
   /* ---------- editor de Python ---------- */
-  const PY_LH=26, PY_PAD=12; /* alto de línea y margen de arriba del editor (iguales en game.css) */
-  /* full: arma el editor de cero (al entrar al nivel). Si no, solo actualiza el contador (así no se pierde el cursor) */
+  const PY_LH=22, PY_PAD=10; /* alto de línea y margen de arriba del editor (iguales en game.css) */
+  /* full: arma el editor de cero (al entrar al nivel). Si no, solo actualiza el contador (así no se pierde el cursor).
+     El editor es un textarea transparente encima de un <pre> con colores (mismo texto, misma letra), y abajo «Así se ve en bloques» */
   function renderPy(full){
     const n=pyLines(G.code), c=$("count"); c.innerHTML=ICO.code("#3776AB")+`${n} ${n===1?"línea":"líneas"}`; c.classList.remove("full","no");
     $("goal").classList.toggle("hidden",G.map.goal==null); if(G.map.goal!=null) $("goal").innerHTML=starIco(true)+"meta "+G.map.goal;
     $("runBtn").classList.toggle("ready",!!G.code.trim()); resetClear();
     if(!full&&$("pyta")) return;
-    $("canvas").innerHTML=`<div class="pyed"><div class="pygut" id="pygut" aria-hidden="true"></div><div class="pywrap"><div class="pyhl hidden" id="pyhl"></div>`+
-      `<textarea id="pyta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Código en Python"></textarea></div></div>`;
-    $("pyta").value=G.code; pyGrow(); }
+    $("canvas").innerHTML=`<div class="pyed"><div class="pygut" id="pygut" aria-hidden="true"></div><div class="pywrap" id="pywrap"><div class="pyhl hidden" id="pyhl"></div><pre class="pyhi" id="pyhi" aria-hidden="true"></pre>`+
+      `<textarea id="pyta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Código en Python"></textarea></div></div>`+
+      `<div class="pyblocks"><h5>${ICO.blocks()}Así se ve en bloques</h5><div id="pybl"></div></div>`;
+    G.pyBlocksLn=null; $("pyta").value=G.code; pyGrow(); }
   function pyGrow(){ const ta=$("pyta"); if(!ta) return; const n=ta.value.split("\n").length;
     $("pygut").innerHTML=Array.from({length:n},(_,i)=>`<i data-ln="${i+1}">${i+1}</i>`).join("");
-    ta.style.height=(n*PY_LH+PY_PAD*2+40)+"px"; }
-  /* marca una línea: cls "" (corriendo), "yes"/"no" (respuesta de if/while), "err" (error); sin línea, la saca */
+    $("pyhi").innerHTML=pyHTML(ta.value)+"\n"; $("pywrap").classList.add("hi"); /* recién ahora el texto del textarea se vuelve transparente */
+    ta.style.height=(n*PY_LH+PY_PAD*2)+"px"; ta.style.width="auto"; ta.style.width=Math.max($("pywrap").clientWidth,ta.scrollWidth)+"px";
+    pyBlocks(ta.value); }
+  /* ---- el código como bloques (el espejo al revés) ---- */
+  const PY_MOVE_DIR={arriba:"u",abajo:"d",izquierda:"l",derecha:"r"};
+  /* cada bloque lleva data-ln (su línea), así se ilumina junto con la línea que corre */
+  function pyStmtHTML(s){ const ln=`data-ln="${s.ln}"`, cmouth=(body,extra="")=>`<div class="mouth"><div class="arm"></div><div class="slot list">${pyListHTML(body)}</div></div><div class="rbot"></div></div>${extra}`;
+    if(s.k==="call"){ const d=PY_MOVE_DIR[s.name];
+      if(d&&!s.args.length) return `<div class="blk mov" ${ln}><span class="ic">${ICO.arrow(d)}</span><span>${LABEL[d]}</span></div>`;
+      if(s.name==="pintar") return `<div class="blk act" ${ln}><span class="ic">${ICO.brush()}</span><span>pintar</span></div>`;
+      if(s.name==="bailar") return `<div class="blk act" ${ln}><span class="ic">${ICO.music()}</span><span>bailar</span></div>`;
+      const a=s.args.map(x=>pyExprText(x)).join(", ");
+      return `<div class="blk fnc" ${ln}><span class="ic">ƒ</span><span>llamar a <b>${escH(s.name)}${a?`(${escH(a)})`:""}</b></span></div>`; }
+    if(s.k==="set") return `<div class="blk pvar" ${ln}><span class="ic">=</span><span><b>${escH(s.n)}</b> ${s.op==="="?"vale":s.op==="+="?"suma":"resta"} <b>${escH(pyExprText(s.e))}</b></span></div>`;
+    if(s.k==="hole") return `<div class="blk phole" ${ln}><span>___ completá acá</span></div>`;
+    if(s.k==="for"){ const a=s.args.map(x=>pyExprText(x)), n=a.length===1?a[0]:`${a[1]} − ${a[0]}`;
+      return `<div class="blk rep" ${ln}><div class="rtop"><span class="ic">${ICO.repeat()}</span><span>repetir</span><span class="nctl"><b>${escH(n)}</b></span><span>veces</span></div>${cmouth(s.body)}`; }
+    if(s.k==="while") return `<div class="blk rep iff pwhile" ${ln}><div class="rtop"><span class="ic">${ICO.repeat()}</span><span>mientras</span><span class="colsel">${escH(pyCondText(s.cond))}</span></div>${cmouth(s.body)}`;
+    if(s.k==="if") return `<div class="blk rep iff" ${ln}><div class="rtop"><span class="ic">${ICO.ifq()}</span><span>si</span><span class="colsel">${escH(pyCondText(s.cond))}</span></div>`+
+      cmouth(s.body,s.orelse?`<div class="blk rep iff els"><div class="rtop"><span class="ic">${ICO.ifq()}</span><span>si no</span></div>${cmouth(s.orelse)}`:"");
+    return ""; } /* pass, «...», global: no se dibujan */
+  function pyListHTML(list){ const h=list.map(pyStmtHTML).join(""); return h||'<div class="ph"></div>'; }
+  function pyBlocks(code){ const box=$("pybl"); if(!box) return; const r=parsePy(code,true); /* los ___ se dibujan como hueco */
+    if(!r.ok){ box.classList.add("stale"); const n=box.querySelector(".pynote")||box.appendChild(Object.assign(document.createElement("div"),{className:"pynote"}));
+      n.textContent=`Hay un error en la línea ${r.ln}: arreglalo para ver los bloques`; return; }
+    const defs=r.prog.body.filter(s=>s.k==="def"), rest=r.prog.body.filter(s=>s.k!=="def");
+    box.classList.remove("stale");
+    box.innerHTML=`<div class="blk hat"><span>al tocar</span><span class="ic">${ICO.flag("#11986A")}</span></div><div class="list root">${pyListHTML(rest)}</div>`+
+      (defs.length?`<div class="fns"><h5>Funciones</h5>${defs.map(d=>`<div class="rep fnbox" data-ln="${d.ln}"><div class="rtop"><span class="ic">ƒ</span><span class="fnm">${escH(d.name)}(${escH(d.params.join(", "))})</span></div>`+
+        `<div class="mouth"><div class="arm"></div><div class="slot list">${pyListHTML(d.body)}</div></div><div class="rbot"></div></div>`).join("")}</div>`:"");
+    if(G.pyBlocksLn) pyMarkBlock(G.pyBlocksLn.ln,G.pyBlocksLn.cls); }
+  function pyMarkBlock(ln,cls){ document.querySelectorAll("#pybl .on,#pybl .err").forEach(x=>x.classList.remove("on","err"));
+    if(!ln) return; const el=document.querySelector(`#pybl [data-ln="${ln}"]`); if(el) el.classList.add(cls==="err"?"err":"on"); }
+  /* marca una línea: cls "" (corriendo), "yes"/"no" (respuesta de if/while), "err" (error); sin línea, la saca. También su bloque */
   function pyMark(ln,cls=""){ const hl=$("pyhl"); if(!hl) return; document.querySelectorAll("#pygut i.on,#pygut i.err").forEach(x=>x.classList.remove("on","err"));
+    G.pyBlocksLn=ln?{ln,cls}:null; pyMarkBlock(ln,cls);
     if(!ln){ hl.className="pyhl hidden"; return; }
     hl.className="pyhl"+(cls?" "+cls:""); hl.style.top=(PY_PAD+(ln-1)*PY_LH)+"px"; void hl.offsetWidth; hl.classList.add("pop");
     const g=document.querySelector(`#pygut i[data-ln="${ln}"]`); if(g){ g.classList.add(cls==="err"?"err":"on"); g.scrollIntoView({block:"nearest"}); } }
@@ -965,7 +1000,7 @@ export function boot() {
   
     if(e.button!==0||!G||G.busy||SCREEN!=="game"||e.target.closest("button,input")) return;
   
-    const el=e.target.closest(".blk"); if(!el||el.classList.contains("hat")||el.closest(".fnbox.lock")) return;
+    const el=e.target.closest(".blk"); if(!el||el.classList.contains("hat")||el.closest(".fnbox.lock")||el.closest(".pyblocks")) return; /* los bloques del código son solo para mirar */
   
     const inPal=!!el.closest("#pal"); if(!inPal&&!el.closest("#canvas")) return;
   

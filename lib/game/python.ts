@@ -99,19 +99,21 @@ function stmt(L){ const {toks,ln}=L, P=exprP(toks,ln), t0=toks[0], w=t0.t==="id"
   if(w&&KW.has(w)) err(ln,`«${w}» no se usa así en este juego`);
   err(ln,"no entiendo esta línea"); }
 
-/* parsePy(código) → {ok:true, prog:{py:true, body}} o {ok:false, ln, msg} */
-export function parsePy(code){
+/* parsePy(código) → {ok:true, prog:{py:true, body}} o {ok:false, ln, msg}.
+   holes:true (solo para dibujar los bloques): acepta los ___ sin completar; una línea que es solo ___ queda como {k:"hole"} */
+export function parsePy(code,holes=false){
   try{
     const L=[];
     String(code).replace(/\r/g,"").split("\n").forEach((raw,i)=>{ const ln=i+1; let s=raw.replace(/\t/g,"    "); const h=s.indexOf("#"); if(h>=0) s=s.slice(0,h);
       if(!s.trim()) return;
-      if(s.includes("___")) err(ln,"completá lo que falta en el lugar de «___»");
+      if(s.includes("___")&&!holes) err(ln,"completá lo que falta en el lugar de «___»");
+      if(holes&&s.trim()==="___"){ L.push({ln,ind:s.length-s.trimStart().length,hole:true}); return; }
       s=s.trimEnd(); const ind=s.length-s.trimStart().length; L.push({ln,ind,toks:lex(s.trim(),ln)}); });
     let i=0;
     function block(ind,top){ const out=[]; let chain=null;
       while(i<L.length){ const l=L[i]; if(l.ind<ind) break;
         if(l.ind>ind) err(l.ln,top&&!out.length?"la primera línea va sin sangría, pegada al borde":"esta línea tiene sangría de más (o no coincide con las de arriba: usá 4 espacios por nivel)");
-        const s=stmt(l); i++;
+        const s=l.hole?{k:"hole",ln:l.ln}:stmt(l); i++;
         if(s.k==="def"&&!top) err(s.ln,"«def» va sin sangría, pegado al borde: las funciones se crean afuera de otras");
         if(s.block){ if(i>=L.length||L[i].ind<=ind) err(l.ln,"después de «:» va un bloque con sangría: dejá 4 espacios al principio de la línea de abajo"); s.body=block(L[i].ind,false); }
         if(s.k==="elif"||s.k==="else"){ if(!chain) err(s.ln,`«${s.k}» va justo después de un if, con la misma sangría`);
@@ -226,6 +228,27 @@ export function pyMissing(prog,req){ if(!req||!req.length) return null;
     for:()=>has.for, while:()=>has.while, if:()=>has.if};
   return req.find(r=>!ok[r]())||null; }
 
+/* ---------- de Python a texto de bloque (el espejo al revés, debajo del código) ---------- */
+const PREC={or:1,and:2,not:3,"==":4,"!=":4,"<":4,">":4,"<=":4,">=":4,"+":5,"-":5,"*":6,"/":6,"//":6,"%":6};
+/* la expresión como se escribió (largo, pasos + 1, n * 2…) */
+export function pyExprText(e,outer=0){ const wrap=(p,t)=>p<outer?`(${t})`:t;
+  switch(e.k){
+    case "num": return typeof e.v==="boolean"?(e.v?"True":"False"):String(e.v);
+    case "name": return e.n;
+    case "neg": return "-"+pyExprText(e.a,7);
+    case "not": return wrap(3,"not "+pyExprText(e.a,3));
+    case "and": case "or": return wrap(PREC[e.k],`${pyExprText(e.a,PREC[e.k])} ${e.k} ${pyExprText(e.b,PREC[e.k]+1)}`);
+    case "bin": return wrap(PREC[e.op],`${pyExprText(e.a,PREC[e.op])} ${e.op} ${pyExprText(e.b,PREC[e.op]+1)}`);
+    case "callx": return `${e.name}(${e.args.map(a=>pyExprText(a)).join(", ")})`; }
+  return "?"; }
+/* la pregunta de un si o un mientras, en castellano cuando es un sensor: «no en la estrella», «la celda es roja», «pared →» */
+const SENSE_TXT={en_estrella:"en la estrella",celda_roja:"la celda es roja",celda_verde:"la celda es verde",pared_arriba:"pared ↑",pared_abajo:"pared ↓",pared_izquierda:"pared ←",pared_derecha:"pared →"};
+export function pyCondText(e){
+  if(e.k==="not") return "no "+pyCondText(e.a);
+  if(e.k==="callx"&&SENSE_TXT[e.name]&&!e.args.length) return SENSE_TXT[e.name];
+  if(e.k==="and"||e.k==="or") return `${pyCondText(e.a)} ${e.k==="and"?"y":"o"} ${pyCondText(e.b)}`;
+  return pyExprText(e); }
+
 /* ---------- de bloques a Python (el espejo debajo de los bloques) ---------- */
 const MOVE_PY={u:"arriba",d:"abajo",l:"izquierda",r:"derecha"}, ACT_PY={paint:"pintar",dance:"bailar",penon:"usar_pincel",penoff:"guardar_pincel"};
 const SENSE_PY=Object.fromEntries(Object.entries(PY_SENSE).map(([k,v])=>[v,k]));
@@ -250,4 +273,5 @@ export function blocksToPy(prog,funcs,names,notes){ const out=[], VARS="ijk", no
 const PY_KW=new Set(["def","for","in","while","if","elif","else","not","and","or","True","False","pass","global"]);
 const escH=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 export function pyHTML(code){ return String(code).split("\n").map(line=>{ const h=line.indexOf("#"), c=h>=0?line.slice(0,h):line, cm=h>=0?line.slice(h):"";
-  return c.replace(/[A-Za-z_][\w]*|\d+|[^A-Za-z_\d]+/g,t=>/^\d/.test(t)?`<span class="pn">${t}</span>`:/^[A-Za-z_]/.test(t)?(PY_KW.has(t)?`<span class="pk">${t}</span>`:isCmd(t)||t==="range"?`<span class="pb">${t}</span>`:t):escH(t))+(cm?`<span class="pc">${escH(cm)}</span>`:""); }).join("\n"); }
+  /* pk palabra de Python, pb comando de GENI, pf función propia (nombre seguido de «(»), pn número, pc comentario */
+  return c.replace(/[A-Za-z_][\w]*|\d+|[^A-Za-z_\d]+/g,(t,o)=>/^\d/.test(t)?`<span class="pn">${t}</span>`:/^[A-Za-z_]/.test(t)?(PY_KW.has(t)?`<span class="pk">${t}</span>`:isCmd(t)||t==="range"?`<span class="pb">${t}</span>`:/^\s*\(/.test(c.slice(o+t.length))?`<span class="pf">${t}</span>`:t):escH(t))+(cm?`<span class="pc">${escH(cm)}</span>`:""); }).join("\n"); }
