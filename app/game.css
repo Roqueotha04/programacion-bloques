@@ -576,3 +576,7 @@ canvas#conf{ position:fixed; inset:0; pointer-events:none; z-index:150; width:10
 .cfgrow input{ width:22px; height:22px; accent-color:var(--ok); }
 .cfgrow b{ width:64px; font-size:14px; color:var(--muted); }
 .cfgrow:has(input:not(:checked)){ opacity:.65; }
+.cfgpass{ position:relative; }
+.cfgpass .minput{ padding-right:96px; }
+.cfgeye{ position:absolute; right:10px; top:50%; transform:translateY(calc(-50% + 8px)); padding:6px 12px; border-radius:10px; border:2px solid var(--line2); background:#fff; font-weight:700; font-size:14px; color:var(--ink); }
+.cfgeye[aria-pressed="true"]{ background:var(--navy); border-color:var(--navy); color:#fff; }

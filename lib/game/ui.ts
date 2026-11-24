@@ -571,10 +571,13 @@ export function boot(hidden?: Record<string, number[]>) {
   function cfgLogin(){
     const d=openModal(`<span class="mico">${ICO.lock("#FFC21A")}</span><h2>Configuración</h2><p>Entrá con tu usuario de profe.</p>`+
       `<form id="cfgForm"><input class="minput" id="cfgUser" type="email" autocomplete="username" placeholder="Usuario" aria-label="Usuario">`+
-      `<input class="minput" id="cfgPass" type="password" autocomplete="current-password" placeholder="Contraseña" aria-label="Contraseña">`+
+      `<div class="cfgpass"><input class="minput" id="cfgPass" type="password" autocomplete="current-password" placeholder="Contraseña" aria-label="Contraseña">`+
+      `<button type="button" class="cfgeye" id="cfgEye" aria-pressed="false">Ver</button></div>`+
       `<div class="mbtns"><button type="button" class="mbtn alt" data-later>Cancelar</button><button class="mbtn" data-go>Entrar${ICO.next()}</button></div></form>`);
     const u=d.querySelector("#cfgUser"), p=d.querySelector("#cfgPass"), go=d.querySelector("[data-go]"); setTimeout(()=>u.focus(),60);
     d.querySelector("[data-later]").onclick=closeModal;
+    const eye=d.querySelector("#cfgEye"); eye.onclick=()=>{ const show=p.type==="password"; p.type=show?"text":"password";
+      eye.textContent=show?"Ocultar":"Ver"; eye.setAttribute("aria-pressed",String(show)); p.focus(); };
     d.querySelector("#cfgForm").onsubmit=async e=>{ e.preventDefault(); go.disabled=true;
       try{ const j=await profeApi("login",{user:u.value,pass:p.value}); cfgPanel(j.hidden); }
       catch(err){ go.disabled=false; bumpEl(p,"no"); SND.nope(); p.select(); toast(ICO.lock("#FFC21A"),err.message); } };

@@ -43,10 +43,11 @@ function same(a: string, b: string) {
   return x.length === y.length && timingSafeEqual(x, y);
 }
 
-export function checkLogin(user: string, pass: string) {
-  const U = process.env.PROFE_USER, P = process.env.PROFE_PASS;
-  if (!U || !P) return false;
-  return same(user.trim().toLowerCase(), U.toLowerCase()) && same(pass, P);
+/* "ok", "bad" (usuario o contraseña mal) o "config" (el servidor no tiene PROFE_USER, PROFE_PASS o PROFE_SECRET) */
+export function checkLogin(user: string, pass: string): "ok" | "bad" | "config" {
+  const U = process.env.PROFE_USER?.trim(), P = process.env.PROFE_PASS?.trim();
+  if (!U || !P || !process.env.PROFE_SECRET) return "config";
+  return same(user.trim().toLowerCase(), U.toLowerCase()) && same(pass.trim(), P) ? "ok" : "bad";
 }
 
 function sign(payload: string) {
