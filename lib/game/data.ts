@@ -265,7 +265,7 @@ CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i
    Los códigos de cada parte (PARTS[].code: genIArepetir, funcionesGENia) también se aceptan ahí. Se ignoran las partes que no existen en la edición */
 export const CLASS_CODES=[
   {code:"nivel1-clase2",parts:[1,2],unlock:[4]},
-  {code:"nivel2-clase2",parts:[1,2],unlock:[4]},
+  {code:"nivel2-clase2",parts:[1,2,3],unlock:[4]},
   {code:"nivel3-clase2",parts:[1,2,4],unlock:[4]}
 ];
 /* «Repetir adentro» (f2) y «Dos pasillos» (r5) salieron del juego normal (Repetir quedó en 8 niveles; r5 pasó al desafío) pero siguen en chicos */
