@@ -625,7 +625,7 @@ export function boot() {
   
   let G=null; const PROGS={}, FUNCS={}, NAMES={}; /* funciones y sus nombres por nivel (no se guardan en localStorage, como PROGS) */
   const PYCODE={}; /* código de Python por nivel (tampoco se guarda en localStorage) */
-  const PY_START="# main: el programa principal (lo que hace GENI)\ndef main():\n    pass  # pass = «no hacer nada»: borrá esta línea y escribí acá\n\n# llamar a main: acá empieza a ejecutarse el programa\nmain()\n";
+  const PY_START="def main():\n    ...\n\nmain()\n";
   
   function startPlay(map){
   
@@ -868,7 +868,7 @@ export function boot() {
   
   /* edición Python: debajo de los bloques, el mismo programa escrito en Python («al tocar» es main) */
   function mirrorHTML(){ if(!PY_ED) return "";
-    return `<div class="pymirror"><h5>${ICO.code("#3776AB")}Tu programa en Python</h5><pre>${pyHTML(blocksToPy(G.prog,G.fn?G.funcs:{},G.names))}</pre></div>`; }
+    return `<div class="pymirror"><h5>${ICO.code("#3776AB")}Tu programa en Python</h5><pre>${pyHTML(blocksToPy(G.prog,G.fn?G.funcs:{},G.names,!!G.map.notes))}</pre></div>`; }
   function renderProg(full){
     if(G.py) return renderPy(full);
 
@@ -913,12 +913,12 @@ export function boot() {
   /* escribe texto en el cursor (con deshacer, si el navegador deja) */
   function taInsert(ta,text){ ta.focus(); let ok=false; try{ ok=document.execCommand("insertText",false,text); }catch(e){} if(!ok) ta.setRangeText(text,ta.selectionStart,ta.selectionEnd,"end"); }
   /* comando de la izquierda: las preguntas van en el cursor; el resto en una línea nueva con la sangría de la actual
-     (si la línea está vacía o es un pass, la reemplaza). «nombre» queda seleccionado para escribir encima */
+     (si la línea está vacía o es «...» o pass, la reemplaza). «nombre» queda seleccionado para escribir encima */
   function pyInsert(txt,inline){ const ta=$("pyta"); if(!ta) return;
     if(inline){ taInsert(ta,txt); return pySync(); }
     const v=ta.value, s=ta.selectionStart, ls=v.lastIndexOf("\n",s-1)+1, nl=v.indexOf("\n",s), le=nl<0?v.length:nl, line=v.slice(ls,le), ind=line.match(/^ */)[0];
     let ins, at;
-    if(!line.trim()||/^\s*pass\b/.test(line)){ ta.focus(); ta.setSelectionRange(ls,le); ins=ind+txt; at=ls; }
+    if(!line.trim()||/^\s*(pass\b|\.\.\.)/.test(line)){ ta.focus(); ta.setSelectionRange(ls,le); ins=ind+txt; at=ls; }
     else { ta.focus(); ta.setSelectionRange(le,le); ins="\n"+ind+(line.trimEnd().endsWith(":")?"    ":"")+txt; at=le; }
     taInsert(ta,ins);
     const k=ins.indexOf("nombre");
@@ -1153,7 +1153,7 @@ export function boot() {
       if(ev.t==="error"){ res={k:"pyerr",ln:ev.ln,msg:ev.msg}; break; }
 
       const addr=G.py?ev.ln:typeof ev.addr[0]==="string"?ev.addr[0]+":"+ev.addr.slice(1).join("."):ev.addr.join(".");
-      /* Python: asignar, def y pass solo marcan su línea un momento */
+      /* Python: asignar, def, pass y «...» solo marcan su línea un momento */
       if(ev.t==="stmt"){ pyMark(ev.ln); if(!ctx.stepMode){ await sleep(T()*.15); if(id!==G.run) return; } continue; }
 
       if(ev.t==="loop"){ setLap(addr,ev.k+1,ev.n); SND.loop(); if(!ctx.stepMode){ await sleep(T()*.25); if(id!==G.run) return; } continue; }

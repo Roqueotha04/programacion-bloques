@@ -39,11 +39,11 @@ export const GROUPS=[
 ];
 /* ===== Repetir avanzado (inicio) ===== */
 /* PARTE 4.5: repetir avanzado, opcional para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir
-   otras partes y no tiene desafío. No está en la edición chicos. Comentada de momento: no se ve */
-// PARTS.push({id:4.5,title:"Repetir avanzado",sub:"repetir con colores, baterías y repetir adentro",c:"#F97316",l:"#FFE4CC",after:[4],extra:true});
-// GROUPS.push(
-//  {id:"I",part:4.5,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
-//  {id:"X",part:4.5,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:8,c:"#DC2626",l:"#FFD9D9"});
+   otras partes y no tiene desafío. No está en la edición chicos. */
+PARTS.push({id:4.5,title:"Repetir avanzado",sub:"repetir con colores, baterías y repetir adentro",c:"#F97316",l:"#FFE4CC",after:[4],extra:true});
+GROUPS.push(
+ {id:"I",part:4.5,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
+ {id:"X",part:4.5,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:8,c:"#DC2626",l:"#FFD9D9"});
 /* ===== Repetir avanzado (fin) ===== */
 /* ===== Funciones avanzadas (inicio) ===== */
 /* PARTE 5.5: funciones avanzadas (recursión). Se abre al superar la parte 5, no cuenta para abrir otras partes. No está en la edición chicos.
@@ -122,13 +122,13 @@ export const MISSIONS=[
 // {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"},
  /* ===== Funciones (fin) ===== */
  /* ===== Repetir avanzado (inicio) ===== */
-// {id:"ra1",grp:"I",title:"Pasillo de colores",max:7,rows:["########","RXVXVXVE","########"],sol:"3(r p r b) r"},
-// {id:"ra2",grp:"I",title:"Escalera bailarina",max:7,rows:["####E","###V.","##V.#","#V.##","R.###"],sol:"3(r u b) r u"},
-// {id:"ra3",grp:"I",title:"Torres de baterías",max:9,rows:["##B#B#B#","##.#.#.#","R......E"],sol:"3(2(r) 2(u) 2(d)) r"},
-// {id:"ra4",grp:"I",title:"Montaña de colores",max:10,rows:["###X.###","##X.V.##","#X.##V.#","R.####VE"],sol:"3(r u p) 3(r d b) r"},
-// {id:"ra5",grp:"X",title:"Escalones de baile",max:8,rows:["R..V######","###.######","###...V###","######.###","######...V","#########.","#########E"],sol:"3(3(r) b 2(d))"},
-// {id:"ra6",grp:"X",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"},
-// {id:"ra7",grp:"X",title:"El gran recorrido",max:9,rows:["R.B.#####","###.#####","###V.B.##","######.##","######V.E"],sol:"2(3(r) 2(d) b) 2(r)"},
+ {id:"ra1",grp:"I",title:"Pasillo de colores",max:7,rows:["########","RXVXVXVE","########"],sol:"3(r p r b) r"},
+ {id:"ra2",grp:"I",title:"Escalera bailarina",max:7,rows:["####E","###V.","##V.#","#V.##","R.###"],sol:"3(r u b) r u"},
+ {id:"ra3",grp:"I",title:"Torres de baterías",max:9,rows:["##B#B#B#","##.#.#.#","R......E"],sol:"3(2(r) 2(u) 2(d)) r"},
+ {id:"ra4",grp:"I",title:"Montaña de colores",max:10,rows:["###X.###","##X.V.##","#X.##V.#","R.####VE"],sol:"3(r u p) 3(r d b) r"},
+ {id:"ra5",grp:"X",title:"Escalones de baile",max:8,rows:["R..V######","###.######","###...V###","######.###","######...V","#########.","#########E"],sol:"3(3(r) b 2(d))"},
+ {id:"ra6",grp:"X",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"},
+ {id:"ra7",grp:"X",title:"El gran recorrido",max:9,rows:["R.B.#####","###.#####","###V.B.##","######.##","######V.E"],sol:"2(3(r) 2(d) b) 2(r)"},
  /* ===== Repetir avanzado (fin) ===== */
  /* ===== Funciones avanzadas (inicio) =====
     adv: hay que ganar con una función que se llama a sí misma (la recursión termina al llegar a la estrella). El alumno crea las
@@ -303,47 +303,87 @@ export function applyKids(){
 
 /* ===== Edición Python (inicio) =====
    ?python, para 13 a 15 años que ya programaron con bloques (VEXcode: secuencias, giros, bucles, «mientras»). Reemplaza todas las
-   partes del juego por estas, guarda en robot-bloques-python y se combina con ?profe y ?test. Los niveles se escriben en un
-   subconjunto de Python (lib/game/python.ts) con un main() que llama funciones, como en la clase:
-   - Parte 1 «Funciones en Python» (clase 1): un nivel de bloques con su espejo en Python, completar código, escribir el main y crear funciones.
-   - Parte 2 «Variables y parámetros» (clase 2): funciones que llaman funciones, variables (y que cambian) y def avanzar(n).
-   - Parte 2.5 «Mientras» (extra): while e if con preguntas (en_estrella(), celda_roja(), pared_derecha()).
+   partes del juego por estas, guarda en robot-bloques-python y se combina con ?profe y ?test. Va de a poco:
+   - Parte 1 «Bloques y Python»: secuencia, pintar, bailar y repetir con bloques; debajo se arma solo el mismo programa en Python
+     (el espejo), así se acostumbran a leer main() y for antes de escribir.
+   - Parte 2 «Funciones»: los niveles de Funciones del juego de 9 a 12 (con el espejo: def) y al final una función que llama a otra.
+   - Parte 3 «Escribí en Python»: ya escriben el código: completar, el main con funciones hechas, el for, crear funciones, colores
+     y funciones que llaman funciones.
+   - Parte 4 «Variables y parámetros»: variables (y que cambian) y def avanzar(n).
+   - Parte 4.5 «Mientras» (extra): while e if con preguntas (en_estrella(), celda_roja(), pared_derecha()).
+   Niveles de bloques (grupo con blocks:true): las reglas de siempre (cls y tools del grupo; max, pre, lock y fns del nivel).
+   notes:true pone comentarios de ayuda en el espejo (solo los 3 primeros niveles; después se acostumbran a leerlo sin ayuda).
    Niveles de código: pre = código de arranque (con ___ para completar; no puede ganar solo), sol = solución, goal = meta de líneas
    (sin vacías ni comentarios), req = lo que hay que usar para la 2.ª estrella (ver pyMissing), tip = [título, ayuda] del cartel.
    Estrellas (starsPy): 1 llegó, +1 usó lo que pide req, +1 dentro de goal. selfTest: la sol gana por el camino más corto y saca 3.
-   blocks:true = nivel de bloques normal (cls 3) que muestra abajo el mismo programa en Python. tools de código: f def, r for,
-   v variables, w while, i if, p pintar, b bailar (arman la lista de comandos de la izquierda). Ids py1… y xp1… son únicos */
-const MAIN0="# main: el programa principal (lo que hace GENI)\ndef main():\n    pass  # pass = «no hacer nada»: borrá esta línea y escribí acá\n\n# llamar a main: acá empieza a ejecutarse el programa\nmain()\n";
+   tools de código: f def, r for, v variables, w while, i if, p pintar, b bailar (arman la lista de comandos de la izquierda).
+   Los ids (pa…, pf…, py…, xp…) no se renombran: las estrellas se guardan por id */
+const MAIN0="def main():\n    ...\n\nmain()\n";
 export const PY_PARTS=[
- {id:1,title:"Funciones en Python",sub:"def, main() y llamar funciones",c:"#3776AB",l:"#DCE9F7",after:[],py:true},
- {id:2,title:"Variables y parámetros",sub:"guardar números y pasárselos a las funciones",c:"#C99400",l:"#FFF4C7",after:[1],py:true},
- {id:2.5,title:"Mientras",sub:"while e if: repetir hasta llegar y decidir",c:"#0EA5E9",l:"#D3F0FC",after:[2],extra:true,py:true}];
+ {id:1,title:"Bloques y Python",sub:"secuencia, pintar, bailar y repetir: mirá cómo queda el código",c:"#3776AB",l:"#DCE9F7",after:[],py:true},
+ {id:2,title:"Funciones",sub:"crear y llamar funciones (def)",c:"#5B6CF0",l:"#E3E6FF",after:[1],py:true},
+ {id:3,title:"Escribí en Python",sub:"ahora el código lo escribís vos",c:"#A35BD6",l:"#F0E1FF",after:[2],py:true},
+ {id:4,title:"Variables y parámetros",sub:"guardar números y pasárselos a las funciones",c:"#C99400",l:"#FFF4C7",after:[3],py:true},
+ {id:4.5,title:"Mientras",sub:"while e if: repetir hasta llegar y decidir",c:"#0EA5E9",l:"#D3F0FC",after:[4],extra:true,py:true}];
 export const PY_GROUPS=[
- {id:"PA",part:1,tools:"rf",title:"Del bloque al código",sub:"el mismo programa, escrito",need:0,c:"#3776AB",l:"#DCE9F7"},
- {id:"PB",part:1,tools:"rf",title:"Escribí el main",sub:"llamá a las funciones",need:4,c:"#5B6CF0",l:"#E3E6FF"},
- {id:"PC",part:1,tools:"rfpb",strict:true,title:"Funciones con colores",sub:"pintar y bailar desde el código",need:8,c:"#A35BD6",l:"#F0E1FF"},
- {id:"PD",part:2,tools:"rfpb",strict:true,title:"Una llama a otra",sub:"funciones que usan funciones",need:0,c:"#C99400",l:"#FFF4C7"},
- {id:"PE",part:2,tools:"rfv",title:"Variables",sub:"un nombre que guarda un número",need:4,c:"#FF9A2E",l:"#FFE2C2"},
- {id:"PF",part:2,tools:"rfvpb",strict:true,title:"Parámetros",sub:"def avanzar(n):",need:8,c:"#E64C55",l:"#FFD9DB"},
- {id:"PG",part:2.5,tools:"rfvwipb",strict:true,title:"Mientras",sub:"while not en_estrella():",need:0,c:"#0EA5E9",l:"#D3F0FC"}];
+ {id:"PA",part:1,blocks:true,cls:1,tools:"pb",strict:true,title:"Bloques y código",sub:"mover, pintar y bailar",need:0,c:"#3776AB",l:"#DCE9F7"},
+ {id:"PH",part:1,blocks:true,cls:2,tools:"rpb",strict:true,title:"Repetir es for",sub:"el bloque repetir se escribe for",need:4,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"PI",part:2,blocks:true,cls:3,tools:"rf",title:"Primeras funciones",sub:"un grupo de pasos con nombre",need:0,c:"#5B6CF0",l:"#E3E6FF"},
+ {id:"PK",part:2,blocks:true,cls:3,tools:"rpbf",strict:true,title:"Funciones y colores",sub:"pintar y bailar con funciones",need:6,c:"#8B6CF0",l:"#E6DFFF"},
+ {id:"PL",part:2,blocks:true,cls:3,tools:"rpbf",strict:true,title:"Armá tu función",sub:"armala desde cero",need:12,c:"#3E6FA8",l:"#D7E6F8"},
+ {id:"PM",part:2,blocks:true,cls:3,tools:"rpbf",strict:true,title:"Una llama a otra",sub:"funciones adentro de funciones",need:14,c:"#C026D3",l:"#FAE1FD"},
+ {id:"PB",part:3,tools:"rf",title:"Completá y llamá",sub:"el código ya está casi listo",need:0,c:"#3776AB",l:"#DCE9F7"},
+ {id:"PC",part:3,tools:"rfp",strict:true,title:"for y def",sub:"repetir y crear funciones escribiendo",need:4,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"PJ",part:3,tools:"rfpb",strict:true,title:"Funciones con colores",sub:"pintar y bailar desde el código",need:8,c:"#A35BD6",l:"#F0E1FF"},
+ {id:"PD",part:3,tools:"rfpb",strict:true,title:"Una llama a otra",sub:"funciones que usan funciones",need:12,c:"#C99400",l:"#FFF4C7"},
+ {id:"PE",part:4,tools:"rfv",title:"Variables",sub:"un nombre que guarda un número",need:0,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"PF",part:4,tools:"rfvpb",strict:true,title:"Parámetros",sub:"def avanzar(n):",need:4,c:"#E64C55",l:"#FFD9DB"},
+ {id:"PG",part:4.5,tools:"rfvwipb",strict:true,title:"Mientras",sub:"while not en_estrella():",need:0,c:"#0EA5E9",l:"#D3F0FC"}];
 export const PY_MISSIONS=[
- {id:"py1",grp:"PA",blocks:true,title:"Bloques y Python",max:7,rows:["######E","####...","##...##","R..####"],sol:"A=(r r u); A A A",
-  tip:["Armá el programa con bloques","Creá una función y llamala · Abajo vas a ver el mismo programa escrito en Python"]},
- {id:"py2",grp:"PA",title:"Completá el código",goal:9,req:["def"],rows:["R..####","##...##","####...","######E"],
-  pre:"# Una función guarda pasos con un nombre\ndef escalon():\n    derecha()\n    derecha()\n    ___\n\n# main es el programa principal (como «al tocar»)\ndef main():\n    escalon()\n    escalon()\n    ___\n\nmain()\n",
+ /* Parte 1: secuencia, pintar, bailar y repetir con bloques (espejo en Python) */
+ {id:"pa1",grp:"PA",notes:true,title:"Tus bloques en Python",rows:["#####","R.#..","#...E","#####"],sol:"r d r r r",
+  tip:["Abajo está tu programa en Python","Cada bloque que ponés aparece escrito: derecha(), abajo()… · Llevá a GENI a la estrella"]},
+ {id:"pa2",grp:"PA",notes:true,title:"pintar() y bailar()",rows:["#####","RXV.E","#####"],sol:"r p r b r r",
+  tip:["Rojas: pintar · Verdes: bailar","Mirá abajo: en Python se escriben pintar() y bailar()"]},
+ {id:"pa3",grp:"PH",notes:true,title:"Repetir es for",max:3,rows:["#######","R.....E","#######"],sol:"6(r)",
+  tip:["¡Usá el bloque repetir!","En Python, repetir 6 veces se escribe: for i in range(6):"]},
+ {id:"pa4",grp:"PH",title:"for que pinta",max:5,rows:["########","RXXXXXXE","########"],sol:"6(r p) r",
+  tip:["Repetí moverte y pintar","Mirá abajo: lo que está adentro del for va con sangría (más a la derecha)"]},
+ {id:"pa5",grp:"PH",title:"Escalera bailarina",max:7,rows:["####E","###V.","##V.#","#V.##","R.###"],sol:"3(r u b) r u"},
+ {id:"pa6",grp:"PH",title:"Un for adentro de otro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))",
+  tip:["Un repetir adentro de otro","Mirá abajo: el for de adentro usa j y tiene más sangría"]},
+ /* Parte 2: funciones con bloques (los niveles de Funciones de 9 a 12) y al final una función que llama a otra */
+ {id:"pf1",grp:"PI",title:"Llamá a la función",max:7,pre:{A:"r r u"},lock:["A"],rows:["######E","####...","##...##","R..####"],sol:"A=(r r u); A A A",
+  tip:["¡Llamá a la función para ahorrar bloques!","Mirá abajo: la función se crea con def y se llama con su nombre y ()"]},
+ {id:"pf2",grp:"PI",title:"Falta un bloque",max:7,pre:{A:"r r"},rows:["R..####","##...##","####...","######E"],sol:"A=(r r d); A A A"},
+ {id:"py1",grp:"PI",title:"Tu primera función",max:7,rows:["######","#####E","###...","R...##"],sol:"A=(r r u); r A A"},
+ {id:"pa7",grp:"PK",title:"La función que pinta",max:10,rows:["##..X..XE","R.X######"],sol:"A=(r r p); A u A r A r"},
+ {id:"pf3",grp:"PK",title:"La función que baila",max:10,rows:["######V.R","EV..V..##"],sol:"A=(l l b); A d A l A l"},
+ {id:"pf4",grp:"PK",title:"Arreglá la función",max:11,pre:{A:"d p"},rows:["R####",".####","X.###","#.###","#X..#","###.#","###XE"],sol:"A=(d d p); A r A r r A r"},
+ {id:"pf5",grp:"PL",title:"Función y pasos",max:10,rows:["#########","########E","####.....","##...####","##.######","R..######"],sol:"A=(r r u); A u A r r A"},
+ {id:"pa8",grp:"PL",title:"Función adentro del for",max:9,rows:["########.","######..E","####.#.##","##.....##","##.######","R..######"],sol:"A=(r r u); 2(A u A d)"},
+ {id:"pf6",grp:"PM",title:"Una llama a otra",max:9,fns:2,rows:["########E","####.....","##...####","R..######"],sol:"A=(r r); B=(A u); B B A B",
+  tip:["Una función puede llamar a otra","La función B usa a la A: mirá abajo cómo queda en Python"]},
+ {id:"pf7",grp:"PM",title:"Rojas de dos en dos",max:10,fns:2,rows:["RX####","#.X.X#","####.X","#####E"],sol:"A=(r p); B=(A d A); B r B d"},
+ /* Parte 3: escriben el código */
+ {id:"py2",grp:"PB",title:"Completá el código",goal:9,req:["def"],rows:["R..####","##...##","####...","######E"],
+  pre:"def escalon():\n    derecha()\n    derecha()\n    ___\n\ndef main():\n    escalon()\n    escalon()\n    ___\n\nmain()\n",
   sol:"def escalon():\n    derecha()\n    derecha()\n    abajo()\n\ndef main():\n    escalon()\n    escalon()\n    escalon()\n\nmain()\n",
-  tip:["Completá los ___","Cambiá cada ___ por lo que falta y tocá Ir"]},
+  tip:["¡Ahora escribís vos!","Cambiá cada ___ por lo que falta y tocá Ir"]},
  {id:"py3",grp:"PB",title:"Llamá a las funciones",goal:14,req:["def"],rows:["######...E","######.###","###....###","###.######","R...######"],
-  pre:"# funciones: se definen acá, pero todavía no se ejecutan\ndef avanzar():\n    derecha()\n    derecha()\n    derecha()\n\ndef subir():\n    arriba()\n    arriba()\n\n# main: el programa principal\ndef main():\n    pass  # pass = «no hacer nada»: cambialo por avanzar() y subir()\n\n# llamar a main: acá empieza a ejecutarse\nmain()\n",
+  pre:"def avanzar():\n    derecha()\n    derecha()\n    derecha()\n\ndef subir():\n    arriba()\n    arriba()\n\ndef main():\n    ...\n\nmain()\n",
   sol:"def avanzar():\n    derecha()\n    derecha()\n    derecha()\n\ndef subir():\n    arriba()\n    arriba()\n\ndef main():\n    avanzar()\n    subir()\n    avanzar()\n    subir()\n    avanzar()\n\nmain()\n",
   tip:["Escribí el main","Las funciones ya están: adentro de main() llamalas en orden, una por línea"]},
- {id:"py4",grp:"PB",title:"Tu primera función",goal:12,req:["def"],rows:["#########","########E","####.....","##...####","##.######","R..######"],pre:MAIN0,
+ {id:"py16",grp:"PC",title:"Escribí el for",goal:6,req:["for"],rows:["########","RXXXXXXE","########"],pre:MAIN0,
+  sol:"def main():\n    for i in range(6):\n        derecha()\n        pintar()\n    derecha()\n\nmain()\n",
+  tip:["El mismo pasillo de la parte 1, ahora escrito","for i in range(6): y abajo, con sangría, lo que se repite"]},
+ {id:"py4",grp:"PC",title:"Tu primera función escrita",goal:12,req:["def"],rows:["#########","########E","####.....","##...####","##.######","R..######"],pre:MAIN0,
   sol:"def escalon():\n    derecha()\n    derecha()\n    arriba()\n\ndef main():\n    escalon()\n    arriba()\n    escalon()\n    derecha()\n    derecha()\n    escalon()\n\nmain()\n",
   tip:["Creá tu propia función","Buscá los pasos que se repiten · def nombre(): arriba de main"]},
- {id:"py5",grp:"PC",title:"La función que pinta",goal:12,req:["def"],rows:["##..X..XE","R.X######"],pre:MAIN0,
+ {id:"py5",grp:"PJ",title:"La función que pinta",goal:12,req:["def"],rows:["##..X..XE","R.X######"],pre:MAIN0,
   sol:"def pintar_dos():\n    derecha()\n    derecha()\n    pintar()\n\ndef main():\n    pintar_dos()\n    arriba()\n    pintar_dos()\n    derecha()\n    pintar_dos()\n    derecha()\n\nmain()\n",
   tip:["Pintá las rojas con una función","pintar() pinta la celda donde está GENI"]},
- {id:"py6",grp:"PC",title:"Pintar y bailar",goal:15,req:["def"],rows:["RXX###","##VXX#","####VE"],pre:MAIN0,
+ {id:"py6",grp:"PJ",title:"Pintar y bailar",goal:15,req:["def"],rows:["RXX###","##VXX#","####VE"],pre:MAIN0,
   sol:"def pinta():\n    derecha()\n    pintar()\n\ndef baila():\n    abajo()\n    bailar()\n\ndef main():\n    pinta()\n    pinta()\n    baila()\n    pinta()\n    pinta()\n    baila()\n    derecha()\n\nmain()\n",
   tip:["Rojas: pintar() · Verdes: bailar()","Podés crear más de una función"]},
  {id:"py7",grp:"PD",title:"Una llama a otra",goal:12,req:["def2"],rows:["########E","####.....","##...####","R..######"],
@@ -353,6 +393,7 @@ export const PY_MISSIONS=[
  {id:"py8",grp:"PD",title:"Filas rojas",goal:14,req:["def2"],rows:["RXXX###","###.###","###.XXX","######E"],pre:MAIN0,
   sol:"def pinta():\n    derecha()\n    pintar()\n\ndef fila():\n    pinta()\n    pinta()\n    pinta()\n\ndef main():\n    fila()\n    abajo()\n    abajo()\n    fila()\n    abajo()\n\nmain()\n",
   tip:["Armá una función con otra adentro","Primero la función chica, después la que la usa, al final main()"]},
+ /* Parte 4: variables y parámetros */
  {id:"py9",grp:"PE",title:"Guardá un número",goal:9,req:["var"],rows:["R.....#","#####.#","E.....#"],
   pre:"largo = ___\n\ndef main():\n    for i in range(largo):\n        derecha()\n    abajo()\n    abajo()\n    ___\n\nmain()\n",
   sol:"largo = 5\n\ndef main():\n    for i in range(largo):\n        derecha()\n    abajo()\n    abajo()\n    for i in range(largo):\n        izquierda()\n\nmain()\n",
@@ -362,12 +403,13 @@ export const PY_MISSIONS=[
   sol:"def main():\n    pasos = 1\n    for i in range(3):\n        for j in range(pasos):\n            derecha()\n        arriba()\n        pasos = pasos + 1\n\nmain()\n",
   tip:["La variable cambia","Cada escalón es más largo: pasos = pasos + 1"]},
  {id:"py11",grp:"PF",title:"Funciones con parámetros",goal:10,req:["param"],rows:["######...E","####...###","R....#####"],
-  pre:"def avanzar(n):\n    for i in range(n):\n        derecha()\n\ndef main():\n    avanzar(4)\n    pass  # seguí acá\n\nmain()\n",
+  pre:"def avanzar(n):\n    for i in range(n):\n        derecha()\n\ndef main():\n    avanzar(4)\n\nmain()\n",
   sol:"def avanzar(n):\n    for i in range(n):\n        derecha()\n\ndef main():\n    avanzar(4)\n    arriba()\n    avanzar(2)\n    arriba()\n    avanzar(3)\n\nmain()\n",
   tip:["n es un parámetro","avanzar(4) camina 4 · avanzar(2) camina 2"]},
  {id:"py12",grp:"PF",title:"Filas de cada largo",goal:12,req:["param"],rows:["RXXX####","###.XX##","#####.XE"],pre:MAIN0,
   sol:"def fila(n):\n    for i in range(n):\n        derecha()\n        pintar()\n\ndef main():\n    fila(3)\n    abajo()\n    fila(2)\n    abajo()\n    fila(1)\n    derecha()\n\nmain()\n",
   tip:["Creá una función con parámetro","def fila(n): pinta n rojas seguidas"]},
+ /* Parte 4.5: mientras */
  {id:"py13",grp:"PG",title:"Hasta la estrella",goal:4,req:["while"],rows:["#############","R...........E","#############"],pre:MAIN0,
   sol:"def main():\n    while not en_estrella():\n        derecha()\n\nmain()\n",
   tip:["Mientras no llegues, avanzá","while not en_estrella(): repite hasta llegar"]},
@@ -377,12 +419,21 @@ export const PY_MISSIONS=[
  {id:"py15",grp:"PG",title:"Seguí el camino",goal:7,req:["while","if"],rows:["R..#####","##.....#","######.#","######.E"],pre:MAIN0,
   sol:"def main():\n    while not en_estrella():\n        if pared_derecha():\n            abajo()\n        else:\n            derecha()\n\nmain()\n",
   tip:["Si hay pared, bajá","if pared_derecha(): … else: …"]}];
+/* desafíos: xpr (repetir) y xp0 (funciones) son de bloques, con el espejo; xp1 y xp2 son de código. Los ids no cambian aunque cambie la parte */
 export const PY_CHALLENGES=[
- {id:"xp1",part:1,tools:"rfpb",strict:true,title:"Desafío de funciones en Python",t3:300,t2:480,levels:[
+ {id:"xpr",part:1,blocks:true,cls:2,tools:"rpb",strict:true,title:"Desafío de repetir",t3:150,t2:240,levels:[
+   {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"},
+   {title:"La montaña bailarina",max:8,rows:["R.####E","#..#...","##.....","###V.##"],sol:"3(r d) b 3(r u)"},
+   {title:"Dos pasillos",max:10,rows:["RXVXV","####V","####V","####E"],sol:"2(r p r b) 2(d b) d"}]},
+ {id:"xp0",part:2,blocks:true,cls:3,tools:"rpbf",strict:true,title:"Desafío de funciones",t3:150,t2:240,levels:[
+   {title:"Pintar con función",max:10,rows:["EX..X..##","######X.R"],sol:"A=(l l p); A u A l A l"},
+   {title:"Bailar con función",max:10,rows:["R.V######","##..V..VE"],sol:"A=(r r b); A d A r A r"},
+   {title:"Colores con función",max:12,rows:["####.#XE","##..V.V#","R.V#####"],sol:"A=(r r b); 2(A u) d A u p r"}]},
+ {id:"xp1",part:3,tools:"rfpb",strict:true,title:"Desafío de escribir en Python",t3:300,t2:480,levels:[
    {title:"La escalera",rows:["...#E","..#..",".#..#","#..#.","R.#.."],pre:MAIN0,sol:"def escalon():\n    derecha()\n    arriba()\n\ndef main():\n    escalon()\n    escalon()\n    escalon()\n    escalon()\n\nmain()\n"},
    {title:"Pasillo pintado",rows:["#########","R.X.X.X.E","#########"],pre:MAIN0,sol:"def dos():\n    derecha()\n    derecha()\n    pintar()\n\ndef main():\n    dos()\n    dos()\n    dos()\n    derecha()\n    derecha()\n\nmain()\n"},
    {title:"Baile en zigzag",rows:["RV####","#.V###","##.V##","###.V#","####.E"],pre:MAIN0,sol:"def paso():\n    derecha()\n    bailar()\n    abajo()\n\ndef main():\n    paso()\n    paso()\n    paso()\n    paso()\n    derecha()\n\nmain()\n"}]},
- {id:"xp2",part:2,tools:"rfvpb",strict:true,title:"Desafío de variables",t3:300,t2:480,levels:[
+ {id:"xp2",part:4,tools:"rfvpb",strict:true,title:"Desafío de variables",t3:300,t2:480,levels:[
    {title:"Avanzar n",rows:["R...#####","###..####","####....E"],pre:MAIN0,sol:"def avanzar(n):\n    for i in range(n):\n        derecha()\n\ndef main():\n    avanzar(3)\n    abajo()\n    avanzar(1)\n    abajo()\n    avanzar(4)\n\nmain()\n"},
    {title:"Ida y vuelta",rows:["R....#","####.#","E....#"],pre:MAIN0,sol:"largo = 4\n\ndef main():\n    for i in range(largo):\n        derecha()\n    abajo()\n    abajo()\n    for i in range(largo):\n        izquierda()\n\nmain()\n"},
    {title:"Filas que crecen",rows:["RX#####","#.XX###","###.XXX","######E"],pre:MAIN0,sol:"def fila(n):\n    for i in range(n):\n        derecha()\n        pintar()\n\ndef main():\n    largo = 1\n    for i in range(3):\n        fila(largo)\n        abajo()\n        largo = largo + 1\n\nmain()\n"}]}];
@@ -392,8 +443,8 @@ export function applyPython(){
   const put=(arr,items)=>arr.splice(0,arr.length,...items);
   put(PARTS,PY_PARTS); put(GROUPS,PY_GROUPS);
   put(MISSIONS,PY_MISSIONS.map(m=>{ const g=GROUPS.find(x=>x.id===m.grp);
-    return Object.assign(m,{part:g.part,cls:m.blocks?3:4,py:!m.blocks,tools:m.blocks?"rf":m.tools??g.tools,strict:m.strict??!!g.strict,adv:false}); }));
-  put(CHALLENGES,PY_CHALLENGES); CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:4,py:true,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
+    return Object.assign(m,{part:g.part,cls:g.blocks?g.cls:4,py:!g.blocks,tools:m.tools??g.tools,strict:m.strict??!!g.strict,adv:false}); }));
+  put(CHALLENGES,PY_CHALLENGES); CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.blocks?ch.cls:4,py:!ch.blocks,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
   CLASS_CODES.length=0;
   numberMissions();
 }

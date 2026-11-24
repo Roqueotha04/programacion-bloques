@@ -2,7 +2,7 @@
 /* Python del juego (edición ?python). No corre Python de verdad: es un subconjunto chico que se traduce a los mismos eventos que
    walk() de engine.ts (move, paint, dance, loop, if, call), así la simulación, las animaciones y selfTest son los de siempre.
    Qué entiende: def (con parámetros), llamadas, for i in range(n) / range(a, b), while, if / elif / else, variables (= += -=),
-   números enteros, + - * // % /, comparaciones, and / or / not, True / False, pass, global y comentarios (#).
+   números enteros, + - * // % /, comparaciones, and / or / not, True / False, pass y «...» (no hacen nada), global y comentarios (#).
    Las palabras de Python van en inglés y los comandos de GENI en español: arriba() abajo() izquierda() derecha() pintar() bailar().
    Preguntas (para if y while): en_estrella() celda_roja() celda_verde() pared_arriba() pared_abajo() pared_izquierda() pared_derecha().
    Los errores salen en español con el número de línea. Sin módulos ni DOM: lo usan engine.ts (simulate, selfTest) y ui.ts. */
@@ -32,6 +32,7 @@ function lex(s,ln){ const out=[]; let i=0;
     if(/\d/.test(c)){ let j=i; while(j<s.length&&/\d/.test(s[j])) j++;
       if(s[j]==="."||s[j]===",") { if(/\d/.test(s[j+1]||"")) err(ln,"en este juego los números son enteros (sin coma ni punto)"); }
       out.push({t:"num",v:+s.slice(i,j)}); i=j; continue; }
+    if(s.startsWith("...",i)){ out.push({t:"op",v:"..."}); i+=3; continue; }
     const two=s.slice(i,i+2);
     if(["==","!=","<=",">=","+=","-=","//"].includes(two)){ out.push({t:"op",v:two}); i+=2; continue; }
     if("()+-*/%<>=:,".includes(c)){ out.push({t:"op",v:c}); i++; continue; }
@@ -83,6 +84,7 @@ function stmt(L){ const {toks,ln}=L, P=exprP(toks,ln), t0=toks[0], w=t0.t==="id"
   if(w==="while"||w==="if"||w==="elif"){ P.p=1; if(!P.peek()||P.is(":")) err(ln,`falta la pregunta: ${w} celda_roja():`); const cond=P.or(); colon(); return {k:w,cond,ln,block:true}; }
   if(w==="else"){ P.p=1; colon(); return {k:"else",ln,block:true}; }
   if(w==="pass"){ P.p=1; end(); return {k:"pass",ln}; }
+  if(t0.v==="..."){ P.p=1; end(); return {k:"pass",ln}; } /* «...»: línea que no hace nada, para dejar una función vacía */
   if(w==="global"){ P.p=1; const names=[]; for(;;){ names.push(name(P.nx(),"después de global van nombres de variables")); if(P.is(",")){ P.p++; continue; } break; } end(); return {k:"global",names,ln}; }
   if(w==="return") err(ln,"en este juego no se usa return: la función termina sola al llegar al final");
   if(w==="break"||w==="continue") err(ln,`en este juego no se usa ${w}`);
@@ -230,19 +232,19 @@ const SENSE_PY=Object.fromEntries(Object.entries(PY_SENSE).map(([k,v])=>[v,k]));
 /* nombre libre del alumno → nombre válido de Python (sin tildes ni espacios); si no sirve, funcion_a */
 export function pyName(name,f){ let s=String(name||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim().replace(/[^a-z0-9_]+/g,"_").replace(/^_+|_+$/g,"");
   if(!s||/^\d/.test(s)||KW.has(s)||isCmd(s)||s==="main") s="funcion_"+String(f).toLowerCase(); return s; }
-export function blocksToPy(prog,funcs,names){ const out=[], VARS="ijk";
-  /* el espejo lleva comentarios para leerlo: qué se define, qué se llama y dónde empieza (los comentarios no cuentan como líneas) */
-  const lines=(list,ind,d)=>{ if(!list.length){ out.push(ind+"pass  # vacía: pass = «no hacer nada»"); return; }
+/* notes: comentarios simples para aprender a leerlo (solo en los primeros niveles, map.notes) */
+export function blocksToPy(prog,funcs,names,notes){ const out=[], VARS="ijk", note=t=>{ if(notes) out.push(t); };
+  const lines=(list,ind,d)=>{ if(!list.length){ out.push(ind+(notes?"...  # no hay nada aquí":"...")); return; }
     for(const b of list){
       if(b.t==="move") out.push(ind+MOVE_PY[b.dir]+"()");
       else if(ACT_PY[b.t]) out.push(ind+ACT_PY[b.t]+"()");
-      else if(b.t==="call") out.push(ind+pyName(names&&names[b.f],b.f)+"()  # llama a la función");
+      else if(b.t==="call") out.push(ind+pyName(names&&names[b.f],b.f)+"()");
       else if(b.t==="repeat"){ out.push(`${ind}for ${VARS[d]||"n"+d} in range(${b.n}):`); lines(b.body,ind+"    ",d+1); }
       else if(b.t==="if"){ const c=b.c[0]==="n"?"not "+SENSE_PY["w"+b.c[1]]:SENSE_PY[b.c]; out.push(`${ind}if ${c}():`); lines(b.body,ind+"    ",d); }
       else if(b.t==="else"){ out.push(ind+"else:"); lines(b.body,ind+"    ",d); } } };
-  Object.keys(funcs||{}).sort().forEach(f=>{ out.push("# función: un grupo de pasos con nombre (se define acá, se ejecuta cuando la llaman)",`def ${pyName(names&&names[f],f)}():`); lines(funcs[f],"    ",0); out.push(""); });
-  out.push("# main: el programa principal (los bloques de «al tocar»)","def main():"); lines(prog,"    ",0);
-  out.push("","# llamar a main: acá empieza a ejecutarse todo","main()"); return out.join("\n"); }
+  Object.keys(funcs||{}).sort().forEach(f=>{ note("# definimos nuestra función"); out.push(`def ${pyName(names&&names[f],f)}():`); lines(funcs[f],"    ",0); out.push(""); });
+  note("# Programa principal"); out.push("def main():"); lines(prog,"    ",0);
+  out.push(""); note("# lo que se ejecuta"); out.push("main()"); return out.join("\n"); }
 
 /* colores para mostrar código (el texto se escapa; los nombres de Python no tienen caracteres de HTML) */
 const PY_KW=new Set(["def","for","in","while","if","elif","else","not","and","or","True","False","pass","global"]);
