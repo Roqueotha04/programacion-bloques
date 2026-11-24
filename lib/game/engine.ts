@@ -1,6 +1,7 @@
 // @ts-nocheck
 /* Código extraído del juego original. No reescribir en React. */
-import { PARTS, GROUPS, MISSIONS, CHALLENGES, NORMAL_COUNT } from "./data";
+import { PARTS, GROUPS, MISSIONS, CHALLENGES, NORMAL_COUNT, ED } from "./data";
+import { parsePy, pyWalk, pyLines, pyMissing } from "./python";
 
 export function timeStars(ch,sec){ return sec<=ch.t3?3:sec<=ch.t2?2:1; }
 export function fmtTime(sec){ sec=Math.floor(sec); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
@@ -62,6 +63,7 @@ export function cellColor(map,S){ const ch=map.rows[S.r][S.c]; return ch==="X"&&
    "wu","wd","wl","wr" = hay pared o borde de ese lado; "nu","nd","nl","nr" = NO hay pared de ese lado */
 export function sense(map,S,c){
   if(c==="x"||c==="v") return cellColor(map,S)===c;
+  if(c==="e") return map.rows[S.r][S.c]==="E"; /* Python: en_estrella() */
   const d=DIRS[c[1]]; if(!d) return false;
   const r=S.r+d[0], k=S.c+d[1], wall=r<0||k<0||r>=map.rows.length||k>=map.rows[0].length||map.rows[r][k]==="#";
   return c[0]==="n"?!wall:wall; }
@@ -137,7 +139,9 @@ export function starsFor(map,count,usedRep,opt,hint,wrong){
    si el nivel lo pide (rep), +1 por el camino más corto (acts = acciones hechas, opt = largo del camino) */
 export function starsAdv(map,{count,rep,acts,opt}){
   return 1+(count<=map.goal&&(!map.rep||rep)?1:0)+(opt!=null&&acts<=opt?1:0); }
-export const maxStars=m=>3; /* todos los niveles dan hasta 3 estrellas */
+export const maxStars=m=>3;
+/* niveles de Python (map.py): 1 llegó, +1 usó lo que pide el nivel (req), +1 dentro de la meta de líneas (goal) */
+export function starsPy(map,{lines,req}){ return 1+(req?1:0)+(map.goal==null||lines<=map.goal?1:0); } /* todos los niveles dan hasta 3 estrellas */
 /* grupos: cada parte tiene su cadena. El primero se abre al terminar las partes «after»;
    los demás al terminar el grupo anterior y juntar las estrellas pedidas (de esa parte) */
 export function partDone(stars,p){ return MISSIONS.filter(m=>m.part===p).every(m=>stars[m.id]); }
@@ -181,8 +185,11 @@ export function parseSolF(s){ let i=0; const funcs={};
 export function parseSol(s){ return parseSolF(s).prog; }
 /* devuelve k: win (con acts = acciones hechas y rec = alguna función se llamó a sí misma), crash, bad, end
    o boom (se pasó de MAXACT acciones o de MAXSTEPS eventos: bucle infinito, repetir de más, etc.) */
+/* prog puede ser un programa de Python ya leído ({py:true,body}, de parsePy): sus errores devuelven k:"pyerr" con ln y msg */
 export function simulate(map,prog,funcs=null){ let S=startState(map), n=0, acts=0, rec=false; const lim=map.cls===0?Infinity:(map.maxAct||MAXACT);
-  for(const ev of walk(prog,c=>sense(map,S,c),[],funcs)){ if(++n>MAXSTEPS) return {k:"boom"};
+  const it=prog&&prog.py?pyWalk(prog,c=>sense(map,S,c)):walk(prog,c=>sense(map,S,c),[],funcs);
+  for(const ev of it){ if(++n>MAXSTEPS) return {k:"boom"};
+    if(ev.t==="error") return {k:"pyerr",ln:ev.ln,msg:ev.msg};
     if(ev.t==="call"){ if(typeof ev.addr[0]==="string"&&ev.addr[0]===ev.f) rec=true; continue; }
     if((ev.t==="move"||ACTS[ev.t])&&++acts>lim) return {k:"boom"};
     /* (el conteo de acciones ahora es para todos los niveles) */
@@ -217,7 +224,8 @@ function worldsCheck(m){ const ws=worldsOf(m), a=ws[0], info=[]; let ok=ws.lengt
   return {ok,info:ws.length+" mundos"+(info.length?" ✖ "+info.join(","):"")}; }
 /* ===== Mundos (fin) ===== */
 export function selfTest(){
-  const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>{ const {prog:sol,funcs:fn}=parseSolF(m.sol), sim=m.worlds?simulateAll(m,sol,undefined,fn):simulate(m,sol,fn), path=shortest(m,startState(m)), cnt=countProgram(sol,fn)+1, used=m.cls===3?hasCall(sol):hasRepeat(sol);
+  const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>m.py?pyCheck(m):blockCheck(m));
+  function blockCheck(m){ const {prog:sol,funcs:fn}=parseSolF(m.sol), sim=m.worlds?simulateAll(m,sol,undefined,fn):simulate(m,sol,fn), path=shortest(m,startState(m)), cnt=countProgram(sol,fn)+1, used=m.cls===3?hasCall(sol):hasRepeat(sol);
     const opt=optFor(m,path), lim=limitFor(m,opt), run=maxRun(sol), cond=m.tools.includes("i");
     /* todos los niveles terminan en la estrella: se gana al llegar con todo hecho */
     const best=m.adv?starsAdv(m,{count:cnt,rep:hasRepeatAll(sol,fn),acts:sim.acts,opt:path&&path.length})===3:starsFor(m,cnt,used,opt,false,sim.S&&sim.S.wrong)===3;
@@ -230,7 +238,13 @@ export function selfTest(){
     const noIf=()=>m.worlds?simulateAll(m,stripIf(sol),undefined,fn):simulate(m,stripIf(sol),fn);
     if(cond) ok=ok&&hasIf(sol)&&noIf().k!=="win";
     if(m.worlds) ok=ok&&worldsCheck(m).ok;
-    return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1&&!m.need?" seguidos:"+run:""}${cond?" sin si: "+noIf().k:""}${m.worlds?" "+worldsCheck(m).info:""}`}; });
+    return {id:m.id,title:m.title,ok,info:`sim:${sim.k} bfs:${path?path.length:"-"} bloques:${cnt}/${lim}${m.cls===1&&!m.need?" seguidos:"+run:""}${cond?" sin si: "+noIf().k:""}${m.worlds?" "+worldsCheck(m).info:""}`}; }
+  /* Python: la solución se lee sin errores, gana por el camino más corto, entra en la meta de líneas y usa lo que pide el nivel (3 estrellas).
+     El código de arranque (pre) no puede ganar solo */
+  function pyCheck(m){ const r=parsePy(m.sol), path=shortest(m,startState(m)), sim=r.ok?simulate(m,r.prog):{k:"pyerr",ln:r.ln,msg:r.msg};
+    const lines=pyLines(m.sol), miss=r.ok?pyMissing(r.prog,m.req):"?", pre=m.pre!=null?parsePy(m.pre):null, preWin=!!(pre&&pre.ok&&simulate(m,pre.prog).k==="win");
+    const ok=r.ok&&hasE(m)&&sim.k==="win"&&!!path&&sim.acts===path.length&&(m.goal==null||lines<=m.goal)&&!miss&&!preWin;
+    return {id:m.id,title:m.title,ok,info:`sim:${sim.k}${sim.k==="pyerr"?" (línea "+sim.ln+": "+sim.msg+")":""} acciones:${sim.acts??"-"} bfs:${path?path.length:"-"} líneas:${lines}${m.goal!=null?"/"+m.goal:""}${miss?" falta:"+miss:""}${preWin?" ✖ el código de arranque ya gana":""}`}; }
   /* recursión: un bucle infinito explota (por acciones y por eventos), y ganar sin que una función se llame a sí misma no cuenta (rec=false) */
   const loopMap={rows:["..R..E"],adv:true,cls:3,tools:"pf",strict:true};
   const boomA=parseSolF("A=(l r A); A"), boomB=parseSolF("A=(A); A");
@@ -240,7 +254,11 @@ export function selfTest(){
     res.push({id:"norec",title:"Ganar sin recursión no cuenta",ok:!!r&&r.k==="win"&&r.rec===false,info:"sim:"+(r?r.k:"-")+" rec:"+(r&&r.rec)}); }
   /* con 2 estrellas en todo lo anterior de la parte alcanza para abrir cada grupo */
   PARTS.forEach(p=>{ let before=0; GROUPS.filter(g=>g.part===p.id).forEach(g=>{ const ok=g.need<=before*2; res.push({id:g.id,title:"Grupo "+g.title,ok,info:`pide ${g.need}, máx ${before*3}`}); before+=MISSIONS.filter(m=>m.grp===g.id).length; }); });
-  /* regla: en cada parte los chicos hacen menos o igual cantidad de niveles que el juego normal */
-  PARTS.forEach(p=>{ const n=MISSIONS.filter(m=>m.part===p.id).length; res.push({id:"cant"+p.id,title:"Cantidad de niveles de la parte "+p.id,ok:n<=NORMAL_COUNT[p.id],info:`${n} niveles (juego normal: ${NORMAL_COUNT[p.id]})`}); });
+  /* Python: errores en español con línea, bucle infinito que explota, def después de la llamada y la 3.ª estrella por líneas */
+  if(ED.kind==="python"){ const mp={rows:["R....E"],cls:4,tools:""}, run=c=>{ const r=parsePy(c); return r.ok?simulate(mp,r.prog):{k:"pyerr",ln:r.ln,msg:r.msg}; };
+    const a=run("derecha"), b=run("while True:\n    x = 1"), c=run("ir()\ndef ir():\n    derecha()"), d=run("def ir(n):\n    for i in range(n):\n        derecha()\nir(5)"), e=run("if True\n    derecha()");
+    res.push({id:"py",title:"Python: errores, bucles infinitos y parámetros",ok:a.k==="pyerr"&&a.ln===1&&b.k==="boom"&&c.k==="pyerr"&&/más arriba/.test(c.msg)&&d.k==="win"&&e.k==="pyerr"&&/«:»/.test(e.msg),info:`derecha → ${a.k} · while True → ${b.k} · llamada antes del def → ${c.k} · ir(5) → ${d.k} · if sin «:» → ${e.k}`}); }
+  /* regla: en cada parte los chicos hacen menos o igual cantidad de niveles que el juego normal (la edición Python tiene sus propias partes) */
+  if(ED.kind!=="python") PARTS.forEach(p=>{ const n=MISSIONS.filter(m=>m.part===p.id).length; res.push({id:"cant"+p.id,title:"Cantidad de niveles de la parte "+p.id,ok:n<=NORMAL_COUNT[p.id],info:`${n} niveles (juego normal: ${NORMAL_COUNT[p.id]})`}); });
   return res;
 }

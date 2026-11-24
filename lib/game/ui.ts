@@ -2,20 +2,22 @@
 /* Código extraído del juego original. No reescribir en React. */
 "use client";
 
-import { PARTS, GROUPS, MISSIONS, CHALLENGES, CLASS_CODES, applyKids } from "./data";
+import { PARTS, GROUPS, MISSIONS, CHALLENGES, CLASS_CODES, applyKids, applyPython } from "./data";
 import {
   ACTS, DIRS, MAXSTEPS, MAXACT, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
-  fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, hasRepeatAll, limitFor, maxStars, optFor, starsAdv,
+  fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, hasRepeatAll, limitFor, maxStars, optFor, starsAdv, starsPy,
   chOf, gateTxt, partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
   tryAct, tryMove, walk,
 } from "./engine";
-import { freshSave, isKids, isProfe, saveKey } from "./save";
+import { parsePy, pyWalk, pyLines, pyMissing, PY_REQ_TIP, blocksToPy, pyHTML } from "./python";
+import { freshSave, isKids, isProfe, isPython, saveKey } from "./save";
 
 let booted = false;
 export function boot() {
   if (booted) return;
   booted = true;
-  if (isKids()) applyKids();
+  const PY_ED=isPython(); /* edición Python (?python): reemplaza las partes; tiene prioridad sobre ?chicos */
+  if (PY_ED) applyPython(); else if (isKids()) applyKids();
   const LABEL={u:"Arriba",d:"Abajo",l:"Izquierda",r:"Derecha"};
   
   const $=id=>document.getElementById(id);
@@ -72,7 +74,8 @@ export function boot() {
   const all3=ms=>ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m));
   const chPlayed3=ch=>{ const b=SAVE.best[ch.id]; return b!=null&&timeStars(ch,b)>=3; };
   const SECRETS={
-    mega:{hint:"sacá 3 estrellas en todos los niveles de Repetir y Repetir avanzado, y en el Desafío de repetir",ok:()=>all3(MISSIONS.filter(m=>m.part===4||m.part===4.5))&&CHALLENGES.filter(c=>c.part===4).every(chPlayed3)},
+    /* (si la edición no tiene Repetir, como la de Python, no se regala: hace falta al menos un nivel) */
+    mega:{hint:"sacá 3 estrellas en todos los niveles de Repetir y Repetir avanzado, y en el Desafío de repetir",ok:()=>{ const ms=MISSIONS.filter(m=>!m.py&&(m.part===4||m.part===4.5)); return ms.length>0&&all3(ms)&&CHALLENGES.filter(c=>c.part===4).every(chPlayed3); }},
     dios:{hint:"sacá 3 estrellas en todos los niveles y todos los desafíos del juego",ok:()=>all3(MISSIONS)&&CHALLENGES.every(chPlayed3)}};
   function secretOk(s){ return !s.secret||PROFE||SECRETS[s.secret].ok(); }
   const skinOwned=s=>SAVE.owned.includes(s.id)||(!!s.secret&&secretOk(s));
@@ -241,8 +244,10 @@ export function boot() {
   
     clock:()=>`<svg viewBox="0 0 32 32"><path d="M13 3h6M16 3v4M24.5 8.5l2-2" stroke="#0D3049" stroke-width="2.6" stroke-linecap="round"/><circle cx="16" cy="18" r="11" fill="#fff" stroke="#0D3049" stroke-width="2.6"/><path d="M16 12v6l4 3" fill="none" stroke="#FF5A62" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   
-    check:()=>`<svg viewBox="0 0 32 32"><path d="M6 17l6 6L26 9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
-  
+    check:()=>`<svg viewBox="0 0 32 32"><path d="M6 17l6 6L26 9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+
+    code:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M11 9 4 16l7 7M21 9l7 7-7 7M18.5 5.5l-5 21" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+
   };
   
   $("ico3").innerHTML=ICO.pencil(); $("walletIco").innerHTML=starIco(true);
@@ -405,7 +410,7 @@ export function boot() {
   
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }
   
-  function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===4.5||p===5.5?ICO.repeat():ICO.ifq(); }
+  function partIco(P){ const p=P.id; if(P.py) return ICO.code(); return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===4.5||p===5.5?ICO.repeat():ICO.ifq(); }
   
   function lockWhy(st){ return st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }
   
@@ -425,7 +430,7 @@ export function boot() {
   
       h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+
   
-        `<span class="gdot">${partIco(P.id)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+(P.extra&&ms.length&&ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m))?`<span class="plat">${starIco(true)}Platino</span>`:"")+
+        `<span class="gdot">${partIco(P)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+(P.extra&&ms.length&&ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m))?`<span class="plat">${starIco(true)}Platino</span>`:"")+
         (PROFE&&P.code?`<span class="profe">Código: ${P.code}</span>`:"")+
         `<span class="gprog">${starIco(true)} ${got} / ${ms.reduce((a,m)=>a+maxStars(m),0)}</span></div><div class="cards">`;
       for(const st of sts){
@@ -559,8 +564,8 @@ export function boot() {
   
     if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro? Tocá otra vez"; SND.nope(); resetT=setTimeout(resetResetBtn,4000); return; }
   
-    SAVE=FRESH(); applyProfe(); persist(); for(const k in PROGS) delete PROGS[k]; for(const k in FUNCS) delete FUNCS[k]; for(const k in NAMES) delete NAMES[k];
-  
+    SAVE=FRESH(); applyProfe(); persist(); for(const k in PROGS) delete PROGS[k]; for(const k in FUNCS) delete FUNCS[k]; for(const k in NAMES) delete NAMES[k]; for(const k in PYCODE) delete PYCODE[k];
+
     resetResetBtn(); renderMenu(); SND.trash(); toast(ICO.robot(),"Progreso borrado. ¡A empezar de nuevo!"); }
   
   $("menu").addEventListener("click",e=>{
@@ -619,6 +624,8 @@ export function boot() {
   /* ================= juego ================= */
   
   let G=null; const PROGS={}, FUNCS={}, NAMES={}; /* funciones y sus nombres por nivel (no se guardan en localStorage, como PROGS) */
+  const PYCODE={}; /* código de Python por nivel (tampoco se guarda en localStorage) */
+  const PY_START="# main: el programa principal (lo que hace GENI)\ndef main():\n    pass  # pass = «no hacer nada»: borrá esta línea y escribí acá\n\n# llamar a main: acá empieza a ejecutarse el programa\nmain()\n";
   
   function startPlay(map){
   
@@ -638,20 +645,24 @@ export function boot() {
     /* mundos: wm = mapa del mundo que se está jugando, worlds = filas de los mundos de este intento, wi = mundo actual (null si no corre) */
     G.tries=0; G.pathLen=(shortest(map,S)||[]).length; /* adv: intentos fallidos y largo del camino más corto, para las estrellas */
     G.wm=map; G.worlds=map.worlds?pickWorlds(map):null; G.wi=null; G.keepW=false; G.conds=map.conds||(tools.includes("b")?["x","v"]:["x"]);
+    /* Python: el programa es texto (G.code); se lee con parsePy al tocar Ir */
+    G.py=!!map.py; G.code=G.py?(PYCODE[map.id]??(map.pre??PY_START)):""; G.pyAst=null; $("game").classList.toggle("pymode",G.py);
 
-  
+
     setTop(map.num||ICO.pencil(),map.ch?`Desafío · Nivel ${map.num} de 3`:map.title); renderTopStars();
-  
-    $("hintBtn").classList.toggle("hidden",!!map.ch||!!map.need||!!map.worlds||map.cls===3);
-  
-    renderPalette(); show("game"); drawBoard(false,true); renderProg();
+
+    $("hintBtn").classList.toggle("hidden",!!map.ch||!!map.need||!!map.worlds||map.cls===3||G.py);
+
+    renderPalette(); show("game"); drawBoard(false,true); renderProg(true);
   
     const lim=`Podés usar hasta ${G.max} bloques`, toStar=hasE(map)?", después a la estrella":"";
   
     if(map.ch&&map.num===1){ const ch=CHALLENGES.find(c=>c.id===map.ch);
   
       say("",ICO.clock(),"El reloj mide cuánto tardás",`3 estrellas: menos de ${fmtTime(ch.t3)} · 2 estrellas: menos de ${fmtTime(ch.t2)}`); }
-  
+    else if(map.tip) say("",G.py?ICO.code("#3776AB"):ICO.blocks(),map.tip[0],map.tip[1]+(map.goal?` · Meta: ${map.goal} líneas`:""));
+    else if(G.py) say("",ICO.code("#3776AB"),"¡Escribí el programa en Python!","Tocá un comando de la izquierda para agregarlo · Ir para probar");
+
     else if(map.adv) say("",ICO.blocks(),"¡Una función que se llama a sí misma!",`Creá tu función y llamala adentro de ella misma: se repite hasta llegar a la estrella${G.nX||G.nV?" · Pintá las rojas y bailá en las verdes":""} · ${lim}`);
     else if(map.worlds) say("",ICO.ifq("#6366F1"),"¡El mapa cambia!",`Tu programa tiene que funcionar en todos${map.reveal?" · Mirá los mundos de abajo":""} · ${lim}`);
     else if((G.nV||G.nX)&&!tools.includes("i")&&!tools.includes("n")) say("",ICO.music("#11986A"),G.nX?"Pintá las rojas y bailá en las verdes":G.nV>1?"¡Bailá en las celdas verdes!":"¡Bailá en la celda verde!",`Después, a la estrella${map.cls===2?" · "+lim:""}`);
@@ -711,6 +722,7 @@ export function boot() {
     document.querySelectorAll("#canvas .running, #canvas .yes, #canvas .nope").forEach(b=>b.classList.remove("running","yes","nope"));
   
     $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen","boom","dizzy"); $("bot").querySelectorAll(".dz").forEach(e=>e.remove()); $("gBoard").classList.remove("kaboom"); placeNow();
+    pyMark(null);
   
   }
   
@@ -759,8 +771,25 @@ export function boot() {
   
   /* ---------- paleta y programa ---------- */
   
+  /* Python: la columna de bloques se vuelve una lista de comandos; tocarlos los escribe en el código.
+     [código, qué hace, tool que lo muestra ("" = siempre), en la misma línea (preguntas)] */
+  const PY_PAL=[
+    {id:"pg-mov",title:"Movimiento",col:"var(--mov)",items:[["arriba()","sube una celda"],["abajo()","baja una celda"],["izquierda()","va a la izquierda"],["derecha()","va a la derecha"]]},
+    {id:"pg-act",title:"Acciones",col:"var(--pnt)",items:[["pintar()","pinta la celda roja","p"],["bailar()","baila en la celda verde","b"]]},
+    {id:"pg-py",title:"Python",col:"var(--fn)",items:[["def nombre():","crea una función","f"],["nombre()","llama a tu función","f"],["for i in range(3):","repite 3 veces","r"],
+      ["nombre = 1","crea una variable","v"],["nombre = nombre + 1","la variable suma 1","v"],["def nombre(n):","función con parámetro n","v"],
+      ["while not en_estrella():","repite hasta llegar","w"],["if celda_roja():","hace algo solo si…","i"],["else:","si no…","i"]]},
+    {id:"pg-ask",title:"Preguntas",col:"var(--ctl)",tool:"wi",items:[["en_estrella()","¿llegó a la estrella?","",1],["celda_roja()","¿está en una roja?","",1],["celda_verde()","¿está en una verde?","b",1],
+      ["pared_derecha()","¿hay pared a la derecha?","",1],["pared_abajo()","¿hay pared abajo?","",1],["pared_arriba()","¿hay pared arriba?","",1],["pared_izquierda()","¿hay pared a la izquierda?","",1]]}];
+  function renderPyPalette(){ let h="", cats="";
+    for(const g of PY_PAL){ if(g.tool&&![...g.tool].some(t=>G.tools.includes(t))) continue;
+      const items=g.items.filter(([, ,t])=>!t||G.tools.includes(t)); if(!items.length) continue;
+      h+=`<div class="pgroup" id="${g.id}"><h4><i style="background:${g.col}"></i>${g.title}</h4>${items.map(([c,d, ,inl])=>`<button class="pyins" data-ins="${escH(c)}"${inl?' data-inline="1"':""}><code>${pyHTML(c)}</code><span>${d}</span></button>`).join("")}</div>`;
+      cats+=`<button class="cat${cats?"":" on"}" data-g="${g.id}"><i style="background:${g.col}"></i>${g.title}</button>`; }
+    $("pal").innerHTML=h; $("cats").innerHTML=cats; }
   function renderPalette(){
-  
+    if(G.py) return renderPyPalette();
+
     let h=`<div class="pgroup" id="pg-mov"><h4><i style="background:var(--mov)"></i>Movimiento</h4>${["u","d","l","r"].map(d=>blockHTML({t:"move",dir:d},null,true)).join("")}</div>`;
   
     let cats=`<button class="cat on" data-g="pg-mov"><i style="background:var(--mov)"></i>Movimiento</button>`;
@@ -837,11 +866,15 @@ export function boot() {
         `<div class="mouth"><div class="arm"></div><div class="slot list" data-l="${f}:">${G.funcs[f].length?listHTML(G.funcs[f],f+":"):'<div class="ph"></div>'}</div></div><div class="rbot"></div></div>`; }).join("")}</div>`; }
   function used(){ return countProgram(G.prog,G.funcs)+1; }
   
-  function renderProg(){
-  
+  /* edición Python: debajo de los bloques, el mismo programa escrito en Python («al tocar» es main) */
+  function mirrorHTML(){ if(!PY_ED) return "";
+    return `<div class="pymirror"><h5>${ICO.code("#3776AB")}Tu programa en Python</h5><pre>${pyHTML(blocksToPy(G.prog,G.fn?G.funcs:{},G.names))}</pre></div>`; }
+  function renderProg(full){
+    if(G.py) return renderPy(full);
+
     const root=G.prog.length?listHTML(G.prog,""):`<div class="rootph">${ICO.drag()}Arrastrá bloques acá</div>`;
-  
-    $("canvas").innerHTML=`<div class="blk hat"><span>al tocar</span><span class="ic">${ICO.flag("#11986A")}</span></div><div class="list root" data-l="">${root}</div>${fnsHTML()}<div class="dropline hidden" id="dropline"></div>`;
+
+    $("canvas").innerHTML=`<div class="blk hat"><span>al tocar</span><span class="ic">${ICO.flag("#11986A")}</span></div><div class="list root" data-l="">${root}</div>${fnsHTML()}${mirrorHTML()}<div class="dropline hidden" id="dropline"></div>`;
   
     const n=used(), c=$("count"); c.innerHTML=ICO.blocks()+`${n} / ${G.max}`; c.classList.toggle("full",n>=G.max); c.classList.remove("no");
   
@@ -855,6 +888,53 @@ export function boot() {
   
   }
   
+  /* ---------- editor de Python ---------- */
+  const PY_LH=26, PY_PAD=12; /* alto de línea y margen de arriba del editor (iguales en game.css) */
+  /* full: arma el editor de cero (al entrar al nivel). Si no, solo actualiza el contador (así no se pierde el cursor) */
+  function renderPy(full){
+    const n=pyLines(G.code), c=$("count"); c.innerHTML=ICO.code("#3776AB")+`${n} ${n===1?"línea":"líneas"}`; c.classList.remove("full","no");
+    $("goal").classList.toggle("hidden",G.map.goal==null); if(G.map.goal!=null) $("goal").innerHTML=starIco(true)+"meta "+G.map.goal;
+    $("runBtn").classList.toggle("ready",!!G.code.trim()); resetClear();
+    if(!full&&$("pyta")) return;
+    $("canvas").innerHTML=`<div class="pyed"><div class="pygut" id="pygut" aria-hidden="true"></div><div class="pywrap"><div class="pyhl hidden" id="pyhl"></div>`+
+      `<textarea id="pyta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Código en Python"></textarea></div></div>`;
+    $("pyta").value=G.code; pyGrow(); }
+  function pyGrow(){ const ta=$("pyta"); if(!ta) return; const n=ta.value.split("\n").length;
+    $("pygut").innerHTML=Array.from({length:n},(_,i)=>`<i data-ln="${i+1}">${i+1}</i>`).join("");
+    ta.style.height=(n*PY_LH+PY_PAD*2+40)+"px"; }
+  /* marca una línea: cls "" (corriendo), "yes"/"no" (respuesta de if/while), "err" (error); sin línea, la saca */
+  function pyMark(ln,cls=""){ const hl=$("pyhl"); if(!hl) return; document.querySelectorAll("#pygut i.on,#pygut i.err").forEach(x=>x.classList.remove("on","err"));
+    if(!ln){ hl.className="pyhl hidden"; return; }
+    hl.className="pyhl"+(cls?" "+cls:""); hl.style.top=(PY_PAD+(ln-1)*PY_LH)+"px"; void hl.offsetWidth; hl.classList.add("pop");
+    const g=document.querySelector(`#pygut i[data-ln="${ln}"]`); if(g){ g.classList.add(cls==="err"?"err":"on"); g.scrollIntoView({block:"nearest"}); } }
+  function pyErr(ln,msg){ pyMark(ln,"err"); SND.nope(); say("err",ICO.code("#FF5A62"),`Error en la línea ${ln}`,escH(msg)); }
+  /* el texto cambió (tecla o comando): se guarda y se corta la ejecución, como al mover un bloque */
+  function pySync(){ const ta=$("pyta"); if(!ta||!G||!G.py||ta.value===G.code) return; G.code=ta.value; PYCODE[G.map.id]=G.code; pyGrow(); changed(); }
+  /* escribe texto en el cursor (con deshacer, si el navegador deja) */
+  function taInsert(ta,text){ ta.focus(); let ok=false; try{ ok=document.execCommand("insertText",false,text); }catch(e){} if(!ok) ta.setRangeText(text,ta.selectionStart,ta.selectionEnd,"end"); }
+  /* comando de la izquierda: las preguntas van en el cursor; el resto en una línea nueva con la sangría de la actual
+     (si la línea está vacía o es un pass, la reemplaza). «nombre» queda seleccionado para escribir encima */
+  function pyInsert(txt,inline){ const ta=$("pyta"); if(!ta) return;
+    if(inline){ taInsert(ta,txt); return pySync(); }
+    const v=ta.value, s=ta.selectionStart, ls=v.lastIndexOf("\n",s-1)+1, nl=v.indexOf("\n",s), le=nl<0?v.length:nl, line=v.slice(ls,le), ind=line.match(/^ */)[0];
+    let ins, at;
+    if(!line.trim()||/^\s*pass\b/.test(line)){ ta.focus(); ta.setSelectionRange(ls,le); ins=ind+txt; at=ls; }
+    else { ta.focus(); ta.setSelectionRange(le,le); ins="\n"+ind+(line.trimEnd().endsWith(":")?"    ":"")+txt; at=le; }
+    taInsert(ta,ins);
+    const k=ins.indexOf("nombre");
+    if(k>=0) ta.setSelectionRange(at+k,at+k+6);
+    else if(txt.endsWith(":")) taInsert(ta,"\n"+ins.split("\n").pop().match(/^ */)[0]+"    ");
+    pySync(); }
+  $("pal").addEventListener("click",e=>{ const b=e.target.closest(".pyins"); if(!b||!G||!G.py||G.busy) return; SND.add(); pyInsert(b.dataset.ins,b.dataset.inline==="1"); });
+  $("canvas").addEventListener("input",e=>{ if(e.target.id==="pyta") pySync(); });
+  /* Tab = 4 espacios (Shift+Tab saca), Enter mantiene la sangría y suma 4 después de «:» */
+  $("canvas").addEventListener("keydown",e=>{ const ta=e.target; if(ta.id!=="pyta"||ta.readOnly) return;
+    const v=ta.value, s=ta.selectionStart, ls=v.lastIndexOf("\n",s-1)+1;
+    if(e.key==="Tab"){ e.preventDefault();
+      if(e.shiftKey){ const k=(v.slice(ls).match(/^ {1,4}/)||[""])[0].length; if(k){ ta.setSelectionRange(ls,ls+k); taInsert(ta,""); } }
+      else taInsert(ta,"    ".slice((s-ls)%4)); pySync(); }
+    else if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); const before=v.slice(ls,s); let ind=before.match(/^ */)[0]; if(before.trimEnd().endsWith(":")) ind+="    ";
+      taInsert(ta,"\n"+ind); pySync(); } });
   const splitA=a=>{ a=String(a); const k=a.indexOf(":"), t=k<0?a:a.slice(k+1); return {f:k<0?null:a.slice(0,k),path:t===""?[]:t.split(".").map(Number)}; }; /* "A:0.1" = función A, bloque 0.1; sin letra = programa */
   const joinA=(f,path)=>f?f+":"+path.join("."):path.join(".");
   const badCall=(b,f)=>f&&(b.t==="call"?!(G.map.adv?b.f<=f:b.f<f):b.body&&b.body.some(x=>badCall(x,f))); /* una función solo llama a otra anterior (B a A); en los niveles avanzados también a sí misma */
@@ -1005,9 +1085,14 @@ export function boot() {
   $("canvas").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches&&e.target.matches("[data-fname]")) e.target.blur(); });
   let clearT=null;
   
-  function resetClear(){ clearTimeout(clearT); $("clearBtn").classList.remove("ask"); $("clearBtn").innerHTML=ICO.trash("currentColor")+"Borrar todo"; }
-  
-  $("clearBtn").onclick=()=>{ if(G.busy||(!G.prog.length&&!G.fids.some(f=>!G.lock.includes(f)&&G.funcs[f].length))) return; const b=$("clearBtn");
+  function resetClear(){ clearTimeout(clearT); $("clearBtn").classList.remove("ask"); $("clearBtn").innerHTML=ICO.trash("currentColor")+(G&&G.py?"Volver al código inicial":"Borrar todo"); }
+
+  $("clearBtn").onclick=()=>{
+    /* Python: vuelve al código de arranque del nivel (también pide confirmar) */
+    if(G.py){ const start=G.map.pre??PY_START; if(G.busy||G.code===start) return; const b=$("clearBtn");
+      if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro?"; clearT=setTimeout(resetClear,3000); return; }
+      G.code=start; delete PYCODE[G.map.id]; SND.trash(); changed(); renderProg(true); return say("",ICO.code("#3776AB"),"Código inicial","Escribí tu programa y tocá Ir"); }
+    if(G.busy||(!G.prog.length&&!G.fids.some(f=>!G.lock.includes(f)&&G.funcs[f].length))) return; const b=$("clearBtn");
   
     if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro?"; clearT=setTimeout(resetClear,3000); return; }
   
@@ -1017,7 +1102,8 @@ export function boot() {
   
   /* ---------- ejecución ---------- */
   
-  function setBusy(v){ G.busy=v; document.body.classList.toggle("busy",v); $("runBtn").disabled=v; $("stepBtn").disabled=v; if(v) $("runBtn").classList.remove("ready"); }
+  function setBusy(v){ G.busy=v; document.body.classList.toggle("busy",v); $("runBtn").disabled=v; $("stepBtn").disabled=v; if(v) $("runBtn").classList.remove("ready");
+    const ta=$("pyta"); if(ta) ta.readOnly=v; /* mientras corre, el código no se edita (Inicio lo libera) */ }
   
   function releaseWait(){ if(G&&G.ctx&&G.ctx.waiting){ const w=G.ctx.waiting; G.ctx.waiting=null; w(); } }
   
@@ -1025,11 +1111,12 @@ export function boot() {
   
     return new Promise(r=>{ G.ctx.waiting=()=>{ $("runBtn").disabled=true; $("stepBtn").disabled=true; r(); }; }); }
   
-  function light(addr){ document.querySelectorAll("#canvas .on").forEach(x=>x.classList.remove("on"));
+  /* en Python, addr es el número de línea */
+  function light(addr){ if(G.py) return pyMark(addr); document.querySelectorAll("#canvas .on").forEach(x=>x.classList.remove("on"));
   
     const el=document.querySelector(`#canvas .blk[data-a="${addr}"]`); if(el){ el.classList.add("on"); el.scrollIntoView({block:"nearest"}); } }
   
-  function setLap(addr,k,n){ const el=document.querySelector(`#canvas .rep[data-a="${addr}"]`); if(!el) return;
+  function setLap(addr,k,n){ if(G.py) return pyMark(addr); const el=document.querySelector(`#canvas .rep[data-a="${addr}"]`); if(!el) return;
   
     el.classList.add("running"); el.querySelector(".lap").textContent=`${k} / ${n}`; }
   
@@ -1041,8 +1128,11 @@ export function boot() {
   
     if(G.busy) return;
   
-    if(!G.prog.length) return say("warn",ICO.drag(),"Arrastrá bloques al programa");
-  
+    /* Python: se lee el código antes de correr; un error marca la línea y no arranca */
+    if(G.py){ if(!G.code.trim()) return say("warn",ICO.code("#3776AB"),"Escribí tu programa en Python");
+      const r=parsePy(G.code); if(!r.ok){ resetRobot(); return pyErr(r.ln,r.msg); } G.pyAst=r.prog; }
+    else if(!G.prog.length) return say("warn",ICO.drag(),"Arrastrá bloques al programa");
+
     const id=++G.run; G.keepW=false; if(G.worlds&&G.map.pool) G.worlds=pickWorlds(G.map); /* con pool, cada intento sortea sus mundos */
     resetRobot(); if(G.worlds){ G.keepW=true; setWorld(0); }
     const ctx=G.ctx={id,stepMode:step,waiting:null,moves:0}; setBusy(true);
@@ -1056,13 +1146,16 @@ export function boot() {
     let res={k:"end"}, last=null;
     for(let wi=0;wi<(G.worlds?G.worlds.length:1);wi++){
     if(wi>0){ setWorld(wi); await sleep(600); if(id!==G.run) return; }
-    const it=walk(G.prog,c=>sense(G.wm,G.S,c),[],G.funcs); let n=0; res={k:"end"};
+    const it=G.py?pyWalk(G.pyAst,c=>sense(G.wm,G.S,c)):walk(G.prog,c=>sense(G.wm,G.S,c),[],G.funcs); let n=0; res={k:"end"};
     for(let nx=it.next();!nx.done;nx=it.next()){ const ev=nx.value;
-  
+
       if(++n>MAXSTEPS){ res={k:"boom"}; break; }
-  
-      const addr=typeof ev.addr[0]==="string"?ev.addr[0]+":"+ev.addr.slice(1).join("."):ev.addr.join(".");
-  
+      if(ev.t==="error"){ res={k:"pyerr",ln:ev.ln,msg:ev.msg}; break; }
+
+      const addr=G.py?ev.ln:typeof ev.addr[0]==="string"?ev.addr[0]+":"+ev.addr.slice(1).join("."):ev.addr.join(".");
+      /* Python: asignar, def y pass solo marcan su línea un momento */
+      if(ev.t==="stmt"){ pyMark(ev.ln); if(!ctx.stepMode){ await sleep(T()*.15); if(id!==G.run) return; } continue; }
+
       if(ev.t==="loop"){ setLap(addr,ev.k+1,ev.n); SND.loop(); if(!ctx.stepMode){ await sleep(T()*.25); if(id!==G.run) return; } continue; }
   
       if(ev.t==="if"||ev.t==="else"){ askIf(addr,ev.ok); if(!ctx.stepMode){ await sleep(T()*.35); if(id!==G.run) return; } continue; }
@@ -1094,13 +1187,14 @@ export function boot() {
     if(res.k==="end"&&!hasE(G.wm)&&goalMet(G.wm,G.S)) res={k:"win"};  
     if(res.k!=="win"){ res.world=wi; break; }
     }
+    if(res.acts==null) res.acts=ctx.moves;
     G.ctx=null; setBusy(false); finish(res,last);
   
   }
   
   /* el bloque si se ilumina verde si la respuesta es sí, gris si es no */
   
-  function askIf(addr,ok){ const el=document.querySelector(`#canvas .iff[data-a="${addr}"]`); if(!el) return;
+  function askIf(addr,ok){ if(G.py){ SND.loop(); return pyMark(addr,ok?"yes":"no"); } const el=document.querySelector(`#canvas .iff[data-a="${addr}"]`); if(!el) return;
   
     el.classList.remove("yes","nope"); void el.offsetWidth; el.classList.add(ok?"yes":"nope"); SND.loop();
   
@@ -1177,12 +1271,16 @@ export function boot() {
     /* niveles avanzados: ganar sin que una función se llame a sí misma no cuenta; un bucle infinito hace explotar a GENI */
     if(res.k==="win"&&G.map.adv&&!res.rec){ G.tries++; SND.fail(); return say("warn",ICO.question(),"¡Llegó, pero sin recursión!","En este nivel una función tiene que llamarse a sí misma"); }
     if(res.k!=="win"&&G.map.adv) G.tries++;
+    if(res.k==="pyerr") return pyErr(res.ln,res.msg);
+    if(res.k==="win"&&G.py) pyMark(null);
     if(res.k==="boom") return explode();
     if(res.k==="win"&&G.map.ch) return chLevelWin(res);
   
     if(res.k==="win"){
   
-      const count=used(), usedRep=G.map.cls===3?hasCall(G.prog):hasRepeat(G.prog), k=G.map.adv?starsAdv(G.map,{count,rep:hasRepeatAll(G.prog,G.funcs),acts:res.acts,opt:G.pathLen}):starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);
+      /* Python: estrellas por lo que pide el nivel (req) y la meta de líneas */
+      const miss=G.py?pyMissing(G.pyAst,G.map.req):null;
+      const count=G.py?pyLines(G.code):used(), usedRep=G.map.cls===3?hasCall(G.prog):hasRepeat(G.prog), k=G.py?starsPy(G.map,{lines:count,req:!miss}):G.map.adv?starsAdv(G.map,{count,rep:hasRepeatAll(G.prog,G.funcs),acts:res.acts,opt:G.pathLen}):starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);
   
       let gained=0, opened=[];
       const map=G.map, part=map.id!=="custom"&&map.part, wasDone=part&&partDone(SAVE.stars,part), lockedSec=lockedSecrets();
@@ -1190,14 +1288,15 @@ export function boot() {
         if(k>old){ const before=groupsNow(); SAVE.stars[G.map.id]=k; gained=k-old; persist(); renderTopStars();
           opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g.title); } }
       let sub;
-      if(G.map.adv){ const m=G.map; sub=count>m.goal?`${ICO.blocks()} Se puede con <b>${m.goal}</b> bloques`:m.rep&&!hasRepeatAll(G.prog,G.funcs)?`${ICO.repeat("#D9780F")} Probá usar repetir para ganar 3 estrellas`:res.acts>G.pathLen?"Se puede con menos pasos":"¡Recursión perfecta!"; }
+      if(G.py) sub=miss?`${ICO.code("#3776AB")} ${PY_REQ_TIP[miss]} para ganar 3 estrellas`:G.map.goal!=null&&count>G.map.goal?`${ICO.code("#3776AB")} Se puede con <b>${G.map.goal}</b> líneas`:"¡Código perfecto!";
+      else if(G.map.adv){ const m=G.map; sub=count>m.goal?`${ICO.blocks()} Se puede con <b>${m.goal}</b> bloques`:m.rep&&!hasRepeatAll(G.prog,G.funcs)?`${ICO.repeat("#D9780F")} Probá usar repetir para ganar 3 estrellas`:res.acts>G.pathLen?"Se puede con menos pasos":"¡Recursión perfecta!"; }
       else if(G.map.cls===3&&!usedRep) sub=`${ICO.blocks()} ¿Probás con una función?`;
       else if(G.map.cls===2&&!usedRep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
       else if(G.S.wrong) sub=`${ICO.brush("#7E3DB0")} Pintaste ${G.S.wrong>1?G.S.wrong+" celdas que no eran rojas":"una celda que no era roja"}${G.tools.includes("n")?" · Guardá el pincel en las blancas":""}`;
       else if(G.opt!=null&&count>G.opt) sub=`${ICO.blocks()} Se puede con <b>${G.opt}</b> bloques`;
       else sub=G.worlds?"¡Funciona en todos los mundos!":G.map.need?"¡Llegó pintando!":"¡Programa perfecto!";
       if(G.hint&&k<3) sub+=" · Sin pista ganás 3 estrellas";
-      if(res.left) sub+=" · Sobraron bloques";
+      if(res.left) sub+=G.py?" · Sobró código después de llegar":" · Sobraron bloques";
       const idx=MISSIONS.indexOf(G.map), nxt=MISSIONS[idx+1], gs=nxt&&groupsNow().find(s=>s.g.id===nxt.grp);
       let extra=`<div class="bigstars">${starRow(k,undefined,maxStars(G.map))}</div>`;
       if(opened.length) extra+=`<div class="unl">${ICO.unlock()} ¡Desbloqueaste «${opened.join("» y «")}»!</div>`;
@@ -1213,11 +1312,11 @@ export function boot() {
       return;
     }
   
-    if(res.k==="crash"){ const el=last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err");
-  
-      say("err",ICO.burst(),res.why==="out"?"¡Ahí no hay camino!":"¡Chocó!","Mirá el bloque rojo"); return; }
-  
-    if(res.k==="bad"){ const el=last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err");
+    if(res.k==="crash"){ const el=!G.py&&last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err"); if(G.py) pyMark(last,"err");
+
+      say("err",ICO.burst(),res.why==="out"?"¡Ahí no hay camino!":"¡Chocó!",G.py?`Mirá la línea ${last}`:"Mirá el bloque rojo"); return; }
+
+    if(res.k==="bad"){ const el=!G.py&&last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err"); if(G.py) pyMark(last,"err");
   
       return res.why==="p"?say("err",ICO.brush("#FF5A62"),"¡Esa celda no era roja!","Solo se pintan las rojas"+(G.tools.includes("i")?": usá el bloque si":""))
   
@@ -1227,6 +1326,8 @@ export function boot() {
   
     if(res.k==="long") return say("err",ICO.hourglass(),"¡Muy largo!","Revisá los números de repetir");
   
+    /* Python: el programa terminó sin mover a GENI (casi siempre falta llamar a main() al final) */
+    if(G.py&&!res.acts) return say("warn",ICO.question(),"GENI no se movió",G.pyAst&&G.pyAst.body.some(s=>s.k==="call")?"¿Las funciones que llamás mueven a GENI?":"Definiste funciones pero no las llamaste: escribí main() al final, sin sangría");
     const g=goalLeft(G.wm,G.S), toStar=hasE(G.map)?", después a la estrella":"";
   
     if(g.bat) return say("warn",ICO.bat(),G.nB>1?"Faltan baterías":"Falta la batería","Primero las baterías, después la estrella");
@@ -1283,7 +1384,7 @@ export function boot() {
   
   function startChallenge(ch){ CH={ch,idx:0,acc:0,t0:null}; playLevel(); }
   
-  function playLevel(){ const m=CH.ch.levels[CH.idx]; PROGS[m.id]=[]; delete FUNCS[m.id]; delete NAMES[m.id]; startPlay(m);
+  function playLevel(){ const m=CH.ch.levels[CH.idx]; PROGS[m.id]=[]; delete FUNCS[m.id]; delete NAMES[m.id]; delete PYCODE[m.id]; startPlay(m);
   
     CH.t0=performance.now(); clearInterval(chTick); chTick=setInterval(renderTimer,250); renderTimer(); }
   
@@ -1461,6 +1562,8 @@ export function boot() {
   
   
   if(PROFE) $("logo").insertAdjacentHTML("beforeend",`<span class="profe">Modo profe · todo desbloqueado</span>`);
+  if(PY_ED){ $("logo").insertAdjacentHTML("beforeend",`<span class="pytag">${ICO.code()}Python</span>`);
+    $("heroSub").textContent="Escribí programas en Python, con funciones y variables, y llevá a GENI hasta la estrella."; }
   
   renderMenu();
   

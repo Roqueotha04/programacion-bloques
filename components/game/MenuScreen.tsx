@@ -11,7 +11,7 @@ export function MenuScreen() {
         />
         <div className="htxt">
           <h1 id="heroTitle" aria-label="Programa con GENI" />
-          <p>
+          <p id="heroSub">
             Arrastrá los bloques, armá el programa y llevá a GENI hasta la
             estrella.
           </p>

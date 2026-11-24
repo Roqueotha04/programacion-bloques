@@ -484,3 +484,41 @@ canvas#conf{ position:fixed; inset:0; pointer-events:none; z-index:150; width:10
   *,*::before,*::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; animation-delay:0s !important; }
   .robot{ transition:none; } .sky{ display:none; }
 }
+
+/* ===== Edición Python (inicio) ===== */
+.logo .pytag{ display:inline-flex; align-items:center; gap:6px; background:#3776AB; color:#fff; font-size:14px; padding:4px 12px 4px 9px; border-radius:999px; box-shadow:0 3px 0 #23507A; }
+.logo .pytag svg{ width:18px; height:18px; }
+/* comandos de la izquierda: se tocan y se escriben en el código */
+.pyins{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; width:100%; padding:9px 12px; border-radius:12px; background:var(--bg2); border:1.5px solid var(--line); text-align:left; transition:transform .15s,border-color .15s,background .15s; }
+.pyins:hover{ transform:translateX(3px); border-color:var(--cel); background:#fff; }
+.pyins code{ font-family:ui-monospace,"Cascadia Code",Consolas,monospace; font-size:15px; font-weight:600; color:var(--navy); white-space:nowrap; }
+.pyins span{ font-size:13px; color:var(--muted); }
+#game.pymode .pgroup{ gap:8px; }
+#game.pymode .trash{ display:none; }
+/* editor: números de línea + texto; la barra marca la línea que corre (alto de línea y margen iguales a PY_LH y PY_PAD de ui.ts) */
+#game.pymode .canvas{ padding:0; background-image:none; background-color:#14325C; }
+.pyed{ display:flex; min-height:100%; font-family:ui-monospace,"Cascadia Code",Consolas,monospace; font-size:17px; line-height:26px; }
+.pygut{ flex:none; padding:12px 10px 12px 14px; text-align:right; color:#6F93BC; user-select:none; background:#0F2747; min-width:48px; }
+.pygut i{ display:block; font-style:normal; height:26px; }
+.pygut i.on{ color:#57E1FF; font-weight:700; }
+.pygut i.err{ color:#fff; background:var(--red); border-radius:6px; padding:0 4px; margin:0 -4px; }
+.pywrap{ position:relative; flex:1; min-width:0; }
+.pywrap textarea{ position:relative; z-index:1; display:block; width:100%; min-height:100%; margin:0; padding:12px 14px; border:0; outline:none; resize:none; overflow-x:auto; overflow-y:hidden;
+  background:transparent; color:#EAF2FF; caret-color:#57E1FF; font:inherit; line-height:26px; tab-size:4; white-space:pre; }
+.pywrap textarea::selection{ background:rgba(87,225,255,.35); }
+.pywrap textarea:read-only{ color:#C9D8EA; }
+.pyhl{ position:absolute; left:0; right:0; height:26px; background:rgba(87,225,255,.18); box-shadow:inset 4px 0 0 #57E1FF; pointer-events:none; transition:top .12s; }
+.pyhl.yes{ background:rgba(30,196,140,.25); box-shadow:inset 4px 0 0 var(--ok); }
+.pyhl.no{ background:rgba(157,178,196,.2); box-shadow:inset 4px 0 0 #9DB2C4; }
+.pyhl.err{ background:rgba(255,90,98,.3); box-shadow:inset 4px 0 0 var(--red); }
+.pyhl.pop{ animation:pyhlpop .3s; }
+@keyframes pyhlpop{ 0%{ opacity:.4; } }
+/* espejo: el programa de bloques escrito en Python */
+.pymirror{ margin-top:26px; padding-top:14px; border-top:2.5px dashed var(--line2); max-width:520px; }
+.pymirror h5{ display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:15px; color:var(--muted); font-weight:700; }
+.pymirror h5 svg{ width:22px; height:22px; }
+.pymirror pre{ margin:0; padding:12px 16px; border-radius:14px; background:#14325C; color:#EAF2FF; font-family:ui-monospace,"Cascadia Code",Consolas,monospace; font-size:15px; line-height:23px; overflow:auto; }
+/* colores del código: palabras de Python, comandos de GENI, números, comentarios */
+.pk{ color:#FFC83D; font-weight:700; } .pb{ color:#57E1FF; } .pn{ color:#FF9CCB; } .pc{ color:#8FA9C8; font-style:italic; }
+.pyins .pk{ color:#B7791F; } .pyins .pb{ color:var(--cel-d); } .pyins .pn{ color:#D9367F; }
+/* ===== Edición Python (fin) ===== */

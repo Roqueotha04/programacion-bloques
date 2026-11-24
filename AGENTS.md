@@ -22,26 +22,35 @@ Partes, siempre en este orden (**Mundos y Si están comentadas en `data.ts` de m
 | 2 | Pintar | Parte 1 | Pincel (usar y guardar). |
 | 3 | Bailar | Parte 2 | Pintar de un toque y bailar (rojas: pintar, verdes: bailar), con baterías. Sin repetir. |
 | 4 | Repetir | Parte 3 + código del profe (`genIArepetir`) | Bloque repetir; incluye niveles de repetir con baile y pintura. |
-| 4.5 | Repetir avanzado *(extra)* | Parte 4 | Niveles opcionales de repetir más difíciles (colores, baterías, repetir adentro). |
+| ~~4.5~~ | Repetir avanzado *(extra, oculta)* | Parte 4 | Niveles opcionales de repetir más difíciles (colores, baterías, repetir adentro). |
 | 5 | Funciones | Parte 2 | Funciones con nombre libre: se definen y se llaman. |
 | 5.5 | Funciones avanzadas *(extra)* | Parte 5 | Recursión: una función que se llama a sí misma. |
 | ~~6~~ | Mundos *(oculta)* | Partes 2 y 4 | Cada nivel trae varios mapas y el programa tiene que ganar en todos (`si`, `si no`, paredes). |
 | ~~7~~ | Si *(oculta)* | Partes 2 y 4 | Condicional por color de celda. Siempre es la última. |
 
-- **Parte 4.5 «Repetir avanzado» (`extra:true`)**: opcional, para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir otras partes, no tiene desafío y no está en `?chicos`. 7 niveles `ra1`–`ra7` (grupos `I` y `X`, `cls 2`, `tools:"rpb"`, `strict`).
+- **Parte 4.5 «Repetir avanzado» (`extra:true`)** — **comentada en `data.ts` de momento: no se ve**: opcional, para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir otras partes, no tiene desafío y no está en `?chicos`. 7 niveles `ra1`–`ra7` (grupos `I` y `X`, `cls 2`, `tools:"rpb"`, `strict`).
 - **Parte 5.5 «Funciones avanzadas» (`extra:true`)**: no cuenta para abrir otras partes. Se abre al superar la parte 5 y no está en `?chicos`. Son niveles `adv` (grupos `Y`, `Z` y `N`): hay que ganar con una función que se llama a sí misma (la recursión corta al llegar a la estrella). Dan hasta **3 estrellas** como todos (`starsAdv`: llegar con recursión, meta de bloques, camino más corto). **En cualquier nivel** (menos «Mi mapa») más de `MAXACT` (30) acciones, o 400 eventos, devuelve `boom`: GENI se marea y explota. `selfTest` valida que cada solución use recursión, el `boom` y que ganar sin recursión no cuenta. Los ids `v1`–`v9` no se renombran. Mundos y Si (partes 6 y 7 anteriores) y sus desafíos `x5` y `x8` están comentados en `data.ts`.
 - Cada parte tiene grupos de niveles y un desafío extra con cronómetro (3 niveles seguidos). El desafío **no cuenta** como nivel de la parte.
 - Una parte se supera con todos sus niveles **y** su desafío extra (al menos 1 estrella). Al terminar el último nivel de una parte se invita a jugar el desafío.
-- Edades pensadas (solo orientativo, no hay selector): 6 a 8 → Secuencia, Pintar, Bailar, Repetir; 9 a 12 → Funciones; 13 a 15 → Mundos.
+- Edades pensadas (solo orientativo, no hay selector): 6 a 8 → Secuencia, Pintar, Bailar, Repetir; 9 a 12 → Funciones; 13 a 15 → Mundos, o la edición Python si ya programaron con bloques.
 
 ## Edición chicos (`?chicos`, 6 a 8 años)
 
-- Es **la única variante por edad** y la única URL de edición. No agregues otras URLs de edición salvo que te lo pidan.
+- Hay **dos ediciones por URL**: `?chicos` y `?python` (abajo). No agregues otras URLs de edición salvo que te lo pidan.
 - `applyKids()` en `data.ts` deja solo los niveles listados en `KIDS.missions`, saca las partes que quedan sin niveles (Funciones, Mundos, Si) y suma 30 s a los desafíos. Sus partes 3 y 4 son Bailar y Repetir. Guarda en `robot-bloques-chicos`. Se combina con `?profe` y `?test`.
 - `KIDS.need` fija las estrellas que pide cada grupo en esta edición (2 por nivel anterior de la parte).
 - `KIDS_EXTRA` son niveles que solo existen en esta edición (van justo después del nivel `after`): hoy `f2` «Repetir adentro», `r2` «Baile cada dos» y `r5` «Dos pasillos» (f2 y r5 salieron del juego normal, que tiene 8 niveles de Repetir).
 - **Regla de cantidad: en cada parte, los chicos de 6 a 8 hacen menos o igual cantidad de niveles que el resto, nunca más.** Los niveles exclusivos de `KIDS_EXTRA` cuentan. Lo que se agrega o se saca para el juego normal **no** se le agrega o saca automáticamente a los chicos: la lista `KIDS.missions` se decide aparte. `selfTest` lo controla (`NORMAL_COUNT` en `data.ts`: niveles por parte del juego normal) y falla si los chicos pasan al resto en alguna parte.
 - Los ids de nivel son únicos en todo el juego (en chicos un id repetido trae a otra parte).
+
+## Edición Python (`?python`, 13 a 15 años del plan viejo)
+
+- Para los que ya programaron con bloques (VEXcode): escriben **Python** para mover a GENI. `applyPython()` en `data.ts` **reemplaza** todas las partes por `PY_PARTS`, `PY_GROUPS`, `PY_MISSIONS` y `PY_CHALLENGES`, y vacía `CLASS_CODES`. Guarda en `robot-bloques-python`. Se combina con `?profe` y `?test` y tiene prioridad sobre `?chicos`. `ED.kind` dice qué edición está activa.
+- Partes: **1 «Funciones en Python»** (clase 1: un nivel de bloques con su espejo en Python, completar `___`, escribir el `main`, crear funciones, funciones con colores); **2 «Variables y parámetros»** (clase 2: una función llama a otra, variables, variable que cambia, `def avanzar(n)`); **2.5 «Mientras»** (`extra`, sin desafío: `while not en_estrella():`, `if celda_roja():`, `if pared_derecha(): … else: …`). Las partes 1 y 2 tienen desafío (`xp1`, `xp2`). Los ids `py1`–`py15` no se renombran.
+- `lib/game/python.ts`: subconjunto de Python que se traduce a los mismos eventos que `walk()`, así `simulate`, las animaciones y `selfTest` son los de siempre. **No es Python de verdad** (no hay Pyodide): `parsePy` (código → árbol, errores en español con número de línea y «¿Quisiste decir…?»), `pyWalk` (árbol → eventos), `pyLines`, `pyMissing`, `blocksToPy` (espejo) y `pyHTML` (colores). Palabras de Python en inglés; comandos de GENI en español (`arriba() abajo() izquierda() derecha() pintar() bailar()`), preguntas `en_estrella() celda_roja() celda_verde() pared_arriba/abajo/izquierda/derecha()`. Respeta la semántica de Python que se enseña: el `def` tiene que estar antes de la llamada, las variables de una función son locales (`global` existe) y la sangría es de 4 espacios.
+- Nivel de código (`py:true`, `cls 4`): `pre` código de arranque (con `___` para completar; no puede ganar solo), `sol`, `goal` meta de **líneas** (sin vacías ni comentarios), `req` lo que hay que usar (`def`, `def2`, `var`, `var2`, `param`, `for`, `while`, `if`) y `tip` el cartel. Estrellas (`starsPy`): 1 llegó, +1 `req`, +1 dentro de `goal`. `blocks:true` es un nivel de bloques normal (`cls 3`) que muestra abajo el mismo programa en Python. Todo `while` o llamada emite eventos, así un bucle infinito explota con el tope de siempre.
+- `selfTest` (con `?python&test`): cada `sol` se lee sin errores, gana por el camino más corto, entra en `goal` y cumple `req`; el `pre` no gana solo; y un chequeo de errores, `while True` y parámetros. La regla de cantidad de chicos no aplica.
+- Vista: en niveles de código la columna de bloques es una lista de comandos (tocar = escribir en el cursor, con la sangría de la línea), el programa es un editor con números de línea (Tab = 4 espacios, Enter mantiene la sangría), se marca la línea que corre y los errores muestran la línea en rojo. El código vive en memoria por nivel (`PYCODE`), como los bloques.
 
 ## Reglas del juego
 
@@ -71,6 +80,7 @@ Next.js es la cáscara. El juego sigue siendo JS de DOM, no un rewrite en React.
 | `components/game/*` | Markup estático con los **mismos `id`** del original. |
 | `lib/game/ui.ts` | Menú, arrastre, run, tienda, editor. Se bootea **una sola vez**. |
 | `lib/game/engine.ts` | Simulación pura, sin DOM. |
+| `lib/game/python.ts` | Python de la edición `?python` (parser e intérprete), sin DOM. |
 | `lib/game/data.ts` | `PARTS`, `GROUPS`, `MISSIONS`, `CHALLENGES`, `KIDS`. |
 | `lib/game/save.ts` | Claves y `freshSave()`. |
 | `app/game.css` | Estilo del juego. Tailwind no se aplica: su reset cambia botones y títulos. |
@@ -82,8 +92,8 @@ Next.js es la cáscara. El juego sigue siendo JS de DOM, no un rewrite en React.
 ## Cómo trabajar
 
 - Buenas prácticas de **este** Next.js (App Router, archivos en `app/`). Antes de APIs nuevas, leé `node_modules/next/dist/docs/`. Mantené el estilo actual: cáscara React mínima, juego en `lib/game`, CSS propio, español.
-- Después de cada feature: `npm run build`. Tiene que terminar bien. El recuento de `selfTest` tiene que seguir verde, en el juego normal **y** en `?chicos`.
-- **Nunca** levantes el proyecto (`next dev`, `npm run dev`, `next start`). No es un paso de verificación. Para correr `selfTest` sin servidor: transpilá `data.ts` y `engine.ts` con el `typescript` del repo en una carpeta temporal y llamá a `selfTest()` con Node (probalo también con `applyKids()` aplicado).
+- Después de cada feature: `npm run build`. Tiene que terminar bien. El recuento de `selfTest` tiene que seguir verde, en el juego normal, en `?chicos` **y** en `?python`.
+- **Nunca** levantes el proyecto (`next dev`, `npm run dev`, `next start`). No es un paso de verificación. Para correr `selfTest` sin servidor: transpilá `data.ts`, `engine.ts` y `python.ts` con el `typescript` del repo en una carpeta temporal y llamá a `selfTest()` con Node (probalo también con `applyKids()` y con `applyPython()` aplicados).
 - Si usás subagentes o worktrees, creá los worktrees desde el estado actual del árbol (los cambios sin commitear no están en `HEAD`).
 - No dejes HTML suelto en la raíz (`index.html`, `index.legacy.html`). Vercel lo toma como sitio estático, busca `/index.html` y da 404. El deploy es Next.js (`vercel.json`).
 - No agregues usuarios, i18n, ni pantallas que el juego no tenga. Las variantes por edad van por URL, no por selector ni rutas.
