@@ -449,3 +449,30 @@ export function applyPython(){
   numberMissions();
 }
 /* ===== Edición Python (fin) ===== */
+
+/* ===== Configuración del profe (inicio) =====
+   El profe entra con usuario y contraseña (botón «Configuración», solo con ?profe) y oculta partes por vista. Se guarda en la base
+   (tabla game_config, ver lib/server/profe.ts) y page.tsx la pasa a boot(). EDITION_PARTS: partes de cada vista para el panel
+   (se calcula acá, antes de applyKids/applyPython). */
+const partRow=p=>({id:p.id,title:p.title,extra:!!p.extra});
+const KIDS_GRPS=new Set([...MISSIONS.filter(m=>KIDS.missions.includes(m.id)).map(m=>m.grp),...KIDS_EXTRA.filter(x=>KIDS.missions.includes(x.m.id)).map(x=>x.m.grp)]);
+export const EDITION_PARTS={
+  normal:PARTS.map(partRow),
+  chicos:PARTS.filter(p=>GROUPS.some(g=>g.part===p.id&&KIDS_GRPS.has(g.id))).map(partRow),
+  python:PY_PARTS.map(partRow)};
+/* oculta partes de la edición activa. Las que dependían de una oculta pasan a pedir lo que pedía ella (no quedan trabadas).
+   mark (modo profe): no saca nada, solo marca p.hidden para mostrar «oculta» en el menú */
+export function hideParts(ids,mark){
+  const hid=PARTS.filter(p=>ids.includes(p.id)); if(!hid.length) return;
+  if(mark){ hid.forEach(p=>p.hidden=true); return; }
+  const byId=new Map(PARTS.map(p=>[p.id,p]));
+  const expand=(after,seen=new Set())=>after.flatMap(a=>{ if(seen.has(a)) return []; seen.add(a);
+    const P=byId.get(a); return P&&ids.includes(a)?expand(P.after,seen):[a]; });
+  PARTS.forEach(p=>{ p.after=[...new Set(expand(p.after))]; });
+  const keep=(arr,f)=>arr.splice(0,arr.length,...arr.filter(f));
+  keep(PARTS,p=>!ids.includes(p.id));
+  keep(GROUPS,g=>!ids.includes(g.part));
+  keep(MISSIONS,m=>!ids.includes(m.part));
+  keep(CHALLENGES,c=>!ids.includes(c.part));
+}
+/* ===== Configuración del profe (fin) ===== */

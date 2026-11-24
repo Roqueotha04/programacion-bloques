@@ -2,7 +2,7 @@
 /* Código extraído del juego original. No reescribir en React. */
 "use client";
 
-import { PARTS, GROUPS, MISSIONS, CHALLENGES, CLASS_CODES, applyKids, applyPython } from "./data";
+import { PARTS, GROUPS, MISSIONS, CHALLENGES, CLASS_CODES, applyKids, applyPython, hideParts, EDITION_PARTS, ED } from "./data";
 import {
   ACTS, DIRS, MAXSTEPS, MAXACT, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
   fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, hasRepeatAll, limitFor, maxStars, optFor, starsAdv, starsPy,
@@ -13,11 +13,14 @@ import { parsePy, pyWalk, pyLines, pyMissing, PY_REQ_TIP, blocksToPy, pyHTML, py
 import { freshSave, isKids, isProfe, isPython, saveKey } from "./save";
 
 let booted = false;
-export function boot() {
+/* hidden: partes ocultas por vista que eligió el profe ({normal:[4.5], chicos:[], python:[]}), leídas en page.tsx */
+export function boot(hidden?: Record<string, number[]>) {
   if (booted) return;
   booted = true;
   const PY_ED=isPython(); /* edición Python (?python): reemplaza las partes; tiene prioridad sobre ?chicos */
   if (PY_ED) applyPython(); else if (isKids()) applyKids();
+  /* con ?profe las partes ocultas se ven marcadas; con ?test no se oculta nada (selfTest revisa todo) */
+  if (!/[?&]test/.test(location.search)) hideParts((hidden&&hidden[ED.kind])||[], isProfe());
   const LABEL={u:"Arriba",d:"Abajo",l:"Izquierda",r:"Derecha"};
   
   const $=id=>document.getElementById(id);
@@ -431,7 +434,7 @@ export function boot() {
       h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+
   
         `<span class="gdot">${partIco(P)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+(P.extra&&ms.length&&ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m))?`<span class="plat">${starIco(true)}Platino</span>`:"")+
-        (PROFE&&P.code?`<span class="profe">Código: ${P.code}</span>`:"")+
+        (PROFE&&P.code?`<span class="profe">Código: ${P.code}</span>`:"")+(P.hidden?`<span class="profe poff">Oculta para alumnos</span>`:"")+
         `<span class="gprog">${starIco(true)} ${got} / ${ms.reduce((a,m)=>a+maxStars(m),0)}</span></div><div class="cards">`;
       for(const st of sts){
   
@@ -555,6 +558,54 @@ export function boot() {
     d.querySelector("[data-later]").onclick=closeModal;
   }
   $("codeBtn").onclick=openCodes;
+
+  /* ===== Configuración del profe (inicio) =====
+     botón «Configuración» (solo con ?profe): login con usuario y contraseña (lo controla el servidor, app/api/profe) y un interruptor
+     por parte en cada vista. Lo oculto desaparece para los alumnos de esa vista; acá se ve marcado «Oculta para alumnos» */
+  const ED_NAMES={normal:"Normal",chicos:"Chicos (6 a 8)",python:"Python"};
+  async function profeApi(path,body){
+    const r=await fetch("/api/profe/"+path,body===undefined?{cache:"no-store"}:{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({})); if(!r.ok) throw Object.assign(new Error(j.error||"No se pudo conectar"),{status:r.status}); return j; }
+  async function openConfig(){
+    try{ cfgPanel((await profeApi("config")).hidden); }catch{ cfgLogin(); } }
+  function cfgLogin(){
+    const d=openModal(`<span class="mico">${ICO.lock("#FFC21A")}</span><h2>Configuración</h2><p>Entrá con tu usuario de profe.</p>`+
+      `<form id="cfgForm"><input class="minput" id="cfgUser" type="email" autocomplete="username" placeholder="Usuario" aria-label="Usuario">`+
+      `<input class="minput" id="cfgPass" type="password" autocomplete="current-password" placeholder="Contraseña" aria-label="Contraseña">`+
+      `<div class="mbtns"><button type="button" class="mbtn alt" data-later>Cancelar</button><button class="mbtn" data-go>Entrar${ICO.next()}</button></div></form>`);
+    const u=d.querySelector("#cfgUser"), p=d.querySelector("#cfgPass"), go=d.querySelector("[data-go]"); setTimeout(()=>u.focus(),60);
+    d.querySelector("[data-later]").onclick=closeModal;
+    d.querySelector("#cfgForm").onsubmit=async e=>{ e.preventDefault(); go.disabled=true;
+      try{ const j=await profeApi("login",{user:u.value,pass:p.value}); cfgPanel(j.hidden); }
+      catch(err){ go.disabled=false; bumpEl(p,"no"); SND.nope(); p.select(); toast(ICO.lock("#FFC21A"),err.message); } };
+  }
+  function cfgPanel(hidden){
+    const state={normal:[...(hidden.normal||[])],chicos:[...(hidden.chicos||[])],python:[...(hidden.python||[])]};
+    let tab=ED.kind;
+    const d=openModal(`<span class="mico">${ICO.unlock()}</span><h2>Configuración</h2><p>Elegí qué partes ven los alumnos en cada vista.</p>`+
+      `<div class="cfgtabs" role="tablist">${Object.keys(ED_NAMES).map(k=>`<button type="button" role="tab" data-tab="${k}">${ED_NAMES[k]}</button>`).join("")}</div>`+
+      `<div class="cfglist" id="cfgList"></div>`+
+      `<div class="mbtns"><button class="mbtn alt" data-out>Salir</button><button class="mbtn alt" data-later>Cerrar</button><button class="mbtn" data-go>Guardar${ICO.next()}</button></div>`);
+    d.querySelector(".mbox").classList.add("cfgbox");
+    const draw=()=>{ d.querySelectorAll("[data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===tab)));
+      d.querySelector("#cfgList").innerHTML=EDITION_PARTS[tab].map(P=>{ const on=!state[tab].includes(P.id);
+        return `<label class="cfgrow"><span>Parte ${P.id} · ${escH(P.title)}${P.extra?' <i>extra</i>':""}</span>`+
+          `<input type="checkbox" role="switch" data-p="${P.id}"${on?" checked":""}><b>${on?"Visible":"Oculta"}</b></label>`; }).join(""); };
+    d.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; draw(); });
+    d.querySelector("#cfgList").addEventListener("change",e=>{ const id=Number(e.target.dataset.p), on=e.target.checked;
+      state[tab]=on?state[tab].filter(x=>x!==id):[...state[tab],id]; e.target.nextElementSibling.textContent=on?"Visible":"Oculta"; });
+    d.querySelector("[data-later]").onclick=closeModal;
+    d.querySelector("[data-out]").onclick=async()=>{ await profeApi("logout",{}).catch(()=>{}); closeModal(); toast(ICO.lock("#FFC21A"),"Saliste de la configuración"); };
+    const save=d.querySelector("[data-go]");
+    save.onclick=async()=>{ save.disabled=true;
+      try{ for(const k of Object.keys(state)) await profeApi("config",{edition:k,hidden:state[k]});
+        PARTS.forEach(P=>P.hidden=state[ED.kind].includes(P.id)); closeModal(); renderMenu(); toast(ICO.unlock(),"¡Guardado! Los alumnos lo ven al recargar la página"); }
+      catch(err){ save.disabled=false; toast(ICO.lock("#FFC21A"),err.message); if(err.status===401) cfgLogin(); } };
+    draw();
+  }
+  if(PROFE){ const b=document.createElement("button"); b.className="resetbtn cfgbtn"; b.id="cfgBtn"; b.innerHTML=ICO.lock("#FFC21A")+"<span>Configuración</span>";
+    b.onclick=openConfig; $("resetBtn").before(b); }
+  /* ===== Configuración del profe (fin) ===== */
   /* borrar progreso (para un alumno nuevo): hay que tocar dos veces */
   let resetT=null;
   

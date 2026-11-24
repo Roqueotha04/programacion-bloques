@@ -2,6 +2,6 @@
 
 import { boot as bootUi } from "./ui";
 
-export function boot() {
-  bootUi();
+export function boot(hidden?: Record<string, number[]>) {
+  bootUi(hidden);
 }

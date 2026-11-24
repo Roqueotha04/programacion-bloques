@@ -559,3 +559,20 @@ canvas#conf{ position:fixed; inset:0; pointer-events:none; z-index:150; width:10
 .pymirror{ margin-top:26px; padding-top:14px; border-top:2.5px dashed var(--line2); max-width:520px; }
 .pymirror pre{ margin:0; padding:10px 14px; border-radius:14px; background:#fff; border:1.5px solid var(--line2); color:#1E3A5F; font-family:"Cascadia Code","JetBrains Mono","Fira Code",Consolas,ui-monospace,monospace; font-size:14px; line-height:21px; overflow:auto; font-variant-ligatures:none; }
 /* ===== Edición Python (fin) ===== */
+
+/* configuración del profe (botón «Configuración» con ?profe) */
+.cfgbtn{ color:#4A3300; border-color:#FFC21A; background:#FFF6D6; }
+.cfgbtn:hover{ background:#FFE9A3; color:#4A3300; border-color:#FFC21A; }
+.cfgbtn + .resetbtn{ margin-left:0; }
+.profe.poff{ background:#E5E7EB; color:#374151; box-shadow:0 3px 0 #C9CDD3; margin-left:8px; }
+.mbox.cfgbox{ width:min(520px,100%); max-height:calc(100vh - 32px); overflow:auto; }
+.cfgtabs{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+.cfgtabs button{ padding:7px 14px; border-radius:12px; border:2px solid var(--line2); background:#fff; font-weight:700; font-size:15px; color:var(--muted); }
+.cfgtabs button[aria-selected="true"]{ background:var(--navy); border-color:var(--navy); color:#fff; }
+.cfglist{ display:grid; gap:8px; margin-top:14px; text-align:left; }
+.cfgrow{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:14px; border:2px solid var(--line); background:var(--bg2); cursor:pointer; font-weight:600; }
+.cfgrow span{ flex:1; }
+.cfgrow i{ font-style:normal; font-size:13px; color:var(--muted); }
+.cfgrow input{ width:22px; height:22px; accent-color:var(--ok); }
+.cfgrow b{ width:64px; font-size:14px; color:var(--muted); }
+.cfgrow:has(input:not(:checked)){ opacity:.65; }

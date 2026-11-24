@@ -58,6 +58,7 @@ Partes, siempre en este orden (**Mundos y Si están comentadas en `data.ts` de m
 - **Códigos** (botón «Código» arriba a la izquierda del menú): `CLASS_CODES` en `data.ts`. `nivel1-clase2` marca Secuencia y Pintar (niveles y desafío) con 3 estrellas; `nivel2-clase2` marca Secuencia, Pintar y Bailar (así se empieza directo con Repetir); `nivel3-clase2` marca Secuencia, Pintar y Repetir (Bailar queda sin hacer). Las estrellas se acreditan al taller y repetir el código no suma dos veces. Los tres dan por ingresado el código de Repetir (así se hacen Bailar y Repetir de corrido). Funciones pide `funcionesGENia`. El mismo cuadro acepta los códigos de cada parte.
 - Taller: diseños, caras (guiño, enojado, cool) y dos colores (cuerpo y detalle). Editor de mapa propio, borrar progreso (doble toque).
 - `?profe` abre todo y muestra códigos. `?test` corre `selfTest()` del motor.
+- **Configuración del profe** (botón «Configuración» en el menú, solo con `?profe`): login con usuario y contraseña y un interruptor por parte en cada vista (Normal, Chicos, Python). Lo oculto desaparece para los alumnos de esa vista; con `?profe` se ve marcado «Oculta para alumnos» y con `?test` no se oculta nada. `hideParts()` en `data.ts` saca la parte (con sus grupos, niveles y desafío) y las que dependían de ella pasan a pedir lo que pedía la oculta (no quedan trabadas). `EDITION_PARTS` lista las partes de cada vista para el panel. Se guarda en Postgres (tabla `game_config`, una fila por vista con `hidden` jsonb, ver `db/game_config.sql`); `app/page.tsx` la lee en el servidor y la pasa a `boot(hidden)`. Si la base falla, no se oculta nada. Es el único login: no agregues cuentas de alumnos.
 - Pantallas: menú, juego, editor, taller. Se muestran y ocultan con `.hidden` en el DOM. No son rutas de Next.js.
 
 ## Cómo se arman los niveles
@@ -83,6 +84,8 @@ Next.js es la cáscara. El juego sigue siendo JS de DOM, no un rewrite en React.
 | `lib/game/python.ts` | Python de la edición `?python` (parser e intérprete), sin DOM. |
 | `lib/game/data.ts` | `PARTS`, `GROUPS`, `MISSIONS`, `CHALLENGES`, `KIDS`. |
 | `lib/game/save.ts` | Claves y `freshSave()`. |
+| `lib/server/profe.ts` | Solo servidor: base (`DATABASE_URL`, driver `@neondatabase/serverless`), login (`PROFE_USER`, `PROFE_PASS`) y sesión firmada (`PROFE_SECRET`, cookie httpOnly de 8 h). |
+| `app/api/profe/*` | `login`, `logout` y `config` (GET: sesión y configuración; POST: guarda las partes ocultas de una vista). |
 | `app/game.css` | Estilo del juego. Tailwind no se aplica: su reset cambia botones y títulos. |
 
 `GameApp` llama `boot()` en un `useEffect` vacío. Hay un flag de módulo para no bootear dos veces (Strict Mode). Un re-render de React que pise `innerHTML` borra el juego: no pongas estado de React sobre esos nodos.
@@ -96,6 +99,6 @@ Next.js es la cáscara. El juego sigue siendo JS de DOM, no un rewrite en React.
 - **Nunca** levantes el proyecto (`next dev`, `npm run dev`, `next start`). No es un paso de verificación. Para correr `selfTest` sin servidor: transpilá `data.ts`, `engine.ts` y `python.ts` con el `typescript` del repo en una carpeta temporal y llamá a `selfTest()` con Node (probalo también con `applyKids()` y con `applyPython()` aplicados).
 - Si usás subagentes o worktrees, creá los worktrees desde el estado actual del árbol (los cambios sin commitear no están en `HEAD`).
 - No dejes HTML suelto en la raíz (`index.html`, `index.legacy.html`). Vercel lo toma como sitio estático, busca `/index.html` y da 404. El deploy es Next.js (`vercel.json`).
-- No agregues usuarios, i18n, ni pantallas que el juego no tenga. Las variantes por edad van por URL, no por selector ni rutas.
+- No agregues usuarios (más allá del login del profe), i18n, ni pantallas que el juego no tenga. Las variantes por edad van por URL, no por selector ni rutas.
 - No uses Tailwind en el juego. No conviertas las pantallas en rutas.
 - Commits y push solo si te los piden.
