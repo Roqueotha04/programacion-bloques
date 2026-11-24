@@ -38,21 +38,21 @@ export const GROUPS=[
  /* ===== Funciones (fin) ===== */
 ];
 /* ===== Repetir avanzado (inicio) ===== */
-/* PARTE 5.5: repetir avanzado, opcional para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir
+/* PARTE 4.5: repetir avanzado, opcional para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir
    otras partes y no tiene desafío. No está en la edición chicos */
-PARTS.push({id:5.5,title:"Repetir avanzado",sub:"repetir con colores, baterías y repetir adentro",c:"#F97316",l:"#FFE4CC",after:[4],extra:true});
+PARTS.push({id:4.5,title:"Repetir avanzado",sub:"repetir con colores, baterías y repetir adentro",c:"#F97316",l:"#FFE4CC",after:[4],extra:true});
 GROUPS.push(
- {id:"I",part:5.5,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
- {id:"X",part:5.5,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:8,c:"#DC2626",l:"#FFD9D9"});
+ {id:"I",part:4.5,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
+ {id:"X",part:4.5,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:8,c:"#DC2626",l:"#FFD9D9"});
 /* ===== Repetir avanzado (fin) ===== */
 /* ===== Funciones avanzadas (inicio) ===== */
-/* PARTE 6: funciones avanzadas (recursión). Se abre al superar la parte 5, no cuenta para abrir otras partes. No está en la edición chicos.
+/* PARTE 5.5: funciones avanzadas (recursión). Se abre al superar la parte 5, no cuenta para abrir otras partes. No está en la edición chicos.
    (Mundos y Si, antes partes 6 y 7, están comentadas de momento) */
-PARTS.push({id:6,title:"Funciones avanzadas",sub:"una función que se llama a sí misma",c:"#7C3AED",l:"#EDE4FF",after:[5],extra:true});
+PARTS.push({id:5.5,title:"Funciones avanzadas",sub:"una función que se llama a sí misma",c:"#7C3AED",l:"#EDE4FF",after:[5],extra:true});
 GROUPS.push(
- {id:"Y",part:6,cls:3,adv:true,tools:"pf",strict:true,title:"Se llama a sí misma",sub:"la función se repite hasta llegar a la estrella",need:0,c:"#7C3AED",l:"#EDE4FF"},
- {id:"Z",part:6,cls:3,adv:true,tools:"rpbf",strict:true,title:"Recursión con todo",sub:"repetir, pintar y bailar",need:6,c:"#C026D3",l:"#FAE1FD"},
- {id:"N",part:6,cls:3,adv:true,tools:"rpbf",strict:true,title:"Para pensar",sub:"un arranque, dos carriles y una serpiente",need:10,c:"#0EA5E9",l:"#D3F0FC"});
+ {id:"Y",part:5.5,cls:3,adv:true,tools:"pf",strict:true,title:"Se llama a sí misma",sub:"la función se repite hasta llegar a la estrella",need:0,c:"#7C3AED",l:"#EDE4FF"},
+ {id:"Z",part:5.5,cls:3,adv:true,tools:"rpbf",strict:true,title:"Recursión con todo",sub:"repetir, pintar y bailar",need:6,c:"#C026D3",l:"#FAE1FD"},
+ {id:"N",part:5.5,cls:3,adv:true,tools:"rpbf",strict:true,title:"Para pensar",sub:"un arranque, dos carriles y una serpiente",need:10,c:"#0EA5E9",l:"#D3F0FC"});
 /* ===== Funciones avanzadas (fin) ===== */
 // /* ===== Mundos (inicio) ===== */
 // /* el mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
