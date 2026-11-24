@@ -126,7 +126,7 @@ export const MISSIONS=[
  {id:"ra2",grp:"I",title:"Escalera bailarina",max:7,rows:["####E","###V.","##V.#","#V.##","R.###"],sol:"3(r u b) r u"},
  {id:"ra3",grp:"I",title:"Torres de baterías",max:9,rows:["##B#B#B#","##.#.#.#","R......E"],sol:"3(2(r) 2(u) 2(d)) r"},
  {id:"ra4",grp:"I",title:"Montaña de colores",max:10,rows:["###X.###","##X.V.##","#X.##V.#","R.####VE"],sol:"3(r u p) 3(r d b) r"},
- {id:"ra5",grp:"X",title:"Zigzag de baile",max:9,rows:["R....","....V",".....","....V","E...."],sol:"2(4(r) d b 4(l) d)"},
+ {id:"ra5",grp:"X",title:"Escalones de baile",max:7,rows:["R..V######","###.######","###...V###","######.###","######...V","#########.","#########E"],sol:"3(3(r) b 2(d))"},
  {id:"ra6",grp:"X",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"},
  {id:"ra7",grp:"X",title:"El gran recorrido",max:9,rows:["R.B.#####","###.#####","###V.B.##","######.##","######V.E"],sol:"2(3(r) 2(d) b) 2(r)"},
  /* ===== Repetir avanzado (fin) ===== */
