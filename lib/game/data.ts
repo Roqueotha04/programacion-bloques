@@ -33,8 +33,8 @@ export const GROUPS=[
  /* ===== Bailar (fin) ===== */
  /* ===== Funciones (inicio) ===== */
  {id:"O",part:5,cls:3,tools:"rf",title:"Primeras funciones",sub:"un grupo de pasos con nombre",need:0,c:"#5B6CF0",l:"#E3E6FF"},
- {id:"P",part:5,cls:3,tools:"rpbf",strict:true,title:"Funciones y colores",sub:"repetir, pintar y bailar con funciones",need:6,c:"#8B6CF0",l:"#E6DFFF"},
- {id:"Q",part:5,cls:3,tools:"rpbf",strict:true,title:"Dos funciones",sub:"una función puede llamar a otra",need:12,c:"#3E6FA8",l:"#D7E6F8"}
+ {id:"P",part:5,cls:3,tools:"rpbf",strict:true,title:"Funciones y colores",sub:"pintar y bailar con funciones",need:6,c:"#8B6CF0",l:"#E6DFFF"},
+ {id:"Q",part:5,cls:3,tools:"rpbf",strict:true,title:"Armá tu función",sub:"armala desde cero",need:12,c:"#3E6FA8",l:"#D7E6F8"}
  /* ===== Funciones (fin) ===== */
 ];
 /* ===== Funciones avanzadas (inicio) ===== */
@@ -103,13 +103,15 @@ export const MISSIONS=[
     pre: cuerpos ya armados; lock: funciones que no se pueden editar; fns: cuántas funciones hay (1 por defecto) */
  {id:"o1",grp:"O",title:"Llamá a la función",max:7,pre:{A:"r r u"},lock:["A"],rows:["######E","####...","##...##","R..####"],sol:"A=(r r u); A A A"},
  {id:"o2",grp:"O",title:"Falta un bloque",max:7,pre:{A:"r r"},rows:["R..####","##...##","####...","######E"],sol:"A=(r r d); A A A"},
- {id:"o3",grp:"O",title:"Tu primera función",max:10,rows:["#########","########E","####.....","##...####","##.######","R..######"],sol:"A=(r r u); A u A r r A"},
- {id:"p1",grp:"P",title:"Función en repetir",max:9,rows:["########.","######..E","####.#.##","##.....##","##.######","R..######"],sol:"A=(r r u); 2(A u A d)"},
+ {id:"o4",grp:"O",title:"Tu primera función",max:7,rows:["######","#####E","###...","R...##"],sol:"A=(r r u); r A A"},
  {id:"p2",grp:"P",title:"La función que pinta",max:10,rows:["##..X..XE","R.X######"],sol:"A=(r r p); A u A r A r"},
  {id:"p3",grp:"P",title:"La función que baila",max:10,rows:["######V.R","EV..V..##"],sol:"A=(l l b); A d A l A l"},
- {id:"q1",grp:"Q",title:"Arreglá la función",max:11,pre:{A:"d p"},rows:["R####",".####","X.###","#.###","#X..#","###.#","###XE"],sol:"A=(d d p); A r A r r A r"},
- {id:"q2",grp:"Q",title:"Una llama a otra",max:10,fns:2,rows:["RX####","#.X.X#","####.X","#####E"],sol:"A=(r p); B=(A d A); B r B d"},
- {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"},
+ {id:"q1",grp:"P",title:"Arreglá la función",max:11,pre:{A:"d p"},rows:["R####",".####","X.###","#.###","#X..#","###.#","###XE"],sol:"A=(d d p); A r A r r A r"},
+ {id:"o3",grp:"Q",title:"Función y pasos",max:10,rows:["#########","########E","####.....","##...####","##.######","R..######"],sol:"A=(r r u); A u A r r A"},
+ {id:"p1",grp:"Q",title:"Función en repetir",max:9,rows:["########.","######..E","####.#.##","##.....##","##.######","R..######"],sol:"A=(r r u); 2(A u A d)"},
+// q2 y q3 sacados de momento (Funciones quedó en 8 niveles)
+// {id:"q2",grp:"Q",title:"Una llama a otra",max:10,fns:2,rows:["RX####","#.X.X#","####.X","#####E"],sol:"A=(r p); B=(A d A); B r B d"},
+// {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"},
  /* ===== Funciones (fin) ===== */
  /* ===== Funciones avanzadas (inicio) =====
     adv: hay que ganar con una función que se llama a sí misma (la recursión termina al llegar a la estrella). El alumno crea las
@@ -255,6 +257,13 @@ export const KIDS_EXTRA=[
   {after:"f2",m:{id:"r2",grp:"R",title:"Baile cada dos",max:6,rows:["##########","R.V.V.V.VE","##########"],sol:"4(r r b) r"}},
   {after:"r4",m:{id:"r5",grp:"R",title:"Dos pasillos",max:10,rows:["RXVXV","####V","####V","####E"],sol:"2(r p r b) 2(d b) d"}}
 ];
+/* desafíos propios de esta edición: reemplazan al del mismo id (el de Repetir sigue como antes, sin pintar ni bailar) */
+export const KIDS_CHALLENGES=[
+ {id:"x2",part:4,cls:2,tools:"r",title:"Desafío de repetir",t3:150,t2:240,levels:[
+   {title:"Escalones dobles",max:5,rows:["R..####","##...##","####...","######E"],sol:"3(r r d)"},
+   {title:"Subir y bajar",max:7,rows:["####B.###","###....##","##..##..#","#..####..","R.######E"],sol:"4(r u) 4(r d)"},
+   {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"}]}
+];
 export const KIDS={missions:["a3","a4","b1","b2","b3","c1","h1","h2","h3","h4","h5","l1","l2","m1","m2","m3","w1","w2","d1","d2","d3","d4","f2","r2","r4","r5"],need:{B:4,C:10,H:0,F:8,R:10},extra:30};
 export function applyKids(){
   const keep=(arr,f)=>arr.splice(0,arr.length,...arr.filter(f));
@@ -264,6 +273,9 @@ export function applyKids(){
   keep(GROUPS,g=>MISSIONS.some(m=>m.grp===g.id));
   keep(PARTS,p=>GROUPS.some(g=>g.part===p.id));
   keep(CHALLENGES,c=>PARTS.some(p=>p.id===c.part));
+  KIDS_CHALLENGES.forEach(ch=>{ const i=CHALLENGES.findIndex(c=>c.id===ch.id); if(i<0) return;
+    ch.levels.forEach((m,j)=>Object.assign(m,{id:ch.id+"-"+(j+1),num:j+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id}));
+    CHALLENGES[i]=ch; });
   GROUPS.forEach(g=>{ if(g.id in KIDS.need) g.need=KIDS.need[g.id]; });
   CHALLENGES.forEach(c=>{ c.t3+=KIDS.extra; c.t2+=KIDS.extra; });
   numberMissions();
