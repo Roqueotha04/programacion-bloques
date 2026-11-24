@@ -23,9 +23,11 @@ Partes, siempre en este orden (**Mundos y Si están comentadas en `data.ts` de m
 | 3 | Bailar | Parte 2 | Pintar de un toque y bailar (rojas: pintar, verdes: bailar), con baterías. Sin repetir. |
 | 4 | Repetir | Parte 3 + código del profe (`genIArepetir`) | Bloque repetir; incluye niveles de repetir con baile y pintura. |
 | 5 | Funciones | Parte 2 | Funciones con nombre libre: se definen y se llaman. |
+| 5.5 | Repetir avanzado *(extra)* | Parte 4 | Niveles opcionales de repetir más difíciles (colores, baterías, repetir adentro). |
 | ~~6~~ | Mundos *(oculta)* | Partes 2 y 4 | Cada nivel trae varios mapas y el programa tiene que ganar en todos (`si`, `si no`, paredes). |
 | ~~7~~ | Si *(oculta)* | Partes 2 y 4 | Condicional por color de celda. Siempre es la última. |
 
+- **Parte 5.5 «Repetir avanzado» (`extra:true`)**: opcional, para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir otras partes, no tiene desafío y no está en `?chicos`. 7 niveles `ra1`–`ra7` (grupos `I` y `X`, `cls 2`, `tools:"rpb"`, `strict`).
 - **Parte 6 «Funciones avanzadas» (`extra:true`)**: no cuenta para abrir otras partes. Se abre al superar la parte 5 y no está en `?chicos`. Son niveles `adv` (grupos `Y`, `Z` y `N`): hay que ganar con una función que se llama a sí misma (la recursión corta al llegar a la estrella). Dan hasta **3 estrellas** como todos (`starsAdv`: llegar con recursión, meta de bloques, camino más corto). **En cualquier nivel** (menos «Mi mapa») más de `MAXACT` (30) acciones, o 400 eventos, devuelve `boom`: GENI se marea y explota. `selfTest` valida que cada solución use recursión, el `boom` y que ganar sin recursión no cuenta. Los ids `v1`–`v9` no se renombran. Mundos y Si (partes 6 y 7 anteriores) y sus desafíos `x5` y `x8` están comentados en `data.ts`.
 - Cada parte tiene grupos de niveles y un desafío extra con cronómetro (3 niveles seguidos). El desafío **no cuenta** como nivel de la parte.
 - Una parte se supera con todos sus niveles **y** su desafío extra (al menos 1 estrella). Al terminar el último nivel de una parte se invita a jugar el desafío.

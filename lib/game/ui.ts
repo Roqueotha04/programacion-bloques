@@ -214,7 +214,7 @@ export function boot() {
   /* ================= menú ================= */  
   function miniMap(rows,s=14){ if(s===14) s=Math.max(5,Math.min(14,Math.floor((144-6-2*(rows[0].length-1))/rows[0].length))); /* en las tarjetas, los mapas largos se achican para no salirse */ let h=`<div class="mini" style="grid-template-columns:repeat(${rows[0].length},${s}px);--ms:${s}px">`;  
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }  
-  function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===6?ICO.repeat():ICO.ifq(); }  
+  function partIco(p){ return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===5.5||p===6?ICO.repeat():ICO.ifq(); }  
   function lockWhy(st){ return st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }  
   function renderMenu(){  
     $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();  

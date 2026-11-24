@@ -37,6 +37,14 @@ export const GROUPS=[
  {id:"Q",part:5,cls:3,tools:"rpbf",strict:true,title:"Armá tu función",sub:"armala desde cero",need:12,c:"#3E6FA8",l:"#D7E6F8"}
  /* ===== Funciones (fin) ===== */
 ];
+/* ===== Repetir avanzado (inicio) ===== */
+/* PARTE 5.5: repetir avanzado, opcional para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir
+   otras partes y no tiene desafío. No está en la edición chicos */
+PARTS.push({id:5.5,title:"Repetir avanzado",sub:"repetir con colores, baterías y repetir adentro",c:"#F97316",l:"#FFE4CC",after:[4],extra:true});
+GROUPS.push(
+ {id:"I",part:5.5,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
+ {id:"X",part:5.5,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:8,c:"#DC2626",l:"#FFD9D9"});
+/* ===== Repetir avanzado (fin) ===== */
 /* ===== Funciones avanzadas (inicio) ===== */
 /* PARTE 6: funciones avanzadas (recursión). Se abre al superar la parte 5, no cuenta para abrir otras partes. No está en la edición chicos.
    (Mundos y Si, antes partes 6 y 7, están comentadas de momento) */
@@ -113,6 +121,15 @@ export const MISSIONS=[
 // {id:"q2",grp:"Q",title:"Una llama a otra",max:10,fns:2,rows:["RX####","#.X.X#","####.X","#####E"],sol:"A=(r p); B=(A d A); B r B d"},
 // {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"},
  /* ===== Funciones (fin) ===== */
+ /* ===== Repetir avanzado (inicio) ===== */
+ {id:"ra1",grp:"I",title:"Pasillo de colores",max:7,rows:["########","RXVXVXVE","########"],sol:"3(r p r b) r"},
+ {id:"ra2",grp:"I",title:"Escalera bailarina",max:7,rows:["####E","###V.","##V.#","#V.##","R.###"],sol:"3(r u b) r u"},
+ {id:"ra3",grp:"I",title:"Torres de baterías",max:9,rows:["##B#B#B#","##.#.#.#","R......E"],sol:"3(2(r) 2(u) 2(d)) r"},
+ {id:"ra4",grp:"I",title:"Montaña de colores",max:10,rows:["###X.###","##X.V.##","#X.##V.#","R.####VE"],sol:"3(r u p) 3(r d b) r"},
+ {id:"ra5",grp:"X",title:"Zigzag de baile",max:9,rows:["R....","....V",".....","....V","E...."],sol:"2(4(r) d b 4(l) d)"},
+ {id:"ra6",grp:"X",title:"Repetir adentro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))"},
+ {id:"ra7",grp:"X",title:"El gran recorrido",max:9,rows:["R.B.#####","###.#####","###V.B.##","######.##","######V.E"],sol:"2(3(r) 2(d) b) 2(r)"},
+ /* ===== Repetir avanzado (fin) ===== */
  /* ===== Funciones avanzadas (inicio) =====
     adv: hay que ganar con una función que se llama a sí misma (la recursión termina al llegar a la estrella). El alumno crea las
     funciones desde cero (sin pre). goal: bloques de la meta (la 2.ª estrella), max = goal + 2.
