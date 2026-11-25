@@ -15,7 +15,17 @@ export function countB(rows){ return rows.join("").split("B").length-1; }
 export function cellsOf(rows,ch){ const out=[]; rows.forEach((row,r)=>[...row].forEach((x,c)=>{ if(x===ch) out.push(r+","+c); })); return out; }
 export function hasE(map){ return map.rows.some(r=>r.includes("E")); }
 /* pnt: celdas pintadas, dan: verdes donde bailó, wrong: pintadas que no eran rojas, pen: pincel en uso */
-export function startState(map){ const R=find(map.rows,"R"); return {r:R[0],c:R[1],got:[],pnt:[],dan:[],wrong:0,pen:false,starNoBat:false}; }
+export function startState(map){ const R=find(map.rows,"R"); return {r:R[0],c:R[1],got:[],pnt:[],dan:[],wrong:0,pen:false,starNoBat:false,keys:[],open:[]}; }
+/* ===== Portales y llaves (inicio) =====
+   Portales: «O» (azul) y «U» (naranja), cada letra va en 2 celdas. Pisar un portal lleva a GENI al otro del mismo color
+   (al salir no vuelve a entrar: hay que salir y volver a pisarlo). Llaves: «k» (dorada) abre «K», «j» (rosa) abre «J», «c» (celeste) abre «C».
+   La llave se agarra sola al pasar (keys guarda las letras) y abre todas las puertas de su color; sin llave la puerta es una pared.
+   open: puertas abiertas («r,c»), para dibujarlas */
+export const PORTALS="OU", DOORS={K:"k",J:"j",C:"c"};
+export function portalExit(rows,r,c){ const ch=rows[r][c]; if(!PORTALS.includes(ch)) return null;
+  for(let i=0;i<rows.length;i++) for(let j=0;j<rows[i].length;j++) if(rows[i][j]===ch&&(i!==r||j!==c)) return [i,j];
+  return null; }
+/* ===== Portales y llaves (fin) ===== */
 /* bloques de acción y su letra en las soluciones */
 export const ACTS={paint:"p",dance:"b",penon:"n",penoff:"f"};
 /* pinta la celda (r,c) si se puede (la estrella no se pinta). Pintar algo que no es rojo cuenta como «wrong», salvo en llegar pintando */
@@ -33,13 +43,20 @@ export function tryMove(map,S,dir){
   const rows=map.rows, [dr,dc]=DIRS[dir], r=S.r+dr, c=S.c+dc;
   if(r<0||c<0||r>=rows.length||c>=rows[0].length) return {k:"crash",why:"out",r,c};
   const ch=rows[r][c]; if(ch==="#") return {k:"crash",why:"rock",r,c};
-  const got=S.got.slice(), key=r+","+c; let bat=false;
+  const keys=S.keys||[], open=S.open||[];
+  if(DOORS[ch]&&!keys.includes(DOORS[ch])) return {k:"crash",why:"door",r,c}; /* puerta cerrada: falta su llave */
+  const got=S.got.slice(), key=r+","+c; let bat=false, door=false, gotKey=null, tp=null;
   if(ch==="B"&&!got.includes(key)){ got.push(key); bat=true; }
-  let S2={...S,r,c,got}; const n0=S2.pnt.length;
+  let S2={...S,r,c,got,keys,open};
+  if(DOORS[ch]&&!open.includes(key)){ S2.open=open.concat(key); door=true; }
+  if(ch==="k"||ch==="j"||ch==="c"){ if(!keys.includes(ch)){ S2.keys=keys.concat(ch); gotKey=ch; } }
+  const ex=portalExit(rows,r,c); if(ex){ tp={from:[r,c],to:ex}; S2.r=ex[0]; S2.c=ex[1]; }
+  if(tp) return {k:"ok",S:S2,bat,pnt:false,door,gotKey,tp};
+  const n0=S2.pnt.length;
   if(S.pen) S2=paintCell(map,S2,r,c); /* con el pincel en uso pinta cada celda que pisa */
   const pnt=S2.pnt.length>n0;
-  if(ch==="E"){ if(goalMet(map,S2)) return {k:"win",S:S2,bat,pnt}; S2.starNoBat=true; }
-  return {k:"ok",S:S2,bat,pnt};
+  if(ch==="E"){ if(goalMet(map,S2)) return {k:"win",S:S2,bat,pnt,door,gotKey}; S2.starNoBat=true; }
+  return {k:"ok",S:S2,bat,pnt,door,gotKey};
 }
 /* acciones en la celda del robot: n usar pincel (y pinta donde está), f guardar pincel,
    p pintar de un toque, b bailar. En niveles «strict» pintar/bailar en la celda equivocada es error */
@@ -65,8 +82,8 @@ export function sense(map,S,c){
   if(c==="x"||c==="v") return cellColor(map,S)===c;
   if(c==="e") return map.rows[S.r][S.c]==="E"; /* Python: en_estrella() */
   const d=DIRS[c[1]]; if(!d) return false;
-  const r=S.r+d[0], k=S.c+d[1], wall=r<0||k<0||r>=map.rows.length||k>=map.rows[0].length||map.rows[r][k]==="#";
-  return c[0]==="n"?!wall:wall; }
+  const r=S.r+d[0], k=S.c+d[1], wall=r<0||k<0||r>=map.rows.length||k>=map.rows[0].length||map.rows[r][k]==="#"||(DOORS[map.rows[r][k]]&&!(S.keys||[]).includes(DOORS[map.rows[r][k]]));
+  return c[0]==="n"?!wall:!!wall; } /* siempre true/false (con las puertas, wall podía ser undefined y el «si no» de Mundos no corría) */
 
 /* camino más corto (cada acción = 1 bloque) desde S: junta baterías, pinta rojas, baila en verdes y llega a la estrella si hay.
    Con pincel (tools «n») busca usarlo y guardarlo sin pintar nunca una celda que no sea roja.
@@ -81,21 +98,25 @@ export function shortest(map,S){
   /* con pincel: pisar (r,c) pinta; devuelve el nuevo t o -1 si pintaría una celda que no es roja */
   const ink=(t,r,c)=>{ const k=r+","+c, ch=rows[r][c], i=tg.findIndex(([x])=>x===k);
     if(i>=0) return t|1<<i; return ch==="E"||S.pnt.includes(k)?t:-1; };
-  const start={r:S.r,c:S.c,b:b0,t:t0,w:S.pen?1:0,prev:null}, seen=new Set([`${S.r},${S.c},${b0},${t0},${start.w}`]); let q=[start];
+  /* llaves (k: bit 1, j: bit 2, c: bit 4) y portales: pisar un portal deja al robot en el otro */
+  const KB={k:1,j:2,c:4}, k0=(S.keys||[]).reduce((a,x)=>a|KB[x],0);
+  const start={r:S.r,c:S.c,b:b0,t:t0,w:S.pen?1:0,k:k0,prev:null}, seen=new Set([`${S.r},${S.c},${b0},${t0},${start.w},${k0}`]); let q=[start];
   while(q.length){ const nq=[];
     for(const s of q){ const next=[];
       for(const d of "udlr"){
-        const r=s.r+DIRS[d][0], c=s.c+DIRS[d][1];
+        let r=s.r+DIRS[d][0], c=s.c+DIRS[d][1];
         if(r<0||c<0||r>=n||c>=m||rows[r][c]==="#") continue;
-        const t=PEN&&s.w?ink(s.t,r,c):s.t; if(t<0) continue;
-        const bi=bats.indexOf(r+","+c); next.push({r,c,b:bi>=0?s.b|1<<bi:s.b,t,w:s.w,a:d}); }
+        const ch=rows[r][c]; if(DOORS[ch]&&!(s.k&KB[DOORS[ch]])) continue;
+        const kk=KB[ch]?s.k|KB[ch]:s.k, ex=portalExit(rows,r,c); if(ex){ r=ex[0]; c=ex[1]; }
+        const t=PEN&&s.w&&!ex?ink(s.t,r,c):s.t; if(t<0) continue;
+        const bi=bats.indexOf(r+","+c); next.push({r,c,b:bi>=0&&!ex?s.b|1<<bi:s.b,t,w:s.w,k:kk,a:d}); }
       if(PEN){ if(s.w) next.push({...s,w:0,a:"f"});
         else { const t=ink(s.t,s.r,s.c); if(t>=0) next.push({...s,t,w:1,a:"n"}); } }
       else { const ti=tg.findIndex(([k])=>k===s.r+","+s.c);
-        if(ti>=0&&!(s.t>>ti&1)) next.push({r:s.r,c:s.c,b:s.b,t:s.t|1<<ti,w:0,a:tg[ti][1]}); }
+        if(ti>=0&&!(s.t>>ti&1)) next.push({r:s.r,c:s.c,b:s.b,t:s.t|1<<ti,w:0,k:s.k,a:tg[ti][1]}); }
       for(const x of next){ const node={...x,prev:s};
         if(x.b===fullB&&x.t===fullT&&(!E||(DIRS[x.a]&&rows[x.r][x.c]==="E"))){ const path=[]; for(let y=node;y.prev;y=y.prev) path.unshift([y.r,y.c,y.a]); return path; }
-        const k=`${x.r},${x.c},${x.b},${x.t},${x.w}`; if(!seen.has(k)){ seen.add(k); nq.push(node); } } }
+        const k=`${x.r},${x.c},${x.b},${x.t},${x.w},${x.k}`; if(!seen.has(k)){ seen.add(k); nq.push(node); } } }
     q=nq; }
   return null;
 }
@@ -287,6 +308,11 @@ export function selfTest(){
     const a=run("derecha"), b=run("while True:\n    x = 1"), c=run("ir()\ndef ir():\n    derecha()"), d=run("def ir(n):\n    for i in range(n):\n        derecha()\nir(5)"), e=run("if True\n    derecha()");
     res.push({id:"py",title:"Python: errores, bucles infinitos y parámetros",ok:a.k==="pyerr"&&a.ln===1&&b.k==="boom"&&c.k==="pyerr"&&/más arriba/.test(c.msg)&&d.k==="win"&&e.k==="pyerr"&&/«:»/.test(e.msg),info:`derecha → ${a.k} · while True → ${b.k} · llamada antes del def → ${c.k} · ir(5) → ${d.k} · if sin «:» → ${e.k}`}); }
   /* regla: en cada parte los chicos hacen menos o igual cantidad de niveles que el juego normal (la edición Python tiene sus propias partes) */
-  if(ED.kind!=="python") PARTS.forEach(p=>{ const n=MISSIONS.filter(m=>m.part===p.id).length; res.push({id:"cant"+p.id,title:"Cantidad de niveles de la parte "+p.id,ok:n<=NORMAL_COUNT[p.id],info:`${n} niveles (juego normal: ${NORMAL_COUNT[p.id]})`}); });
+  /* (las partes kidsOnly, como «Portales» y «Llaves», existen solo en chicos: no se comparan) */
+  if(ED.kind!=="python") PARTS.forEach(p=>{ const n=MISSIONS.filter(m=>m.part===p.id).length; res.push({id:"cant"+p.id,title:"Cantidad de niveles de la parte "+p.id,ok:!!p.kidsOnly||n<=NORMAL_COUNT[p.id],info:p.kidsOnly?`${n} niveles (solo en chicos)`:`${n} niveles (juego normal: ${NORMAL_COUNT[p.id]})`}); });
+  /* portales y llaves: cada portal tiene su pareja, la llave abre la puerta y sin llave la puerta es pared */
+  { const pm={rows:["RkK.O","####.","E..O."],cls:1,tools:""}, a=simulate(pm,parseSol("r r r r")), b=simulate({...pm,rows:["R.K.O","####.","E..O."]},parseSol("r r"));
+    const okP=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].every(m=>[...PORTALS].every(ch=>{ const n=m.rows.join("").split(ch).length-1; return n===0||n===2; }));
+    res.push({id:"portal",title:"Portales y llaves",ok:a.k==="end"&&a.S.r===2&&a.S.c===3&&a.S.keys.includes("k")&&b.k==="crash"&&b.why==="door"&&okP,info:`llave + puerta + portal → ${a.k} en ${a.S?a.S.r+","+a.S.c:"-"} · sin llave → ${b.k}${b.why?" ("+b.why+")":""} · portales de a pares: ${okP?"sí":"no"}`}); }
   return res;
 }

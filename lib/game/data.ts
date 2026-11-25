@@ -330,6 +330,68 @@ export const KIDS_CHALLENGES=[
    {title:"Subir y bajar",max:7,rows:["####B.###","###....##","##..##..#","#..####..","R.######E"],sol:"4(r u) 4(r d)"},
    {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"}]}
 ];
+/* ===== Portales y llaves (inicio) =====
+   PARTES 5 «Portales» y 6 «Llaves» de la edición chicos: solo existen ahí (kidsOnly: no se comparan con el juego normal en la regla
+   de cantidad; en el juego normal el 5 es Funciones y el 6 Mundos, que los chicos no tienen). Portales se abre al superar Repetir y
+   Llaves al superar Portales. Mapas: «O»/«U» portales (de a pares), «k»/«j»/«c» llaves (dorada, rosa, celeste) que abren «K»/«J»/«C»
+   (ver engine.ts). No hay bloques nuevos: lo nuevo está en el mapa. Los 2 últimos niveles de cada parte usan repetir simple.
+   icon: ícono de la tarjeta del menú. tip = [título, ayuda] del cartel. Los ids (pt…, ll…, ge…, xpt, xll) no se renombran */
+export const KIDS_PARTS={
+ parts:[
+  {id:5,title:"Portales",sub:"entrás por uno y salís por el otro",c:"#06B6D4",l:"#CFF6FC",after:[4],kidsOnly:true,icon:"portal"},
+  {id:6,title:"Llaves",sub:"cada llave abre la puerta de su color",c:"#F5B800",l:"#FFF3C4",after:[5],kidsOnly:true,icon:"key"}],
+ groups:[
+  {id:"PO",part:5,cls:1,tools:"",title:"Primeros portales",sub:"entrás por uno y salís por el otro",need:0,c:"#06B6D4",l:"#CFF6FC"},
+  {id:"PB",part:5,cls:1,tools:"",title:"Portales y baterías",sub:"viajes más largos para juntar baterías",need:6,c:"#1EC48C",l:"#D2F6E8"},
+  {id:"PR",part:5,cls:2,tools:"r",title:"Portales con repetir",sub:"el repetir sigue del otro lado",need:12,c:"#8B5CF6",l:"#EDE4FF"},
+  {id:"LK",part:6,cls:1,tools:"",title:"Primeras llaves",sub:"la llave abre la puerta",need:0,c:"#F5B800",l:"#FFF3C4"},
+  {id:"LC",part:6,cls:1,tools:"",title:"Llaves de colores",sub:"dorada, rosa y celeste",need:6,c:"#FF6FB5",l:"#FFDCEC"},
+  {id:"LX",part:6,cls:2,tools:"r",title:"Gran escape",sub:"llaves, portales y repetir",need:12,c:"#E64C55",l:"#FFD9DB"}],
+ missions:[
+  /* Portales */
+  {id:"pt1",grp:"PO",title:"Primer portal",rows:["R.##","#O##","####","O..E"],sol:"r d r r r",
+   tip:["¡Un portal mágico!","Entrá por un portal y salís por el otro del mismo color"]},
+  {id:"pt2",grp:"PO",title:"El atajo",rows:["R.....","O####.","#####.","#####.","####OE"],sol:"d r",
+   tip:["¿Caminar o usar el portal?","Por el portal llegás con muchos menos bloques"]},
+  {id:"pt3",grp:"PO",title:"¿Azul o naranja?",rows:["O.R.U","#####","O.#U.","..#.E"],sol:"r r d r",
+   tip:["Dos portales distintos","Cada portal te lleva al otro de su mismo color: ¿cuál llega a la estrella?"]},
+  {id:"pt4",grp:"PB",title:"La batería del otro lado",rows:["R...#B","##O.#.","E...#O"],sol:"r r d u u d d d l l",
+   tip:["¡Los portales van y vuelven!","Cruzá a buscar la batería y volvé por el mismo portal"]},
+  {id:"pt5",grp:"PB",title:"Dos portales, una batería",rows:["R.#B..",".##.#.","O.#U#.","###.#.","E.U..O"],sol:"d d l l l u u d d l l",
+   tip:["Azul y naranja","Usá los dos portales para llegar a la batería y a la estrella"]},
+  {id:"pt6",grp:"PB",title:"El gran viaje",rows:["R.O#.B","##.#..","B.U#U.",".####O","E....."],sol:"r r u u u d d l l l d d",
+   tip:["Dos baterías, dos portales","Juntá las dos baterías antes de ir a la estrella"]},
+  {id:"ge1",grp:"PR",title:"Pasillo mágico",max:4,rows:["R.....O","#######","O..B..E"],sol:"12(r)",
+   tip:["¡Usá repetir!","El portal no corta el repetir: del otro lado GENI sigue avanzando"]},
+  {id:"pt7",grp:"PR",title:"Escalera mágica",max:7,rows:["R.#####","#..####","##..###","###O###","#######","O.B..E#"],sol:"3(r d) 5(r)",
+   tip:["Escalera y portal","Repetí la escalera hasta el portal y seguí del otro lado"]},
+  /* Llaves */
+  {id:"ll1",grp:"LK",title:"Primera llave",rows:["Rk###","#.###","#.K.E"],sol:"r d d r r r",
+   tip:["¡Una puerta con llave!","Pasá por la llave y la puerta se abre sola"]},
+  {id:"ll2",grp:"LK",title:"Ir a buscar la llave",rows:["..k#E","R..#K",".#...","....."],sol:"u r r d d r r u u",
+   tip:["La llave está lejos","Primero buscá la llave, después andá a la puerta"]},
+  {id:"ll4",grp:"LK",title:"Llave y batería",rows:["Rk#B.","#.#.#","#...K","####.","##E.."],sol:"r d d r r u u d d r d d l l",
+   tip:["Llave, batería y estrella","La batería no está detrás de la puerta: ¿qué buscás primero?"]},
+  {id:"ll3",grp:"LC",title:"Dos puertas",rows:["Rk.#E","##K#J","#j..."],sol:"r r d d l r r r u u",
+   tip:["Llave dorada y llave rosa","Cada llave abre la puerta de su color: ¿cuál va primero?"]},
+  {id:"ll5",grp:"LC",title:"Tres colores",rows:["Rk#.c","#.#J.","#.K.C","##j#E"],sol:"r d d r d u r u u r d d d",
+   tip:["¡La llave celeste!","Dorada, rosa y celeste: cada una abre el camino a la siguiente"]},
+  {id:"ll6",grp:"LC",title:"Puertas y batería",rows:["R.k#..","##.#B.","#j..J.","####.#","##EK.."],sol:"r r d d l r r r u d d d l l",
+   tip:["Dos llaves y una batería","La batería está detrás de la puerta rosa"]},
+  {id:"ll7",grp:"LX",title:"Escalera de llaves",max:6,rows:["Rk#####","#.K####","##.j###","###.J##","####..E"],sol:"4(r d) 2(r)",
+   tip:["¡Usá repetir!","La escalera pasa por las llaves y las puertas: repetí el escalón"]},
+  {id:"ge2",grp:"LX",title:"Gran escape",max:7,rows:["R.#####","#..####","##.U###","#######","U.j.J.E"],sol:"2(r d) 7(r)",
+   tip:["¡El gran escape!","Escalera, portal, llave y puerta: usá repetir"]}],
+ challenges:[
+  {id:"xpt",part:5,cls:1,tools:"",title:"Desafío de portales",t3:150,t2:240,levels:[
+   {title:"Portal rápido",rows:["R.#..","#O#.E","###.#","O...."],sol:"r d r r r u u r"},
+   {title:"La batería escondida",rows:["B.O#R","##.#.","E..#O"],sol:"d d l l r r u d d d l l"},
+   {title:"Dos colores",rows:["RU#..E","..#.##","O.#.O.","##B.#U"],sol:"d d l d l r u u u r r"}]},
+  {id:"xll",part:6,cls:1,tools:"",title:"Desafío de llaves",t3:150,t2:240,levels:[
+   {title:"La llave del rincón",rows:["R.k","##.","EK."],sol:"r r d d l l"},
+   {title:"La llave celeste",rows:["R.#c.","..#.#","C....","E####"],sol:"d r d r r u u d d l l l d"},
+   {title:"Todo junto",rows:["R.U#E","####K","U.#..","k...#"],sol:"r r d r r r u r u u"}]}]};
+/* ===== Portales y llaves (fin) ===== */
 export const KIDS={missions:["a3","a4","b1","b2","b3","c1","h1","h2","h3","h4","h5","l1","l2","m1","m2","m3","w1","w2","d1","d2","d3","d4","f2","r2","r4","r5"],need:{B:4,C:10,H:0,F:8,R:10},extra:30};
 /* edición activa: "normal", "chicos" (applyKids) o "python" (applyPython). selfTest la mira para sus reglas */
 export const ED={kind:"normal"};
@@ -342,6 +404,10 @@ export function applyKids(){
   keep(GROUPS,g=>MISSIONS.some(m=>m.grp===g.id));
   keep(PARTS,p=>GROUPS.some(g=>g.part===p.id));
   keep(CHALLENGES,c=>PARTS.some(p=>p.id===c.part));
+  /* Portales y Llaves: las partes que solo existen en esta edición (van después de Repetir) */
+  const KP=KIDS_PARTS; PARTS.push(...KP.parts); GROUPS.push(...KP.groups);
+  MISSIONS.push(...KP.missions.map(m=>{ const g=KP.groups.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,adv:false}); }));
+  KP.challenges.forEach(ch=>{ ch.levels.forEach((m,j)=>Object.assign(m,{id:ch.id+"-"+(j+1),num:j+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:false,ch:ch.id})); CHALLENGES.push(ch); });
   KIDS_CHALLENGES.forEach(ch=>{ const i=CHALLENGES.findIndex(c=>c.id===ch.id); if(i<0) return;
     ch.levels.forEach((m,j)=>Object.assign(m,{id:ch.id+"-"+(j+1),num:j+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id}));
     CHALLENGES[i]=ch; });
@@ -507,7 +573,7 @@ const partRow=p=>({id:p.id,title:p.title,extra:!!p.extra});
 const KIDS_GRPS=new Set([...MISSIONS.filter(m=>KIDS.missions.includes(m.id)).map(m=>m.grp),...KIDS_EXTRA.filter(x=>KIDS.missions.includes(x.m.id)).map(x=>x.m.grp)]);
 export const EDITION_PARTS={
   normal:PARTS.map(partRow),
-  chicos:PARTS.filter(p=>GROUPS.some(g=>g.part===p.id&&KIDS_GRPS.has(g.id))).map(partRow),
+  chicos:PARTS.filter(p=>GROUPS.some(g=>g.part===p.id&&KIDS_GRPS.has(g.id))).map(partRow).concat(KIDS_PARTS.parts.map(partRow)),
   python:PY_PARTS.map(partRow)};
 /* oculta partes de la edición activa. Las que dependían de una oculta pasan a pedir lo que pedía ella (no quedan trabadas).
    mark (modo profe): no saca nada, solo marca p.hidden para mostrar «oculta» en el menú */
