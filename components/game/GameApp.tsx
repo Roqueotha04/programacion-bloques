@@ -9,9 +9,11 @@ import { ShopScreen } from "./ShopScreen";
 import { Sky } from "./Sky";
 import { TopBar } from "./TopBar";
 
-export function GameApp() {
+/* hidden: partes que el profe ocultó en cada vista (se lee en el servidor, app/page.tsx). Solo se usa al bootear. */
+export function GameApp({ hidden }: { hidden?: Record<string, number[]> }) {
   useEffect(() => {
-    boot();
+    boot(hidden);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

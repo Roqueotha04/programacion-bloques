@@ -10,7 +10,14 @@ export function isKids() {
   return /[?&]chicos/.test(location.search);
 }
 
+/* edición Python (?python, 13 a 15 años): tiene prioridad sobre ?chicos */
+export const SAVE_KEY_PYTHON = "robot-bloques-python";
+export function isPython() {
+  return /[?&]python/.test(location.search);
+}
+
 export function saveKey() {
+  if (isPython()) return isProfe() ? SAVE_KEY_PYTHON + "-profe" : SAVE_KEY_PYTHON;
   if (isKids()) return isProfe() ? SAVE_KEY_KIDS + "-profe" : SAVE_KEY_KIDS;
   return isProfe() ? SAVE_KEY_TEACHER : SAVE_KEY_STUDENT;
 }
@@ -27,7 +34,7 @@ export function freshSave() {
     body: "gris",
     face: "normal",
     faces: ["normal"],
-    seen: ["A"],
+    seen: ["A", "PA"], /* primer grupo de cada edición (PA: Python), para que no avise «nuevo» al entrar */
     codes: [],
   };
 }
