@@ -867,7 +867,7 @@ export function boot(hidden?: Record<string, number[]>) {
   const PY_PAL=[
     {id:"pg-mov",title:"Movimiento",col:"var(--mov)",items:[["arriba()","sube una celda"],["abajo()","baja una celda"],["izquierda()","va a la izquierda"],["derecha()","va a la derecha"]]},
     {id:"pg-act",title:"Acciones",col:"var(--pnt)",items:[["pintar()","pinta la celda roja","p"],["bailar()","baila en la celda verde","b"]]},
-    {id:"pg-py",title:"Python",col:"var(--fn)",items:[["def nombre():","crea una función","f"],["nombre()","llama a tu función","f"],["for i in range(3):","repite 3 veces","r"],
+    {id:"pg-py",title:"Python",col:"var(--fn)",items:[["def nombre():","crea una función","f"],["nombre()","llama a tu función","f"],["repetir(3):","repite 3 veces","r"],
       ["nombre = 1","crea una variable","v"],["nombre = nombre + 1","la variable suma 1","v"],["def nombre(n):","función con parámetro n","v"],
       ["while not en_estrella():","repite hasta llegar","w"],["if celda_roja():","hace algo solo si…","i"],["else:","si no…","i"]]},
     {id:"pg-ask",title:"Preguntas",col:"var(--ctl)",tool:"wi",items:[["en_estrella()","¿llegó a la estrella?","",1],["celda_roja()","¿está en una roja?","",1],["celda_verde()","¿está en una verde?","b",1],

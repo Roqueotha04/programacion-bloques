@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* Python del juego (edición ?python). No corre Python de verdad: es un subconjunto chico que se traduce a los mismos eventos que
    walk() de engine.ts (move, paint, dance, loop, if, call), así la simulación, las animaciones y selfTest son los de siempre.
-   Qué entiende: def (con parámetros), llamadas, for i in range(n) / range(a, b), while, if / elif / else, variables (= += -=),
+   Qué entiende: def (con parámetros), llamadas, repetir(n): (el repetir de los bloques, tipo pseudocódigo; también for i in range(n) / range(a, b)), while, if / elif / else, variables (= += -=),
    números enteros, + - * // % /, comparaciones, and / or / not, True / False, pass y «...» (no hacen nada), global y comentarios (#).
    Las palabras de Python van en inglés y los comandos de GENI en español: arriba() abajo() izquierda() derecha() pintar() bailar().
    Preguntas (para if y while): en_estrella() celda_roja() celda_verde() pared_arriba() pared_abajo() pared_izquierda() pared_derecha().
@@ -11,7 +11,7 @@ export const PY_MOVES={arriba:"u",abajo:"d",izquierda:"l",derecha:"r"};
 export const PY_ACTS={pintar:"paint",bailar:"dance",usar_pincel:"penon",guardar_pincel:"penoff"};
 /* preguntas: devuelven la condición del sensor de engine.ts (sense) */
 export const PY_SENSE={en_estrella:"e",celda_roja:"x",celda_verde:"v",pared_arriba:"wu",pared_abajo:"wd",pared_izquierda:"wl",pared_derecha:"wr"};
-const KW=new Set(["def","for","in","while","if","elif","else","not","and","or","True","False","pass","global","return","range","None","break","continue","import","class","lambda"]);
+const KW=new Set(["def","repetir","for","in","while","if","elif","else","not","and","or","True","False","pass","global","return","range","None","break","continue","import","class","lambda"]);
 const isCmd=n=>!!(PY_MOVES[n]||PY_ACTS[n]||PY_SENSE[n]);
 
 class PyErr{ constructor(ln,msg){ this.ln=ln; this.msg=msg; } }
@@ -55,7 +55,7 @@ function exprP(toks,ln){ let p=0;
     if(t.t==="op"&&t.v==="("){ const e=or(); if(!is(")")) err(ln,"falta cerrar el paréntesis «)»"); p++; return e; }
     if(t.t==="id"){
       if(t.v==="True"||t.v==="False") return {k:"num",v:t.v==="True"};
-      if(KW.has(t.v)&&t.v!=="range") err(ln,`«${t.v}» no puede ir ahí`);
+      if(KW.has(t.v)&&t.v!=="range") err(ln,t.v==="repetir"?"repetir va al principio de la línea: repetir(3):":`«${t.v}» no puede ir ahí`);
       if(is("(")){ p++; return {k:"callx",name:t.v,args:args()}; }
       return {k:"name",n:t.v}; }
     if(t.v==="=") err(ln,"para comparar se usa == (un solo = es para guardar un valor)");
@@ -75,6 +75,9 @@ function stmt(L){ const {toks,ln}=L, P=exprP(toks,ln), t0=toks[0], w=t0.t==="id"
     else for(;;){ const q=name(P.nx(),"los parámetros son nombres: def avanzar(n):"); if(params.includes(q)) err(ln,`el parámetro «${q}» está repetido`); params.push(q);
       if(P.is(",")){ P.p++; continue; } if(P.is(")")){ P.p++; break; } err(ln,"falta cerrar el paréntesis «)»"); }
     colon(); return {k:"def",name:n,params,ln,block:true}; }
+  if(w==="repetir"){ P.p=1; if(!P.is("(")) err(ln,"faltan los paréntesis con las veces: repetir(3):"); P.p++;
+    const a=P.args(); if(a.length!==1) err(ln,"repetir lleva un número entre los paréntesis: repetir(3):");
+    colon(); return {k:"for",v:null,args:a,ln,block:true}; }
   if(w==="for"){ P.p=1; const v=name(P.nx(),"se escribe así: for i in range(3):");
     if(!P.is("in")) err(ln,"falta «in»: for i in range(3):"); P.p++;
     if(!P.is("range")) err(ln,"en este juego el for usa range: for i in range(3):"); P.p++;
@@ -95,7 +98,7 @@ function stmt(L){ const {toks,ln}=L, P=exprP(toks,ln), t0=toks[0], w=t0.t==="id"
     if(t1&&t1.t==="op"&&t1.v==="("){ P.p=2; const a=P.args(); end(); return {k:"call",name:w,args:a,ln}; }
     if(t1&&t1.v==="==") err(ln,"para guardar un valor se usa un solo = (== es para comparar)");
     if(!t1) err(ln,isCmd(w)?`faltan los paréntesis: ${w}()`:`«${w}» sola no hace nada: si es una función, llamala con paréntesis: ${w}()`);
-    const k=sug(w,["def","for","while","if","elif","else","pass"]); if(k) err(ln,"no entiendo esta línea."+k); }
+    const k=sug(w,["def","repetir","for","while","if","elif","else","pass"]); if(k) err(ln,"no entiendo esta línea."+k); }
   if(w&&KW.has(w)) err(ln,`«${w}» no se usa así en este juego`);
   err(ln,"no entiendo esta línea"); }
 
@@ -128,7 +131,7 @@ export function parsePy(code,holes=false){
 /* ---------- ejecución (árbol → eventos) ---------- */
 /* nombres locales de una función: parámetros, variables que se asignan adentro y variables del for (menos las global) */
 function localNames(def){ const s=new Set(def.params), g=new Set();
-  const v=list=>list.forEach(x=>{ if(x.k==="set") s.add(x.n); if(x.k==="for") s.add(x.v); if(x.k==="global") x.names.forEach(n=>g.add(n)); if(x.body) v(x.body); if(x.orelse) v(x.orelse); });
+  const v=list=>list.forEach(x=>{ if(x.k==="set") s.add(x.n); if(x.k==="for"&&x.v) s.add(x.v); if(x.k==="global") x.names.forEach(n=>g.add(n)); if(x.body) v(x.body); if(x.orelse) v(x.orelse); });
   v(def.body); g.forEach(n=>s.delete(n)); return s; }
 function defsIn(list,out=new Set()){ list.forEach(x=>{ if(x.k==="def") out.add(x.name); if(x.body) defsIn(x.body,out); if(x.orelse) defsIn(x.orelse,out); }); return out; }
 
@@ -169,7 +172,7 @@ export function* pyWalk(prog,test){
         if(funcs.has(n)) err(ln,`en este juego las funciones no devuelven valores: ${n}() va sola en su línea`);
         if(n==="range") err(ln,"range se usa en el for: for i in range(3):");
         err(ln,`«${n}» no es una pregunta que GENI conozca.${sug(n,Object.keys(PY_SENSE))}`); } } }
-  const int=(v,ln)=>{ v=num(v,ln); if(!Number.isInteger(v)) err(ln,"range necesita un número entero (usá // para dividir)"); return v; };
+  const int=(v,ln)=>{ v=num(v,ln); if(!Number.isInteger(v)) err(ln,"repetir necesita un número entero (usá // para dividir)"); return v; };
   function* run(list,fr){ for(const s of list) yield* exec(s,fr); }
   function* exec(s,fr){ const ln=s.ln;
     switch(s.k){
@@ -179,7 +182,7 @@ export function* pyWalk(prog,test){
         if(funcs.has(s.n)) err(ln,`«${s.n}» ya es el nombre de una función: usá otro nombre para la variable`);
         setv(s.n,v,fr); yield E({t:"stmt",ln}); return; }
       case "for": { const a=s.args.map(x=>int(ev(x,fr,ln),ln)), [from,to]=a.length===1?[0,a[0]]:a, n=Math.max(0,to-from);
-        for(let k=0;k<n;k++){ setv(s.v,from+k,fr); yield E({t:"loop",ln,k,n}); yield* run(s.body,fr); }
+        for(let k=0;k<n;k++){ if(s.v) setv(s.v,from+k,fr); yield E({t:"loop",ln,k,n}); yield* run(s.body,fr); }
         if(!n) yield E({t:"stmt",ln}); return; }
       case "while": for(;;){ const ok=truthy(ev(s.cond,fr,ln)); yield E({t:"if",ln,ok}); if(!ok) return; yield* run(s.body,fr); }
       case "if": { const ok=truthy(ev(s.cond,fr,ln)); yield E({t:"if",ln,ok}); if(ok) yield* run(s.body,fr); else if(s.orelse) yield* run(s.orelse,fr); return; }
@@ -200,12 +203,12 @@ export function* pyWalk(prog,test){
 export function pyLines(code){ return String(code).split("\n").filter(l=>{ const h=l.indexOf("#"); return (h>=0?l.slice(0,h):l).trim(); }).length; }
 
 /* lo que pide el nivel (req) para la 2.ª estrella. Devuelve la primera que falta, o null si están todas:
-   def: una función propia (además de main) que se llama · def2: una función que llama a otra · for · while · if
+   def: una función propia (además de main) que se llama · def2: una función que llama a otra · for (repetir) · while · if
    var: una variable que se guarda y se usa · var2: una variable que cambia (se asigna 2 veces o con += / -=)
    param: una función con parámetro que lo usa y se llama con un valor */
 export const PY_REQ_TIP={def:"Creá una función propia (además de main) y llamala",def2:"Hacé que una función llame a otra función tuya",
   var:"Guardá el número en una variable y usala",var2:"Hacé que la variable cambie: pasos = pasos + 1",param:"Usá una función con parámetro: def avanzar(n):",
-  for:"Usá for para repetir",while:"Usá while para repetir hasta llegar",if:"Usá if para decidir"};
+  for:"Usá repetir(…): para repetir",while:"Usá while para repetir hasta llegar",if:"Usá if para decidir"};
 export function pyMissing(prog,req){ if(!req||!req.length) return null;
   const defs=[], calls=[], sets=new Map(), reads=new Set(), has={for:false,while:false,if:false};
   const ex=e=>{ if(!e) return; if(e.k==="name") reads.add(e.n); ["a","b"].forEach(k=>ex(e[k])); (e.args||[]).forEach(ex); };
@@ -256,13 +259,13 @@ const SENSE_PY=Object.fromEntries(Object.entries(PY_SENSE).map(([k,v])=>[v,k]));
 export function pyName(name,f){ let s=String(name||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim().replace(/[^a-z0-9_]+/g,"_").replace(/^_+|_+$/g,"");
   if(!s||/^\d/.test(s)||KW.has(s)||isCmd(s)||s==="main") s="funcion_"+String(f).toLowerCase(); return s; }
 /* notes: comentarios simples para aprender a leerlo (solo en los primeros niveles, map.notes) */
-export function blocksToPy(prog,funcs,names,notes){ const out=[], VARS="ijk", note=t=>{ if(notes) out.push(t); };
+export function blocksToPy(prog,funcs,names,notes){ const out=[], note=t=>{ if(notes) out.push(t); };
   const lines=(list,ind,d)=>{ if(!list.length){ out.push(ind+(notes?"...  # no hay nada aquí":"...")); return; }
     for(const b of list){
       if(b.t==="move") out.push(ind+MOVE_PY[b.dir]+"()");
       else if(ACT_PY[b.t]) out.push(ind+ACT_PY[b.t]+"()");
       else if(b.t==="call") out.push(ind+pyName(names&&names[b.f],b.f)+"()");
-      else if(b.t==="repeat"){ out.push(`${ind}for ${VARS[d]||"n"+d} in range(${b.n}):`); lines(b.body,ind+"    ",d+1); }
+      else if(b.t==="repeat"){ out.push(`${ind}repetir(${b.n}):`); lines(b.body,ind+"    ",d+1); }
       else if(b.t==="if"){ const c=b.c[0]==="n"?"not "+SENSE_PY["w"+b.c[1]]:SENSE_PY[b.c]; out.push(`${ind}if ${c}():`); lines(b.body,ind+"    ",d); }
       else if(b.t==="else"){ out.push(ind+"else:"); lines(b.body,ind+"    ",d); } } };
   Object.keys(funcs||{}).sort().forEach(f=>{ note("# definimos nuestra función"); out.push(`def ${pyName(names&&names[f],f)}():`); lines(funcs[f],"    ",0); out.push(""); });
@@ -270,7 +273,7 @@ export function blocksToPy(prog,funcs,names,notes){ const out=[], VARS="ijk", no
   out.push(""); note("# lo que se ejecuta"); out.push("main()"); return out.join("\n"); }
 
 /* colores para mostrar código (el texto se escapa; los nombres de Python no tienen caracteres de HTML) */
-const PY_KW=new Set(["def","for","in","while","if","elif","else","not","and","or","True","False","pass","global"]);
+const PY_KW=new Set(["def","repetir","for","in","while","if","elif","else","not","and","or","True","False","pass","global"]);
 const escH=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 export function pyHTML(code){ return String(code).split("\n").map(line=>{ const h=line.indexOf("#"), c=h>=0?line.slice(0,h):line, cm=h>=0?line.slice(h):"";
   /* pk palabra de Python, pb comando de GENI, pf función propia (nombre seguido de «(»), pn número, pc comentario */
