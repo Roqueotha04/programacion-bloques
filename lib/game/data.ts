@@ -202,6 +202,48 @@ const MUNDOS=[
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds; return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict}); });
 MISSIONS.push(...MUNDOS);
 /* ===== Mundos (fin) ===== */
+/* ===== Eventos (inicio) ===== */
+/* PARTE 8 (Mundo 3, experimental): eventos. Los bloques «al apretar [tecla]» son bloques de inicio (como «al tocar»): se ponen donde se quiera,
+   uno por tecla, y cada uno lleva su pila de hasta 3 acciones. Tras Ir, cada tecla (teclado o botones en pantalla) hace toda la pila de su evento.
+   keys: teclas del nivel (u d l r flechas, s espacio). sol: «tecla:acciones» (una letra por acción). play: teclas que ganan con la sol.
+   goal: bloques de la meta («al tocar» + cada evento + cada acción), max = goal + 2. Estrellas (starsAdv): 1 llegó, +1 dentro de goal,
+   +1 sin acciones de más (camino más corto) */
+PARTS.push({id:8,world:3,title:"Eventos",sub:"al apretar una tecla, el robot actúa",c:"#8B5CF6",l:"#E9DEFF",after:[1]});
+GROUPS.push(
+ {id:"EV",part:8,cls:2,tools:"k",title:"Una tecla, una acción",sub:"asociá cada tecla con lo que hace el robot",need:0,c:"#8B5CF6",l:"#E9DEFF"},
+ {id:"EW",part:8,cls:2,tools:"kp",strict:true,title:"Pilas y colores",sub:"una tecla puede hacer varias cosas",need:6,c:"#EC4899",l:"#FCE0EF"});
+MISSIONS.push(...[
+ {id:"ev1",grp:"EV",title:"Una tecla",goal:3,max:5,keys:"r",rows:["#######","R.....E","#######"],sol:"r:r",play:"rrrrrr",
+  tip:["Al apretar una tecla, GENI actúa","Arrastrá «al apretar» al programa y poné una acción adentro · Tocá Ir y apretá la flecha"]},
+ {id:"ev2",grp:"EV",title:"Dos teclas",goal:5,max:7,keys:"rd",rows:["R.##","#..#","##.E"],sol:"r:r d:d",play:"rdrdr",
+  tip:["Una tecla para cada acción","Armá dos eventos: uno para ir a la derecha y otro para bajar"]},
+ {id:"ev3",grp:"EV",title:"Mapa libre",goal:9,max:11,keys:"udlr",rows:["..#..","B.R.E","...#.","..B.."],sol:"l:l d:d r:r u:u",play:"lldd" + "rr" + "rruu",
+  tip:["Cuatro flechas, cuatro eventos","Juntá las dos baterías y andá a la estrella en el orden que quieras"]},
+ {id:"ev4",grp:"EW",title:"Una tecla, dos acciones",goal:6,max:8,keys:"rs",rows:["######","RXXXXE","######"],sol:"r:rp s:r",play:"rrrrs",
+  tip:["Un evento puede hacer varias cosas","Poné mover y pintar en la misma tecla · Rojas: pintar"]},
+ {id:"ev5",grp:"EW",title:"Todo en un mapa",goal:9,max:11,keys:"udlrs",rows:["..X.E",".#.#.","R.X.B"],sol:"r:r l:l u:u s:p",play:"rrsrr" + "ll" + "uusrr",
+  tip:["Flechas y espacio juntas","Pintá las rojas, juntá la batería y llegá a la estrella"]}
+].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,ev:true}); }));
+/* PARTE 9 (Mundo 3, experimental): eventos libres. Igual que la parte 8 pero el alumno elige la tecla de cada evento (selector: apretar una tecla,
+   letras, números, flechas o espacio, o tocar una en pantalla) y puede poner hasta evmax eventos. Si dos eventos usan la misma tecla, corren los
+   dos (de arriba hacia abajo). free:true. sol/play con teclas u d l r s (el selector acepta más). maxAct: tope de acciones antes de explotar */
+PARTS.push({id:9,world:3,title:"Eventos libres",sub:"elegí vos qué tecla hace cada cosa",c:"#A855F7",l:"#F1E1FF",after:[8]});
+GROUPS.push(
+ {id:"EL",part:9,cls:2,tools:"kp",strict:true,title:"Elegí tus teclas",sub:"cada evento con la tecla que quieras",need:0,c:"#A855F7",l:"#F1E1FF"},
+ {id:"EM",part:9,cls:2,tools:"kp",strict:true,title:"Mapas grandes",sub:"pilas largas y pocos eventos",need:6,c:"#6366F1",l:"#E0E1FF"});
+MISSIONS.push(...[
+ {id:"evl1",grp:"EL",title:"Tu primera tecla",goal:3,max:5,evmax:1,maxAct:20,rows:["#######","R.....E","#######"],sol:"r:r",
+  tip:["Elegí vos la tecla","Arrastrá «al apretar», tocá «Tecla ?» y apretá la que quieras · Poné una acción adentro"]},
+ {id:"evl2",grp:"EL",title:"Tus controles",goal:7,max:9,evmax:3,maxAct:30,rows:["R....","####B","####.","E...."],sol:"r:r d:d l:l",
+  tip:["Tres eventos, tres teclas","Elegí una tecla para cada dirección · Juntá la batería y llegá a la estrella"]},
+ {id:"evl3",grp:"EL",title:"Una tecla, la escalera",goal:4,max:6,evmax:2,maxAct:24,rows:["R.###","#..##","##..#","###..","####E"],sol:"r:rd",play:"rrrr",
+  tip:["Un evento con dos acciones","Poné mover a la derecha y bajar en el mismo evento: ¡la escalera en 4 pulsaciones!"]},
+ {id:"evl4",grp:"EM",title:"Pintá con tu tecla",goal:11,max:13,evmax:5,maxAct:40,rows:["R.X..","#.#.#","X...X","#.#.#","E...."],sol:"u:u d:d l:l r:r s:p",
+  tip:["Cinco teclas a tu gusto","Movete, y usá una tecla para pintar las rojas · Después, a la estrella"]},
+ {id:"evl5",grp:"EM",title:"El gran recorrido",goal:9,max:11,evmax:2,maxAct:40,rows:["######E","######.","######.","###....","###B###","###.###","R.B.###"],sol:"r:rrr u:uuu",play:"ruru",
+  tip:["Pilas de tres acciones","Solo tenés dos eventos: ¡que cada uno haga tres pasos!"]}
+].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,ev:true,free:true}); }));
+/* ===== Eventos (fin) ===== */
 /* orden: por número de parte (Secuencia, Pintar, Bailar, Repetir, Funciones, Mundos, Si); el sort es estable */
 const byPart=(a,b)=>a.part-b.part;
 PARTS.sort((a,b)=>a.id-b.id); GROUPS.sort(byPart); MISSIONS.sort(byPart);

@@ -245,6 +245,30 @@ button.colsel:hover{ box-shadow:0 0 0 3px rgba(255,255,255,.6); }
 .wmini{ padding:2px; border-radius:10px; border:2.5px solid transparent; }
 .wmini.on{ border-color:#6366F1; background:#E0E1FF; }
 /* ===== Mundos (fin) ===== */
+/* ===== Eventos (inicio) ===== */
+.blk.rep.evt{ --c:var(--evt); --cd:var(--evt-d); color:#4A3300; }
+.evt .ic{ background:rgba(255,255,255,.55); }
+.kcap{ display:grid; place-items:center; min-width:34px; height:32px; padding:0 9px; border-radius:9px; border:2px solid var(--ink); border-bottom-width:5px; background:#fff; color:var(--ink); font-size:18px; font-weight:800; line-height:1; }
+.evt .slot .ph{ border-color:rgba(160,110,0,.6); background:rgba(255,200,61,.16); }
+/* un evento puesto en el programa es un bloque de inicio con posición libre (left/top en el lienzo); la cabecera lo mueve */
+.canvas .evt[data-ev]{ position:absolute; z-index:3; width:max-content; }
+.canvas .evt[data-ev]>.rtop{ cursor:grab; }
+.canvas .evt.moving{ z-index:20; opacity:.92; cursor:grabbing; filter:drop-shadow(0 10px 14px rgba(13,48,73,.25)); }
+.evt.on{ box-shadow:none; filter:none; animation:none; }
+.evt.on>.rtop{ box-shadow:0 0 0 3px #fff,0 0 0 6px var(--glow),0 0 22px var(--glow); }
+.pal .evt.used{ opacity:.35; pointer-events:none; filter:grayscale(.7); }
+button.kcap.ksel{ cursor:pointer; } button.kcap.ksel:hover{ background:#FFF6D6; }
+.kpick{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:16px; }
+.kpick .kpb{ min-width:56px; height:52px; padding:0 14px; border-radius:14px; background:#fff; border:3px solid var(--ink); border-bottom-width:6px; color:var(--ink); font-size:22px; font-weight:800; line-height:1; }
+.kpick .kpb.wide{ min-width:130px; font-size:18px; } .kpick .kpb:active{ transform:translateY(3px); border-bottom-width:3px; }
+#keypad:empty{ display:none; }
+#tidyBtn{ margin-left:auto; } #tidyBtn+.clear{ margin-left:0; }
+#keypad{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:4px 0 2px; transition:opacity .2s; }
+#keypad.off{ opacity:.45; }
+#keypad .kpb.wide{ min-width:150px; font-size:20px; }
+#keypad .kpb{ min-width:56px; height:56px; padding:0 14px; border-radius:14px; background:#fff; border:3px solid var(--ink); border-bottom-width:7px; color:var(--ink); font-size:26px; font-weight:800; line-height:1; transition:transform .08s,background .08s; }
+#keypad .kpb:active,#keypad .kpb.hit{ transform:translateY(4px); border-bottom-width:3px; background:#FFE9A8; }
+/* ===== Eventos (fin) ===== */
 .hat{ --c:var(--evt); --cd:var(--evt-d); color:#4A3300; height:66px; padding-top:8px; border-radius:30px 14px 10px 10px / 26px 14px 10px 10px; cursor:default; min-width:190px; }
 .hat::before{ display:none; }
 .hat .ic{ background:rgba(255,255,255,.55); }

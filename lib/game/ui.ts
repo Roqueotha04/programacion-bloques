@@ -7,7 +7,7 @@ import {
   ACTS, DIRS, MAXSTEPS, MAXACT, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
   fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, hasRepeatAll, limitFor, maxStars, optFor, starsAdv, starsPy,
   chOf, gateTxt, partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
-  tryAct, tryMove, walk,
+  tryAct, tryMove, walk, EVMAX,
 } from "./engine";
 import { parsePy, pyWalk, pyLines, pyMissing, PY_REQ_TIP, blocksToPy, pyHTML, pyExprText, pyCondText } from "./python";
 import { freshSave, isKids, isProfe, isPython, saveKey } from "./save";
@@ -208,6 +208,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     repeat:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M6.5 15a9.5 9.5 0 0 1 16.3-6.6M25.5 17a9.5 9.5 0 0 1-16.3 6.6" fill="none" stroke="${c}" stroke-width="3.4" stroke-linecap="round"/><path d="M24 3v6.5h-6.5M8 29v-6.5h6.5" fill="none" stroke="${c}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   
+    key:()=>`<svg viewBox="0 0 32 32"><rect x="4" y="4" width="24" height="21" rx="6" fill="#fff" stroke="#4A3300" stroke-width="2.5"/><rect x="4" y="21" width="24" height="7" rx="3.5" fill="#4A3300"/></svg>`,
     flag:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M8 29V4" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/><path d="M8 5c5-3 9 3 16 0v12c-7 3-11-3-16 0z" fill="${c}"/></svg>`,
   
     step:()=>`<svg viewBox="0 0 32 32"><path d="M4 16h15M13 9l7 7-7 7" fill="none" stroke="#2FB0F0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 7v18" stroke="#0D3049" stroke-width="3.4" stroke-linecap="round"/></svg>`,
@@ -427,7 +428,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }
   
-  function partIco(P){ const p=P.id; if(P.py) return ICO.code(); return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.music():p===4||p===4.5?ICO.repeat():p===5||p===5.5?ICO.blocks():p===6?ICO.bulb():ICO.ifq(); }
+  function partIco(P){ const p=P.id; if(P.py) return ICO.code(); return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.music():p===4||p===4.5?ICO.repeat():p===5||p===5.5?ICO.blocks():p===6?ICO.bulb():p===8?ICO.key():ICO.ifq(); }
   
   function lockWhy(st){ return st.worldLock?worldWhy(st.worldLock):st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }
   
@@ -645,7 +646,8 @@ export function boot(hidden?: Record<string, number[]>) {
     if(e.target.closest("#resetBtn")) return askReset();
     const wc=e.target.closest(".wcard");
     if(wc){ if(wc.classList.contains("locked")||wc.classList.contains("soon")){ bumpEl(wc,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),wc.dataset.why); }
-      WORLD=+wc.dataset.w; renderMenu(); return show("menu"); }  
+      WORLD=+wc.dataset.w; renderMenu(); return show("menu"); }
+  
   
     const x=e.target.closest(".chcard");
   
@@ -696,13 +698,13 @@ export function boot(hidden?: Record<string, number[]>) {
   
   /* ================= juego ================= */
   
-  let G=null; const PROGS={}, FUNCS={}, NAMES={}; /* funciones y sus nombres por nivel (no se guardan en localStorage, como PROGS) */
+  let G=null; const PROGS={}, FUNCS={}, NAMES={}, EVS={}; /* EVS: eventos por nivel {tecla:{x,y,body}} (tampoco se guardan en localStorage) */ /* funciones y sus nombres por nivel (no se guardan en localStorage, como PROGS) */
   const PYCODE={}; /* código de Python por nivel (tampoco se guarda en localStorage) */
   const PY_START="def main():\n    ...\n\nmain()\n";
   
   function startPlay(map){
   
-    PROGS[map.id]=PROGS[map.id]||[];
+    PROGS[map.id]=PROGS[map.id]||[]; EVS[map.id]=EVS[map.id]||{};
     /* funciones: tools «f» (1 función, 2 si el mapa dice fns:2); pre: cuerpos ya armados */
     const fids=(map.tools??"r").includes("f")?(map.fns===2?["A","B"]:["A"]):[];
     if(!FUNCS[map.id]){ FUNCS[map.id]={}; NAMES[map.id]={}; fids.forEach(f=>{ FUNCS[map.id][f]=map.pre&&map.pre[f]?parseSol(map.pre[f]):[]; }); }
@@ -713,7 +715,8 @@ export function boot(hidden?: Record<string, number[]>) {
   
     G={map,rows:map.rows,n:map.rows.length,m:map.rows[0].length,nB:countB(map.rows),nX:cellsOf(map.rows,"X").length,nV:cellsOf(map.rows,"V").length,
   
-       prog:PROGS[map.id],funcs:FUNCS[map.id],names:NAMES[map.id],fids,fn:fids.length>0,lock:map.lock||[],run:0,busy:false,ctx:null,S,tools,rep:tools.includes("r"),opt,max:limitFor(map,opt),hint:false};
+       prog:PROGS[map.id],funcs:FUNCS[map.id],names:NAMES[map.id],fids,fn:fids.length>0,lock:map.lock||[],run:0,busy:false,ctx:null,S,tools,rep:tools.includes("r"),opt,max:limitFor(map,opt),hint:false,
+       ev:!!map.ev,free:!!map.free,capture:null,keys:map.keys?[...map.keys]:[],evs:EVS[map.id],listen:false,pn:0,kq:Promise.resolve()}; /* eventos: teclas del nivel, sus bloques (evs), si espera teclas (listen) y cuántas acciones hizo (pn) */
   
     /* mundos: wm = mapa del mundo que se está jugando, worlds = filas de los mundos de este intento, wi = mundo actual (null si no corre) */
     G.tries=0; G.pathLen=(shortest(map,S)||[]).length; /* adv: intentos fallidos y largo del camino más corto, para las estrellas */
@@ -724,7 +727,7 @@ export function boot(hidden?: Record<string, number[]>) {
 
     setTop(map.num||ICO.pencil(),map.ch?`Desafío · Nivel ${map.num} de 3`:map.title); renderTopStars();
 
-    $("hintBtn").classList.toggle("hidden",!!map.ch||!!map.need||!!map.worlds||map.cls===3||G.py);
+    $("hintBtn").classList.toggle("hidden",!!map.ch||!!map.need||!!map.worlds||map.cls===3||G.py||G.ev); $("stepBtn").classList.toggle("hidden",G.ev); renderKeypad();
 
     renderPalette(); show("game"); drawBoard(false,true); renderProg(true);
   
@@ -784,7 +787,7 @@ export function boot(hidden?: Record<string, number[]>) {
   function setWorld(i){ G.wi=i; G.rows=G.worlds[i]; G.wm=worldMap(G.map,G.rows); G.nB=countB(G.rows); G.nX=cellsOf(G.rows,"X").length; G.nV=cellsOf(G.rows,"V").length; drawBoard(false); }
   function resetRobot(){
     if(G.worlds&&!G.keepW){ const back=G.wi>0; G.wi=null; if(back) return setWorld(0); }
-    G.S=startState(G.wm); G.trail=0; G.lastGot=null; clearHint();
+    G.S=startState(G.wm); G.trail=0; G.lastGot=null; clearHint(); G.listen=false; keypadState();
   
     $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","scorch"));
   
@@ -882,13 +885,29 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(G.fn){ h+=`<div class="pgroup" id="pg-fn"><h4><i style="background:var(--fn)"></i>Funciones</h4>${G.fids.map(f=>blockHTML({t:"call",f},null,true)).join("")}</div>`;
       cats+=`<button class="cat" data-g="pg-fn"><i style="background:var(--fn)"></i>Funciones</button>`; }
+    /* eventos: arriba de todo el bloque «al apretar» (se le cambia la tecla tocándola) */
+    if(G.ev){ h=`<div class="pgroup" id="pg-evt"><h4><i style="background:var(--evt)"></i>Eventos</h4>${G.free?evHTML("*",true):G.keys.map(k=>evHTML(k,true)).join("")}</div>`+h;
+      cats=`<button class="cat on" data-g="pg-evt"><i style="background:var(--evt)"></i>Eventos</button>`+cats.replace('class="cat on"','class="cat"'); }
     $("pal").innerHTML=h; $("cats").innerHTML=cats;
-  
+
   }
   
   const COLS={x:["roja","#FF5A62"],v:["verde","#1EC48C"]};
   /* chip de la condición del si: color de celda o pared por dirección ("pared →", "no hay pared ↓") */
   const ARR={u:"↑",d:"↓",l:"←",r:"→"};
+  /* eventos: texto de cada tecla (flechas y letras P/B) y la tecla del teclado que la dispara */
+  const KEYTXT={u:"↑",d:"↓",l:"←",r:"→",s:"Espacio"}, KEYNAME={u:"flecha arriba",d:"flecha abajo",l:"flecha izquierda",r:"flecha derecha",s:"barra espaciadora"};
+  /* tecla del teclado → código del juego: flechas u d l r, espacio s, letras y números «k:a». Lo demás (Esc, Tab, Enter, F1...) no se usa */
+  const evKeyOf=e=>{ const m={ArrowUp:"u",ArrowDown:"d",ArrowLeft:"l",ArrowRight:"r"}; if(m[e.key]) return m[e.key]; if(e.key===" ") return "s";
+    return /^[a-zñ0-9]$/i.test(e.key)?"k:"+e.key.toLowerCase():null; };
+  const keyLabel=k=>KEYTXT[k]||(k&&k.startsWith("k:")?k.slice(2).toUpperCase():"?");
+  /* bloque de evento (bloque de inicio, como «al tocar»): «al apretar [tecla]» con su pila de acciones. En el programa va con posición libre
+     (G.evs[id]={key,x,y,body}); en la paleta (pal) no tiene posición. La pila usa direcciones «@id:0» (como las funciones).
+     Niveles guiados: el id es la tecla (una por tecla, fija). Niveles libres (map.free): ids e1, e2... y la tecla se elige con el selector */
+  function evHTML(id,pal){ const e=pal?null:G.evs[id], key=pal?(id==="*"?null:id):e.key, body=e?e.body:[], inner=body.length?listHTML(body,"@"+id+":"):'<div class="ph"></div>';
+    const cap=G.free&&!pal?`<button class="kcap ksel" data-ksel title="Elegir la tecla">${key?keyLabel(key):"Tecla ?"}</button>`:`<span class="kcap">${key?keyLabel(key):"?"}</span>`;
+    return `<div class="blk rep evt" ${pal?`data-new="ev:${id}"`:`data-ev="${id}" style="left:${e.x}px;top:${e.y}px"`}><div class="rtop"><span class="ic">${ICO.key()}</span><span>al apretar</span>${cap}</div>`+
+      `<div class="mouth"><div class="arm"></div><div class="slot list"${pal?"":` data-l="@${id}:"`}>${inner}</div></div><div class="rbot"></div></div>`; }
   function condChip(c){ return COLS[c]?`<i style="--cc:${COLS[c][1]}"></i>${COLS[c][0]}`:`<i class="wc">${ARR[c[1]]}</i>${c[0]==="n"?"no hay pared":"pared"}`; }
 
   
@@ -902,6 +921,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const at=pal?`data-new="${b.t==="call"?"call:"+b.f:b.t==="repeat"?"rep":b.t==="move"?b.dir:b.t}"`:`data-a="${addr}"`;
   
+    if(b.t==="evnew") return evHTML(b.key,true); /* el evento que se arrastra desde la paleta */
     if(b.t==="call") return `<div class="blk fnc" ${at}><span class="ic">ƒ</span><span>llamar a <b>${fnLabel(b.f)}</b></span></div>`;
     if(b.t==="move") return `<div class="blk mov" ${at}><span class="ic">${ICO.arrow(b.dir)}</span><span>${LABEL[b.dir]}</span></div>`;
   
@@ -916,7 +936,7 @@ export function boot(hidden?: Record<string, number[]>) {
     const inner=b.body.length?listHTML(b.body,addr):'<div class="ph"></div>';
   
     /* si y repetir comparten la forma de C */
-  
+
     if(b.t==="else") return `<div class="blk rep iff els" ${at}><div class="rtop"><span class="ic">${ICO.ifq()}</span><span>si no</span></div><div class="mouth"><div class="arm"></div><div class="slot list"${pal?"":` data-l="${addr}"`}>${inner}</div></div><div class="rbot"></div></div>`;
     if(b.t==="if") return `<div class="blk rep iff" ${at}><div class="rtop"><span class="ic">${ICO.ifq()}</span><span>${COLS[b.c]?"si la celda es":"si"}</span>`+
       (pal?`<span class="colsel">${condChip(b.c)}</span>`:`<button class="colsel" data-col title="Cambiar condición">${condChip(b.c)}</button>`)+
@@ -937,7 +957,9 @@ export function boot(hidden?: Record<string, number[]>) {
     return `<div class="fns"><h5>Mis funciones</h5>${G.fids.map(f=>{ const lk=G.lock.includes(f);
       return `<div class="rep fnbox${lk?" lock":""}" data-fn="${f}"><div class="rtop"><span class="ic">ƒ</span><input class="fname" data-fname="${f}" maxlength="14" value="${escH(G.names[f]||"")}" placeholder="Función ${f}" aria-label="Nombre de la función ${f}"${lk?" disabled":""}>${lk?`<span class="lk">${ICO.lock("#fff")}</span>`:""}</div>`+
         `<div class="mouth"><div class="arm"></div><div class="slot list" data-l="${f}:">${G.funcs[f].length?listHTML(G.funcs[f],f+":"):'<div class="ph"></div>'}</div></div><div class="rbot"></div></div>`; }).join("")}</div>`; }
-  function used(){ return countProgram(G.prog,G.funcs)+1; }
+  /* eventos: cada «al apretar» cuenta 1 y cada acción de su pila otro */
+  const evUsed=()=>G.ev?Object.values(G.evs).reduce((a,e)=>a+1+countBlocks(e.body),0):0;
+  function used(){ return countProgram(G.prog,G.funcs)+1+evUsed(); }
   
   /* edición Python: debajo de los bloques, el mismo programa escrito en Python («al tocar» es main) */
   function mirrorHTML(){ if(!PY_ED) return "";
@@ -945,9 +967,13 @@ export function boot(hidden?: Record<string, number[]>) {
   function renderProg(full){
     if(G.py) return renderPy(full);
 
-    const root=G.prog.length?listHTML(G.prog,""):`<div class="rootph">${ICO.drag()}Arrastrá bloques acá</div>`;
+    const root=G.prog.length?listHTML(G.prog,""):`<div class="rootph">${ICO.drag()}${G.ev?"Lo que hace al empezar":"Arrastrá bloques acá"}</div>`;
 
-    $("canvas").innerHTML=`<div class="blk hat"><span>al tocar</span><span class="ic">${ICO.flag("#11986A")}</span></div><div class="list root" data-l="">${root}</div>${fnsHTML()}${mirrorHTML()}<div class="dropline hidden" id="dropline"></div>`;
+    $("canvas").innerHTML=`<div class="blk hat"><span>al tocar</span><span class="ic">${ICO.flag("#11986A")}</span></div><div class="list root" data-l="">${root}</div>${fnsHTML()}${mirrorHTML()}`+
+      (G.ev?Object.keys(G.evs).map(k=>evHTML(k,false)).join(""):"")+`<div class="dropline hidden" id="dropline"></div>`;
+    /* guiado: un evento por tecla, el que ya está puesto se apaga en la paleta. Libre: se apaga al llegar al máximo de eventos del nivel */
+    if(G.ev){ const full=Object.keys(G.evs).length>=(G.map.evmax||4);
+      document.querySelectorAll('#pal [data-new^="ev:"]').forEach(el=>el.classList.toggle("used",G.free?full:!!G.evs[el.dataset.new.slice(3)])); renderKeypad(); }
   
     const n=used(), c=$("count"); c.innerHTML=ICO.blocks()+`${n} / ${G.max}`; c.classList.toggle("full",n>=G.max); c.classList.remove("no");
   
@@ -955,12 +981,14 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(G.map.cls!==2&&G.map.cls!==3) $("goal").innerHTML=starIco(true)+"meta "+G.opt;
   
-    $("runBtn").classList.toggle("ready",G.prog.length>0);
-  
+    $("runBtn").classList.toggle("ready",G.prog.length>0||(G.ev&&Object.keys(G.evs).length>0));
+
     resetClear();
-  
+    /* eventos: ninguno tapa a otro (se corre hacia abajo el que se superpone) */
+    if(G.ev) Object.keys(G.evs).sort((a,b)=>G.evs[a].y-G.evs[b].y).forEach(k=>settleEv(k,false));
+
   }
-  
+
   /* ---------- editor de Python ---------- */
   const PY_LH=22, PY_PAD=10; /* alto de línea y margen de arriba del editor (iguales en game.css) */
   /* full: arma el editor de cero (al entrar al nivel). Si no, solo actualiza el contador (así no se pierde el cursor).
@@ -1046,14 +1074,64 @@ export function boot(hidden?: Record<string, number[]>) {
   const splitA=a=>{ a=String(a); const k=a.indexOf(":"), t=k<0?a:a.slice(k+1); return {f:k<0?null:a.slice(0,k),path:t===""?[]:t.split(".").map(Number)}; }; /* "A:0.1" = función A, bloque 0.1; sin letra = programa */
   const joinA=(f,path)=>f?f+":"+path.join("."):path.join(".");
   const badCall=(b,f)=>f&&(b.t==="call"?!(G.map.adv?b.f<=f:b.f<f):b.body&&b.body.some(x=>badCall(x,f))); /* una función solo llama a otra anterior (B a A); en los niveles avanzados también a sí misma */
-  function getList(f,path){ let l=f?G.funcs[f]:G.prog; for(const i of path) l=l[i].body; return l; }
+  function getList(f,path){ let l=f?(f[0]==="@"?G.evs[f.slice(1)].body:G.funcs[f]):G.prog; /* «@u» = pila del evento de la flecha arriba */ for(const i of path) l=l[i].body; return l; }
   function removeAt(f,addr){ return getList(f,addr.slice(0,-1)).splice(addr[addr.length-1],1)[0]; }
   function insertAt(f,path,i,b){ getList(f,path).splice(i,0,b); }
-  function newBlock(kind){ return kind.startsWith("call:")?{t:"call",f:kind[5]}:kind==="rep"?{t:"repeat",n:2,body:[]}:kind==="if"?{t:"if",c:G.conds[0],body:[]}:kind==="else"?{t:"else",body:[]}:ACTS[kind]?{t:kind}:{t:"move",dir:kind}; }
+  function newBlock(kind){ return kind.startsWith("call:")?{t:"call",f:kind[5]}:kind==="rep"?{t:"repeat",n:2,body:[]}:kind.startsWith("ev:")?{t:"evnew",key:kind.slice(3)}:kind==="if"?{t:"if",c:G.conds[0],body:[]}:kind==="else"?{t:"else",body:[]}:ACTS[kind]?{t:kind}:{t:"move",dir:kind}; }
   
+  /* ---------- eventos: bloques de inicio con posición libre ---------- */
+  /* en un nivel de eventos: la pila de un evento (@u, @d...) tiene hasta EVMAX acciones sueltas (sin anidar); en la raíz («al tocar») solo acciones */
+  function evOk(block,f,path){ if(!G.ev) return true; if(block.t==="evnew") return false;
+    if(f&&f[0]==="@") return getList(f,[]).length<EVMAX&&!path.length;
+    return !f&&!path.length&&["move","paint","dance"].includes(block.t); }
+  const evEl=k=>document.querySelector(`#canvas .evt[data-ev="${k}"]`);
+  /* lo que ocupa lugar en el lienzo (coordenadas del lienzo): «al tocar», su lista y los eventos (menos los de skip) */
+  function evRects(skip=[]){ const cv=$("canvas"), cr=cv.getBoundingClientRect(), out=[];
+    document.querySelectorAll("#canvas .hat, #canvas .list.root, #canvas .evt[data-ev]").forEach(el=>{ if(skip.includes(el.dataset.ev)) return;
+      const r=el.getBoundingClientRect(); out.push({x:r.left-cr.left+cv.scrollLeft,y:r.top-cr.top+cv.scrollTop,w:r.width,h:r.height}); });
+    return out; }
+  const evHit=(a,b)=>a.x<b.x+b.w+8&&a.x+a.w+8>b.x&&a.y<b.y+b.h+8&&a.y+a.h+8>b.y;
+  /* primer lugar libre (de arriba a abajo, de izquierda a derecha) donde entra un bloque de w×h */
+  function freeSpot(w,h,obs){ const maxX=Math.max(22,$("canvas").clientWidth-w-22);
+    for(let y=22;y<3000;y+=24) for(let x=22;x<=maxX;x+=24) if(!obs.some(o=>evHit({x,y,w,h},o))) return {x,y};
+    return {x:22,y:22}; }
+  /* acomoda el evento k: sin lugar propio (free) busca el primer lugar libre; si no, se corre hacia abajo mientras tape a otro bloque */
+  function settleEv(k,free){ const el=evEl(k); if(!el||!G.evs[k]) return; const e=G.evs[k], obs=evRects([k]), w=el.offsetWidth, h=el.offsetHeight;
+    if(free){ const p=freeSpot(w,h,obs); e.x=p.x; e.y=p.y; }
+    else { for(let n=0;n<120&&obs.some(o=>evHit({x:e.x,y:e.y,w,h},o));n++) e.y+=16; e.x=Math.min(e.x,Math.max(0,$("canvas").clientWidth-w-8)); }
+    el.style.left=e.x+"px"; el.style.top=e.y+"px"; }
+  /* pone el evento de la tecla k: en (gx,gy) de pantalla (soltado) o en el primer lugar libre (tocado en la paleta) */
+  function placeEv(key,gx,gy){ const cv=$("canvas"), cr=cv.getBoundingClientRect(); let id=key;
+    if(G.free){ let n=1; while(G.evs["e"+n]) n++; id="e"+n; } /* libre: id nuevo, la tecla se elige después */
+    G.evs[id]={key:G.free?null:key,x:gx==null?0:Math.max(0,Math.round(gx-cr.left+cv.scrollLeft)),y:gx==null?0:Math.max(0,Math.round(gy-cr.top+cv.scrollTop)),body:[]};
+    changed(); settleEv(id,gx==null); SND.snap(); const el=evEl(id); if(el){ el.classList.add("fresh"); const r=el.getBoundingClientRect(); sparkle(r.left+30,r.top+20); bumpEl($("count")); }
+    if(G.free) startCapture(id); }
+  /* selector de tecla (niveles libres): una ventana que escucha la próxima tecla apretada y, para tablet, trae algunas para tocar */
+  const PICK=["u","d","l","r","s","k:w","k:a","k:s","k:d","k:q","k:e","k:z","k:x"];
+  function startCapture(id){ G.capture=id;
+    const d=openModal(`<span class="mico">${ICO.key()}</span><h2>¿Con qué tecla?</h2><p>Apretá una tecla del teclado <b>(letras, números, flechas o espacio)</b> o tocá una de acá.</p>`+
+      `<div class="kpick">${PICK.map(k=>`<button class="kpb${k==="s"?" wide":""}" data-pick="${k}">${keyLabel(k)}</button>`).join("")}</div><div class="mbtns"><button class="mbtn alt" data-later>Cancelar</button></div>`);
+    d.addEventListener("click",e=>{ const b=e.target.closest("[data-pick]"); if(b) setEvKey(id,b.dataset.pick); });
+    d.querySelector("[data-later]").onclick=()=>{ G.capture=null; closeModal(); }; }
+  function setEvKey(id,key){ G.capture=null; closeModal(); if(!G.evs[id]) return; G.evs[id].key=key; SND.add(); changed(); }
+  /* botón «Ordenar»: acomoda todos los eventos en lugares libres, sin taparse */
+  function tidyEvents(){ const ks=Object.keys(G.evs).sort((a,b)=>G.evs[a].y-G.evs[b].y||G.evs[a].x-G.evs[b].x); if(!ks.length) return; const obs=evRects(ks);
+    ks.forEach(k=>{ const el=evEl(k), w=el.offsetWidth, h=el.offsetHeight, p=freeSpot(w,h,obs); G.evs[k].x=p.x; G.evs[k].y=p.y; obs.push({x:p.x,y:p.y,w,h}); el.style.left=p.x+"px"; el.style.top=p.y+"px"; });
+    SND.snap(); }
+  /* mover un evento (arrastrando su cabecera). Soltarlo sobre el tacho o la paleta lo borra con sus acciones; no frena el juego */
+  function startEvDrag(e,el){ const k=el.dataset.ev, cv=$("canvas"), r=el.getBoundingClientRect(), ox=e.clientX-r.left, oy=e.clientY-r.top; let moved=false;
+    const over=ev=>{ const t=document.elementFromPoint(ev.clientX,ev.clientY); return !!(t&&(t.closest("#trash")||t.closest("#pal"))); };
+    const mv=ev=>{ if(!moved){ if(Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)<6) return; moved=true; el.classList.add("moving"); el.style.pointerEvents="none"; SND.pick(); }
+      const cr=cv.getBoundingClientRect(); el.style.left=Math.max(0,ev.clientX-ox-cr.left+cv.scrollLeft)+"px"; el.style.top=Math.max(0,ev.clientY-oy-cr.top+cv.scrollTop)+"px";
+      $("trash").classList.toggle("hot",over(ev)); };
+    const up=ev=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); $("trash").classList.remove("hot");
+      if(!moved) return;
+      if(over(ev)){ delete G.evs[k]; SND.trash(); const [x,y]=center($("trash")); burst(x,y,["#FF5A62","#FF9A2E","#5F7F96"],10,4); return changed(); }
+      G.evs[k].x=parseFloat(el.style.left); G.evs[k].y=parseFloat(el.style.top); renderProg(); SND.snap(); };
+    addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); }
   function tooMany(extra){ if(used()+extra<=G.max) return false;
   
-    say("warn",G.rep?ICO.repeat("#D9780F"):ICO.blocks(),`¡Máximo ${G.max} bloques!`,G.map.cls===3?"Usá una función para ahorrar bloques":G.tools.includes("i")?"Usá repetir y si para ahorrar bloques":G.map.cls===2?"Usá repetir para ahorrar bloques":"El bloque «al tocar» también cuenta");
+    say("warn",G.rep?ICO.repeat("#D9780F"):ICO.blocks(),`¡Máximo ${G.max} bloques!`,G.ev?"Cada «al apretar» y cada acción cuentan un bloque · «al tocar» también cuenta":G.map.cls===3?"Usá una función para ahorrar bloques":G.tools.includes("i")?"Usá repetir y si para ahorrar bloques":G.map.cls===2?"Usá repetir para ahorrar bloques":"El bloque «al tocar» también cuenta");
   
     bumpEl($("count"),"no"); SND.nope(); return true; }
   
@@ -1076,8 +1154,10 @@ export function boot(hidden?: Record<string, number[]>) {
     const el=e.target.closest(".blk"); if(!el||el.classList.contains("hat")||el.closest(".fnbox.lock")||el.closest(".pyblocks")) return; /* los bloques del código son solo para mirar */
   
     const inPal=!!el.closest("#pal"); if(!inPal&&!el.closest("#canvas")) return;
-  
+
     e.preventDefault();
+
+    if(!inPal&&el.dataset.ev) return startEvDrag(e,el); /* la cabecera de un evento lo mueve; sus acciones se arrastran como siempre */
   
     const r=el.getBoundingClientRect();
   
@@ -1115,8 +1195,8 @@ export function boot(hidden?: Record<string, number[]>) {
   
     $("trash").classList.toggle("hot",D.zone==="del"); $("pal").classList.toggle("drop",D.zone==="del"&&!D.inPal);
   
-    D.pt=D.zone==="drop"?nearestPoint(gx,gy):null; showDropline(D.pt);
-  
+    D.gx=gx; D.gy=gy; D.pt=D.zone==="drop"&&D.block.t!=="evnew"?nearestPoint(gx,gy):null; showDropline(D.pt); /* un evento nuevo se suelta donde sea: no tiene punto de enganche */
+
   }
   
   function onUp(){
@@ -1125,13 +1205,23 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const d=D; D=null; if(!d) return;
   
-    if(!d.started){ if(d.inPal&&!tooMany(1)){ G.prog.push(newBlock(d.kind)); SND.snap(); changed(); freshAt(G.prog.length-1); } return; }
-  
+    if(!d.started){
+      if(d.inPal&&G.ev){
+        /* eventos: tocar un «al apretar» lo pone en el primer lugar libre; tocar una acción la pone en el primer evento que tenga lugar */
+        if(d.kind.startsWith("ev:")){ if(tooMany(1)) return; return placeEv(d.kind[3]); }
+        const k=Object.keys(G.evs).find(x=>G.evs[x].body.length<EVMAX);
+        if(!k){ SND.nope(); return say("warn",ICO.key(),Object.keys(G.evs).length?"Todos los eventos están llenos":"Primero un «al apretar»",Object.keys(G.evs).length?`Cada evento lleva hasta ${EVMAX} acciones`:"Arrastrá un evento al programa y poné las acciones adentro"); }
+        if(tooMany(1)) return; G.evs[k].body.push(newBlock(d.kind)); SND.snap(); changed(); freshAt("@"+k+":"+(G.evs[k].body.length-1)); return; }
+      if(d.inPal&&!tooMany(1)){ G.prog.push(newBlock(d.kind)); SND.snap(); changed(); freshAt(G.prog.length-1); } return; }
+
     d.ghost.remove(); document.body.classList.remove("dragging"); $("trash").classList.remove("hot"); $("pal").classList.remove("drop");
-  
+
+    if(d.block.t==="evnew"){ if(d.zone==="drop") placeEv(d.block.key,d.gx,d.gy); return; }
+
     let at=null;
-  
-    if(d.zone==="drop"&&d.pt&&!badCall(d.block,d.pt.f)){ insertAt(d.pt.f,d.pt.path,d.pt.i,d.block); at=joinA(d.pt.f,d.pt.path.concat(d.pt.i)); SND.snap(); }
+
+    if(d.zone==="drop"&&d.pt&&!evOk(d.block,d.pt.f,d.pt.path)){ SND.nope(); say("warn",ICO.key(),"Ahí no entra",`Cada evento lleva hasta ${EVMAX} acciones`); if(!d.inPal) insertAt(d.from.f,d.from.path,d.from.i,d.block); }
+    else if(d.zone==="drop"&&d.pt&&!badCall(d.block,d.pt.f)){ insertAt(d.pt.f,d.pt.path,d.pt.i,d.block); at=joinA(d.pt.f,d.pt.path.concat(d.pt.i)); SND.snap(); }
     else if(d.zone==="drop"&&d.pt){ SND.nope(); say("warn",ICO.blocks(),"Ahí no se puede llamar a esa función",G.map.adv?"Una función puede llamarse a sí misma o llamar a las anteriores":"Una función solo llama a las anteriores"); if(!d.inPal) insertAt(d.from.f,d.from.path,d.from.i,d.block); }
   
     else if(d.zone==="del"){ if(!d.inPal){ SND.trash(); const [x,y]=center($("trash")); burst(x,y,["#FF5A62","#FF9A2E","#5F7F96"],10,4); } }
@@ -1171,7 +1261,12 @@ export function boot(hidden?: Record<string, number[]>) {
   
   
   $("canvas").addEventListener("click",e=>{
-  
+
+
+    /* eventos libres: tocar la tecla del bloque abre el selector */
+    const ksel=e.target.closest("[data-ksel]");
+    if(ksel&&!G.busy) return startCapture(ksel.closest(".evt").dataset.ev);
+
     const cs=e.target.closest("[data-col]");
   
     if(cs&&!G.busy){ const s=splitA(cs.closest(".iff").dataset.a), a=s.path, blk=getList(s.f,a.slice(0,-1))[a[a.length-1]];
@@ -1200,11 +1295,11 @@ export function boot(hidden?: Record<string, number[]>) {
     if(G.py){ const start=G.map.pre??PY_START; if(G.busy||G.code===start) return; const b=$("clearBtn");
       if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro?"; clearT=setTimeout(resetClear,3000); return; }
       G.code=start; delete PYCODE[G.map.id]; SND.trash(); changed(); renderProg(true); return say("",ICO.code("#3776AB"),"Código inicial","Escribí tu programa y tocá Ir"); }
-    if(G.busy||(!G.prog.length&&!G.fids.some(f=>!G.lock.includes(f)&&G.funcs[f].length))) return; const b=$("clearBtn");
-  
+    if(G.busy||(!G.prog.length&&!Object.keys(G.evs).length&&!G.fids.some(f=>!G.lock.includes(f)&&G.funcs[f].length))) return; const b=$("clearBtn");
+
     if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro?"; clearT=setTimeout(resetClear,3000); return; }
-  
-    G.prog.length=0; G.fids.forEach(f=>{ if(!G.lock.includes(f)) G.funcs[f].length=0; }); SND.trash(); changed(); say("",ICO.drag(),"Programa vacío","Arrastrá bloques para empezar"); };
+
+    Object.keys(G.evs).forEach(k=>delete G.evs[k]); G.prog.length=0; G.fids.forEach(f=>{ if(!G.lock.includes(f)) G.funcs[f].length=0; }); SND.trash(); changed(); say("",ICO.drag(),"Programa vacío","Arrastrá bloques para empezar"); };
   
   
   
@@ -1230,8 +1325,63 @@ export function boot(hidden?: Record<string, number[]>) {
   
   
   
+  /* ---------- eventos: tras Ir, GENI espera y cada tecla hace la pila de acciones de sus eventos ---------- */
+  const keypadState=()=>{ const el=$("keypad"); if(el) el.classList.toggle("off",!G.listen); };
+  /* teclas que hay en juego: las del nivel (guiado) o las que el alumno eligió en sus eventos (libre) */
+  const evKeys=()=>G.free?[...new Set(Object.values(G.evs).map(e=>e.key).filter(Boolean))]:G.keys;
+  /* botones de tecla en pantalla (para tablet o sin teclado), debajo del tablero, y el botón «Ordenar» de los eventos */
+  function renderKeypad(){ let el=$("keypad"), tb=$("tidyBtn");
+    if(!G.ev){ if(el) el.remove(); if(tb) tb.remove(); return; }
+    if(!el){ el=document.createElement("div"); el.id="keypad"; $("status").before(el); }
+    el.innerHTML=evKeys().map(k=>`<button class="kpb${k==="s"?" wide":""}" data-k="${k}" aria-label="${KEYNAME[k]||"tecla "+keyLabel(k)}">${keyLabel(k)}</button>`).join(""); keypadState();
+    if(!tb){ tb=document.createElement("button"); tb.className="clear"; tb.id="tidyBtn"; tb.title="Acomodar los eventos para que no se tapen"; tb.innerHTML=ICO.blocks()+"Ordenar"; $("clearBtn").before(tb); } }
+  /* una acción de GENI (mover, pintar o bailar) con su animación */
+  async function doAct(a){
+    if(a.t==="move"){ const r=tryMove(G.wm,G.S,a.dir); await animate(r,a.dir); return r; }
+    const r=tryAct(G.wm,G.S,ACTS[a.t]); await animateAct(r,a.t); return r; }
+  /* qué pasó con una acción en modo evento. Devuelve true si hay que cortar (ganó, explotó, o se tocó el programa mientras corría).
+     Chocar o equivocarse no termina: GENI sigue esperando teclas (se marca el bloque y se avisa). Pasarse del tope de acciones (map.maxAct o MAXACT)
+     lo hace explotar, como en los demás niveles */
+  function evAfter(r,id,last){ if(id!==G.run||!G.listen) return true; G.pn++;
+    if(r.k==="win"){ G.listen=false; keypadState(); finish({k:"win",S:G.S,acts:G.pn,rec:false},last); return true; }
+    if(G.pn>(G.map.maxAct||MAXACT)){ G.listen=false; keypadState(); explode(); return true; }
+    if(r.k==="crash"||r.k==="bad") finish0(r,last);
+    else if(G.wm.rows[G.S.r][G.S.c]==="E") finish0({k:"end"},last); /* llegó a la estrella pero falta algo */
+    return false; }
+  /* Ir: arranca «al tocar» (si tiene acciones) y después GENI espera las teclas. Las teclas apretadas mientras tanto hacen fila */
+  function listenStart(){
+    const evs=Object.values(G.evs);
+    if(!evs.some(e=>e.body.length)) return say("warn",ICO.key(),"Armá un evento","Arrastrá «al apretar» al programa y poné acciones adentro");
+    if(G.free&&evs.some(e=>!e.key)) return say("warn",ICO.key(),"Elegí la tecla de cada evento","Tocá «Tecla ?» en el bloque amarillo");
+    const id=++G.run; resetRobot(); G.listen=true; G.pn=0; keypadState();
+    say("",ICO.key(),"¡Ahora apretá las teclas!","Usá el teclado o los botones de abajo · Inicio para volver a empezar");
+    G.kq=(async()=>{ for(let i=0;i<G.prog.length;i++){ if(id!==G.run||!G.listen) return; light(String(i)); const r=await doAct(G.prog[i]); if(evAfter(r,id,String(i))||r.k!=="ok") return; } })().catch(()=>{}); }
+  function keyPress(k){ if(!G||!G.ev) return;
+    if(!G.listen){ SND.nope(); return say("warn",ICO.robot(),"Tocá Ir primero","Después apretá las teclas para mover a GENI"); }
+    const id=G.run; G.kq=G.kq.then(()=>press(k,id)).catch(()=>{}); }
+  /* la tecla k hace TODA la pila de cada evento que la tenga (de arriba hacia abajo), en orden; una pila se corta si choca o se equivoca */
+  async function press(k,id){ if(!G||!G.listen||id!==G.run) return;
+    document.querySelectorAll("#canvas .err").forEach(x=>x.classList.remove("err"));
+    const kb=document.querySelector(`#keypad [data-k="${k}"]`); if(kb){ kb.classList.add("hit"); setTimeout(()=>kb.classList.remove("hit"),220); }
+    const ids=Object.keys(G.evs).filter(i=>G.evs[i].key===k&&G.evs[i].body.length).sort((a,b)=>G.evs[a].y-G.evs[b].y||G.evs[a].x-G.evs[b].x);
+    if(!ids.length){ SND.nope(); const [x,y]=center($("bot")); floatText(x,y-24,"¿Qué hago?","#8B5CF6");
+      return say("warn",ICO.key(),"Esa tecla no tiene evento",`Arrastrá «al apretar ${keyLabel(k)}» al programa y poné una acción adentro`); }
+    for(const eid of ids){ const e=G.evs[eid], ev=evEl(eid);
+      for(let i=0;i<e.body.length;i++){ if(id!==G.run||!G.listen) return;
+        document.querySelectorAll("#canvas .on").forEach(x=>x.classList.remove("on")); if(ev) ev.classList.add("on");
+        const ae=document.querySelector(`#canvas .blk[data-a="@${eid}:${i}"]`); if(ae) ae.classList.add("on");
+        const r=await doAct(e.body[i]); if(evAfter(r,id,"@"+eid+":"+i)) return; if(r.k!=="ok") break; } } }
+  addEventListener("keydown",e=>{ if(!G||SCREEN!=="game"||!G.ev||e.ctrlKey||e.metaKey||e.altKey) return;
+    /* selector de tecla abierto: la próxima tecla permitida queda asignada (Esc cancela; si se cerró la ventana, se olvida) */
+    if(G.capture){ if(!$("modal")){ G.capture=null; } else { if(e.key==="Escape"){ G.capture=null; return; } const c=evKeyOf(e); e.preventDefault(); if(c) setEvKey(G.capture,c); return; } }
+    const t=e.target; if(t&&t.closest&&t.closest("input,textarea,[contenteditable]")) return;
+    const k=evKeyOf(e); if(!k||!evKeys().includes(k)) return; e.preventDefault(); if(!e.repeat) keyPress(k); }); /* preventDefault: las flechas y el espacio no mueven la página */
+  document.addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest("#keypad .kpb"); if(b) return keyPress(b.dataset.k);
+    if(G&&G.ev&&e.target.closest&&e.target.closest("#tidyBtn")) tidyEvents(); });
   async function run(step){
-  
+
+    if(G.ev&&!G.busy) return listenStart();
+
     if(G.ctx&&G.ctx.waiting){ if(!step) G.ctx.stepMode=false; releaseWait(); return; }
   
     if(G.busy) return;
@@ -1388,7 +1538,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
       /* Python: estrellas por lo que pide el nivel (req) y la meta de líneas */
       const miss=G.py?pyMissing(G.pyAst,G.map.req):null;
-      const count=G.py?pyLines(G.code):used(), usedRep=G.map.cls===3?hasCall(G.prog):hasRepeat(G.prog), k=G.py?starsPy(G.map,{lines:count,req:!miss}):G.map.adv?starsAdv(G.map,{count,rep:hasRepeatAll(G.prog,G.funcs),acts:res.acts,opt:G.pathLen}):starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);
+      const count=G.py?pyLines(G.code):used(), usedRep=G.map.cls===3?hasCall(G.prog):hasRepeat(G.prog), k=G.py?starsPy(G.map,{lines:count,req:!miss}):G.map.ev?starsAdv(G.map,{count,rep:false,acts:res.acts,opt:G.pathLen}):G.map.adv?starsAdv(G.map,{count,rep:hasRepeatAll(G.prog,G.funcs),acts:res.acts,opt:G.pathLen}):starsFor(G.map,count,usedRep,G.opt,G.hint,G.S.wrong);
   
       let gained=0, opened=[];
       const map=G.map, part=map.id!=="custom"&&map.part, wasDone=part&&partDone(SAVE.stars,part), lockedSec=lockedSecrets();
@@ -1397,6 +1547,7 @@ export function boot(hidden?: Record<string, number[]>) {
           opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g.title); } }
       let sub;
       if(G.py) sub=miss?`${ICO.code("#3776AB")} ${PY_REQ_TIP[miss]} para ganar 3 estrellas`:G.map.goal!=null&&count>G.map.goal?`${ICO.code("#3776AB")} Se puede con <b>${G.map.goal}</b> líneas`:"¡Código perfecto!";
+      else if(G.map.ev){ const m=G.map; sub=count>m.goal?`${ICO.blocks()} Se puede con <b>${m.goal}</b> bloques`:res.acts>G.pathLen?"Se puede con menos pasos":"¡Eventos perfectos!"; }
       else if(G.map.adv){ const m=G.map; sub=count>m.goal?`${ICO.blocks()} Se puede con <b>${m.goal}</b> bloques`:m.rep&&!hasRepeatAll(G.prog,G.funcs)?`${ICO.repeat("#D9780F")} Probá usar repetir para ganar 3 estrellas`:res.acts>G.pathLen?"Se puede con menos pasos":"¡Recursión perfecta!"; }
       else if(G.map.cls===3&&!usedRep) sub=`${ICO.blocks()} ¿Probás con una función?`;
       else if(G.map.cls===2&&!usedRep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
@@ -1463,7 +1614,7 @@ export function boot(hidden?: Record<string, number[]>) {
       floatText(x,y-34,"¡BOOM!","#FF5A62"); const g=$("gBoard"); g.classList.remove("kaboom"); void g.offsetWidth; g.classList.add("kaboom");
       const c=cellEl(G.S.r,G.S.c); if(c) c.classList.add("scorch"); },1900*k);
     setTimeout(()=>{ if(!alive()) return; setBusy(false); $("gBoard").classList.remove("kaboom");
-      say("err",ICO.burst(),"¡GENI explotó!",G.map.adv?"Tu función no termina nunca: ¿llega a la estrella?":`Hizo más de ${G.map.maxAct||MAXACT} movimientos. Revisá tu programa: ¿repite de más o da vueltas?`); },2750*k); }
+      say("err",ICO.burst(),"¡GENI explotó!",G.ev?`Hizo más de ${G.map.maxAct||MAXACT} movimientos con tus teclas. Tocá Ir y probá un camino más corto`:G.map.adv?"Tu función no termina nunca: ¿llega a la estrella?":`Hizo más de ${G.map.maxAct||MAXACT} movimientos. Revisá tu programa: ¿repite de más o da vueltas?`); },2750*k); }
   function celebrate(gained){
   
     SND.win(); confetti(); $("gBoard").classList.add("win");

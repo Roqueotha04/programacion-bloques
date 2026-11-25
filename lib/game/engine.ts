@@ -199,6 +199,23 @@ export function simulate(map,prog,funcs=null){ let S=startState(map), n=0, acts=
 export function maxRun(list){ const s=[...walk(list,()=>false)].filter(e=>e.t!=="loop"&&e.t!=="if"&&e.t!=="else"&&e.t!=="call").map(e=>e.t==="move"?e.dir:ACTS[e.t]).join(""); return s?Math.max(...s.match(/(.)*/g).map(x=>x.length)):0; }
 /* el mismo programa sin los si (todo lo de adentro siempre): en los niveles de Si tiene que fallar */
 export function stripIf(list){ return list.flatMap(b=>b.t==="if"||b.t==="else"?stripIf(b.body):b.body?[{...b,body:stripIf(b.body)}]:[b]); }
+/* ===== Eventos (inicio) ===== */
+/* map.ev (experimental): los bloques de evento son bloques de inicio, igual de importantes que «al tocar»: «al apretar [tecla]» con su propia
+   pila de acciones (hasta EVMAX). Se ponen donde se quiera en el espacio de trabajo, uno por tecla. No corren solos: tras Ir el alumno aprieta
+   teclas (u d l r flechas, s espacio) y cada una hace TODA la pila de su evento, en orden. map.keys: teclas que ofrece el nivel.
+   sol de un nivel: «r:r u:ur s:p» = tecla:acciones (una letra por acción: u d l r p b); play: teclas que ganan con esa sol (una letra por tecla) */
+export const EVMAX=3;
+export function parseEv(s){ return s.trim().split(/\s+/).filter(Boolean).map(x=>{ const [key,as]=x.split(":");
+  return {t:"on",key,body:[...as].map(a=>{ const act=Object.keys(ACTS).find(k=>ACTS[k]===a); return act?{t:act}:{t:"move",dir:a}; })}; }); }
+/* acciones que hace una tecla (todos los eventos con esa tecla, en orden) */
+export function evBody(prog,key){ return prog.filter(b=>b.t==="on"&&b.key===key).flatMap(b=>b.body); }
+/* aprieta las teclas en orden: gana al llegar a la estrella con todo hecho. Chocar o pintar mal no mueve al robot (como en pantalla).
+   acts = acciones hechas (cada una cuenta aunque choque) */
+export function simulateKeys(map,prog,keys){ let S=startState(map), acts=0;
+  for(const key of keys) for(const a of evBody(prog,key)){ const res=a.t==="move"?tryMove(map,S,a.dir):tryAct(map,S,ACTS[a.t]); acts++;
+    if(res.k==="win") return {...res,acts}; if(res.k==="ok") S=res.S; }
+  return {k:"end",S,acts}; }
+/* ===== Eventos (fin) ===== */
 /* ===== Mundos (inicio) ===== */
 /* un mapa puede traer worlds:[rows0,rows1,...] (rows = worlds[0]) y pool (más mundos de los que se muestran, show por intento) */
 export function worldsOf(map){ return map.pool||map.worlds||[map.rows]; }
@@ -224,7 +241,18 @@ function worldsCheck(m){ const ws=worldsOf(m), a=ws[0], info=[]; let ok=ws.lengt
   return {ok,info:ws.length+" mundos"+(info.length?" ✖ "+info.join(","):"")}; }
 /* ===== Mundos (fin) ===== */
 export function selfTest(){
-  const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>m.py?pyCheck(m):blockCheck(m));
+  const res=[...MISSIONS,...CHALLENGES.flatMap(c=>c.levels)].map(m=>m.ev?evCheck(m):m.py?pyCheck(m):blockCheck(m));
+  /* Eventos: la sol (tecla:acciones) gana apretando las teclas de `play` sin desperdiciar acciones (tantas como el camino más corto), cabe en el
+     máximo, es justo la meta de bloques (3 estrellas: «al tocar» + cada evento + cada acción), usa solo las teclas del nivel (una vez cada una),
+     hasta EVMAX acciones por evento, y `play` solo aprieta teclas que tienen evento */
+  function evCheck(m){ const sol=parseEv(m.sol), path=shortest(m,startState(m)), cnt=countBlocks(sol)+1, kk=sol.map(b=>b.key);
+    /* sin play: una tecla por cada acción del camino más corto (solo si cada acción tiene su evento de una sola acción) */
+    const play=m.play!=null?[...m.play]:path?path.map(([,,a])=>{ const x=sol.find(b=>b.body.length===1&&(b.body[0].t==="move"?b.body[0].dir===a:ACTS[b.body[0].t]===a)); return x&&x.key; }):[];
+    const okKeys=kk.every(k=>m.free||m.keys.includes(k))&&new Set(kk).size===kk.length&&sol.every(b=>b.body.length>=1&&b.body.length<=EVMAX)&&(!m.free||sol.length<=(m.evmax||4))&&play.every(k=>k&&kk.includes(k));
+    const sim=okKeys?simulateKeys(m,sol,play):{k:"-"};
+    const best=sim.k==="win"&&!!path&&starsAdv(m,{count:cnt,rep:false,acts:sim.acts,opt:path.length})===3;
+    const ok=hasE(m)&&!!path&&sim.k==="win"&&sim.acts===path.length&&sim.acts<=(m.maxAct||MAXACT)&&cnt===m.goal&&cnt<=m.max&&best&&okKeys&&m.tools.includes("k");
+    return {id:m.id,title:m.title,ok,info:`sim:${sim.k} acciones:${sim.acts??"-"} bfs:${path?path.length:"-"} bloques:${cnt}/${m.max} meta:${m.goal}${okKeys?"":" ✖ teclas/acciones"}`}; }
   function blockCheck(m){ const {prog:sol,funcs:fn}=parseSolF(m.sol), sim=m.worlds?simulateAll(m,sol,undefined,fn):simulate(m,sol,fn), path=shortest(m,startState(m)), cnt=countProgram(sol,fn)+1, used=m.cls===3?hasCall(sol):hasRepeat(sol);
     const opt=optFor(m,path), lim=limitFor(m,opt), run=maxRun(sol), cond=m.tools.includes("i");
     /* todos los niveles terminan en la estrella: se gana al llegar con todo hecho */
