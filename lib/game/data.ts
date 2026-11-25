@@ -214,7 +214,7 @@ GROUPS.push(
  {id:"EW",part:8,cls:2,tools:"kp",strict:true,title:"Pilas y colores",sub:"una tecla puede hacer varias cosas",need:6,c:"#EC4899",l:"#FCE0EF"});
 MISSIONS.push(...[
  {id:"ev1",grp:"EV",title:"Una tecla",goal:3,max:5,keys:"r",rows:["#######","R.....E","#######"],sol:"r:r",play:"rrrrrr",
-  tip:["Al apretar una tecla, GENI actúa","Arrastrá «al apretar» al programa y poné una acción adentro · Tocá Ir y apretá la flecha"]},
+  tip:["Al apretar una tecla, GENI actúa","Poné «escuchar eventos» debajo de «al tocar» y un «al apretar» con una acción adentro · Tocá Ir y apretá la flecha"]},
  {id:"ev2",grp:"EV",title:"Dos teclas",goal:5,max:7,keys:"rd",rows:["R.##","#..#","##.E"],sol:"r:r d:d",play:"rdrdr",
   tip:["Una tecla para cada acción","Armá dos eventos: uno para ir a la derecha y otro para bajar"]},
  {id:"ev3",grp:"EV",title:"Mapa libre",goal:9,max:11,keys:"udlr",rows:["..#..","B.R.E","...#.","..B.."],sol:"l:l d:d r:r u:u",play:"lldd" + "rr" + "rruu",
@@ -233,7 +233,7 @@ GROUPS.push(
  {id:"EM",part:9,cls:2,tools:"kp",strict:true,title:"Mapas grandes",sub:"pilas largas y pocos eventos",need:6,c:"#6366F1",l:"#E0E1FF"});
 MISSIONS.push(...[
  {id:"evl1",grp:"EL",title:"Tu primera tecla",goal:3,max:5,evmax:1,maxAct:20,rows:["#######","R.....E","#######"],sol:"r:r",
-  tip:["Elegí vos la tecla","Arrastrá «al apretar», tocá «Tecla ?» y apretá la que quieras · Poné una acción adentro"]},
+  tip:["Elegí vos la tecla","Poné «escuchar eventos», un «al apretar» y tocá su «?» para elegir la tecla · Poné una acción adentro"]},
  {id:"evl2",grp:"EL",title:"Tus controles",goal:7,max:9,evmax:3,maxAct:30,rows:["R....","####B","####.","E...."],sol:"r:r d:d l:l",
   tip:["Tres eventos, tres teclas","Elegí una tecla para cada dirección · Juntá la batería y llegá a la estrella"]},
  {id:"evl3",grp:"EL",title:"Una tecla, la escalera",goal:4,max:6,evmax:2,maxAct:24,rows:["R.###","#..##","##..#","###..","####E"],sol:"r:rd",play:"rrrr",
@@ -242,6 +242,26 @@ MISSIONS.push(...[
   tip:["Cinco teclas a tu gusto","Movete, y usá una tecla para pintar las rojas · Después, a la estrella"]},
  {id:"evl5",grp:"EM",title:"El gran recorrido",goal:9,max:11,evmax:2,maxAct:40,rows:["######E","######.","######.","###....","###B###","###.###","R.B.###"],sol:"r:rrr u:uuu",play:"ruru",
   tip:["Pilas de tres acciones","Solo tenés dos eventos: ¡que cada uno haga tres pasos!"]}
+].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,ev:true,free:true}); }));
+/* PARTE 10 (Mundo 3, experimental): llaves y portales con eventos libres. Puzzles en mapas grandes: la llave («k» dorada, «j» rosa, «c» celeste) se agarra
+   sola al pasar y abre la puerta de su color («K», «J», «C»); el portal («O» azul, «U» naranja) lleva al otro del mismo color. Los mapas lo necesitan:
+   sin las llaves no se llega a la estrella. La mecánica es la de siempre (engine: tryMove, shortest). Mismas reglas de eventos que la parte 9 (free,
+   evmax, goal = «al tocar» + eventos + acciones, max = goal + 2). maxAct alto: los caminos son largos (hasta ~40 acciones) */
+PARTS.push({id:10,world:3,title:"Llaves y portales",sub:"puzzles: llaves, puertas y portales",c:"#06B6D4",l:"#CFF6FC",after:[9],icon:"key"});
+GROUPS.push(
+ {id:"LP",part:10,cls:2,tools:"kp",strict:true,title:"Llaves y portales",sub:"una llave, una puerta, un portal",need:0,c:"#06B6D4",l:"#CFF6FC"},
+ {id:"LQ",part:10,cls:2,tools:"kp",strict:true,title:"Puzzles grandes",sub:"mapas grandes: pensá el camino antes de apretar",need:6,c:"#F5B800",l:"#FFF3C4"});
+MISSIONS.push(...[
+ {id:"lq1",grp:"LP",title:"La llave del otro lado",goal:9,max:11,evmax:4,maxAct:45,rows:["R..#..k",".#.#.##",".O.#.O.",".#.####","...K..E"],sol:"u:u d:d l:l r:r",
+  tip:["Portal, llave y puerta","El portal te lleva a la llave y la puerta te cierra el camino a la estrella · No te olvides de «escuchar eventos»"]},
+ {id:"lq2",grp:"LP",title:"Dos puertas",goal:9,max:11,evmax:4,maxAct:50,rows:["...#E..","##.###.","R#.....",".#####.","...#..J","B#.#.##","k#K...j"],sol:"u:u d:d l:l r:r",
+  tip:["Llaves de colores","Cada llave abre la puerta de su color · Juntá la batería y llegá a la estrella"]},
+ {id:"lq3",grp:"LP",title:"El camino cortado",goal:9,max:11,evmax:4,maxAct:50,rows:[".#k......",".###.###K",".OB#R#...","##.#####.","E#.#...#.",".#.#.###.",".....#O.."],sol:"u:u d:d l:l r:r",
+  tip:["Un camino cortado","Hace falta un portal para cruzar: pensá dónde vas a salir"]},
+ {id:"lq4",grp:"LQ",title:"Pintar, llaves y portal",goal:11,max:13,evmax:5,maxAct:60,rows:["...#E......","##.###.###.","k#X...O#.#.","j#X#.###.#.",".#...#...#.",".#####.###.","...#.....#.",".#.#.###.#.","R#..KBO#J#."],sol:"u:u d:d l:l r:r s:p",
+  tip:["Todo junto","Pintá las rojas, juntá las llaves y la batería, y cruzá el portal · Cinco teclas a tu gusto"]},
+ {id:"lq5",grp:"LQ",title:"El gran puzzle",goal:9,max:11,evmax:4,maxAct:70,rows:["E..........","##.#.#####.","R#.#O......",".#.#######.",".#.......#.",".#######C#.",".....Bc#...",".#######.#.",".K.#J..#.#.","j#.#.#.###.","k#...#.BO.."],sol:"u:u d:d l:l r:r",
+  tip:["Tres llaves, un portal y dos baterías","Un mapa grande: mirá todo antes de apretar la primera tecla"]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,ev:true,free:true}); }));
 /* ===== Eventos (fin) ===== */
 /* orden: por número de parte (Secuencia, Pintar, Bailar, Repetir, Funciones, Mundos, Si); el sort es estable */
