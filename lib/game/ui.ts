@@ -7,7 +7,7 @@ import {
   ACTS, DIRS, MAXSTEPS, MAXACT, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
   fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, hasRepeatAll, limitFor, maxStars, optFor, starsAdv, starsPy,
   chOf, gateTxt, partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
-  tryAct, tryMove, walk,
+  tryAct, tryMove, walk, DOORS,
 } from "./engine";
 import { parsePy, pyWalk, pyLines, pyMissing, PY_REQ_TIP, blocksToPy, pyHTML, pyExprText, pyCondText } from "./python";
 import { freshSave, isKids, isProfe, isPython, saveKey } from "./save";
@@ -84,11 +84,12 @@ export function boot(hidden?: Record<string, number[]>) {
   const skinOwned=s=>SAVE.owned.includes(s.id)||(!!s.secret&&secretOk(s));
   const lockedSecrets=()=>SKINS.filter(s=>s.secret&&!skinOwned(s));
   const secretMsgs=before=>before.filter(skinOwned).map(s=>`<div class="unl">${ICO.unlock()} ¡Ganaste un robot secreto: ${s.name}! Buscalo en el taller</div>`).join("");
+  const EXPR=["wow","sorpresa","triste"];
   const FACES=[{id:"normal",name:"Normal",price:0},{id:"guino",name:"Guiño",price:8},{id:"enojado",name:"Enojado",price:12},{id:"cool",name:"Cool",price:16}];
   function robotSVG(o){
     o=Object.assign({skin:SAVE.skin,color:SAVE.color,body:SAVE.body,face:SAVE.face},o||{});
     let [m,l]=ACCENTS[o.color]||ACCENTS.marino, b=(BODIES[o.body]||BODIES.gris)[0], k="#0D3049";
-    const s=o.skin, f=FACES.some(x=>x.id===o.face)?o.face:"normal";
+    const s=o.skin, f=FACES.some(x=>x.id===o.face)||EXPR.includes(o.face)?o.face:"normal";
     if(s==="mega"){ m="#0B0F1A"; l="#22D3FF"; b="#151A27"; k="#22D3FF"; } /* 67 BOT: negro con azul neón, sin importar los colores elegidos */
     if(s==="dios"){ m="#F1F4F9"; l="#FFD34D"; b="#FFFFFF"; k="#B8901A"; } /* DIOS BOT: blanco y dorado */
     const sw=`stroke="${k}" stroke-width="2.5" stroke-linejoin="round"`;
@@ -98,6 +99,10 @@ export function boot(hidden?: Record<string, number[]>) {
     if(f==="guino") pupils=eye(-13,-16,8,12)+`<rect x="4" y="-11" width="10" height="3.2" rx="1.6" fill="#57E1FF"/>`;
     if(f==="cool") pupils=`<rect x="-13" y="-12" width="8" height="5" rx="2.5" fill="#57E1FF"/>`+`<rect x="5" y="-12" width="8" height="5" rx="2.5" fill="#57E1FF"/>`, mouth=`<path d="M-4 12 Q2 16 8 11" stroke="${m}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
     if(f==="enojado") pupils=`<path d="M-15 -21 L-4 -17" stroke="#57E1FF" stroke-width="2.3" fill="none" stroke-linecap="round"/>`+eye(-13,-15,8,11)+`<path d="M15 -21 L4 -17" stroke="#57E1FF" stroke-width="2.3" fill="none" stroke-linecap="round"/>`+eye(5,-15,8,11), mouth=`<path d="M-6 14 Q0 10 6 14" stroke="${m}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    /* caras de un momento (portales y llaves): wow = ojos de estrella, sorpresa = ojos redondos y boca en O, triste */
+    if(f==="wow") pupils=[-9,9].map(x=>`<polygon points="${starPts(7.5,x,-10)}" fill="#FFC21A" stroke="#FFF3C4" stroke-width="1"/>`).join(""), mouth=`<path d="M-9 8 Q0 20 9 8Z" fill="${m}" stroke="${m}" stroke-width="2" stroke-linejoin="round"/><path d="M-4 13 Q0 16 4 13" fill="#FF8FB3"/>`;
+    if(f==="sorpresa") pupils=`<circle cx="-9" cy="-10" r="6.5" fill="#57E1FF"/><circle cx="9" cy="-10" r="6.5" fill="#57E1FF"/><circle cx="-7" cy="-12" r="2" fill="#fff"/><circle cx="11" cy="-12" r="2" fill="#fff"/>`, mouth=`<ellipse cx="0" cy="12" rx="4.5" ry="5.5" fill="${m}"/>`;
+    if(f==="triste") pupils=`<path d="M-15 -19 L-5 -15 M15 -19 L5 -15" stroke="#57E1FF" stroke-width="2.3" stroke-linecap="round"/>`+eye(-13,-12,8,8)+eye(5,-12,8,8)+`<circle cx="-15" cy="-1" r="2.4" fill="#57E1FF" opacity=".9"/>`, mouth=`<path d="M-6 15 Q0 9 6 15" stroke="${m}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
     let back="", front="";
     const antenna=`<line x1="0" y1="-31" x2="0" y2="-40" stroke="${k}" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="-43" r="5" fill="${l}" ${sw}/>`;
   
@@ -185,6 +190,21 @@ export function boot(hidden?: Record<string, number[]>) {
   
    <rect x="35" y="26" width="30" height="15" rx="4" fill="#1EC48C"/><rect x="35" y="45" width="30" height="15" rx="4" fill="#1EC48C"/><rect x="35" y="64" width="30" height="16" rx="4" fill="#1EC48C"/></svg>`; }
   
+  /* ===== Portales y llaves: dibujos ===== */
+  const PCOL={O:["#2FB0F0","#BDE8FF","#14325C"],U:["#FF9A2E","#FFE2C2","#8A3D00"]}, KCOL={k:["#FFC21A","#FFE27A","Dorada"],j:["#FF6FB5","#FFD0E6","Rosa"],c:["#38BDF8","#BAE6FD","Celeste"]};
+  function portalSVG(ch){ const [c,l,d]=PCOL[ch];
+    return `<svg class="portal" viewBox="0 0 100 100"><defs><radialGradient id="pg-${ch}"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${l}"/><stop offset=".8" stop-color="${c}"/><stop offset="1" stop-color="${d}"/></radialGradient></defs>
+     <circle class="ring" cx="50" cy="50" r="44" fill="none" stroke="${c}" stroke-width="4" stroke-dasharray="10 8" opacity=".8"/>
+     <circle cx="50" cy="50" r="36" fill="url(#pg-${ch})" stroke="${d}" stroke-width="3"/>
+     <g class="swirl">${[0,120,240].map(a=>`<path d="M50 50 C50 30 70 26 78 40" transform="rotate(${a} 50 50)" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".85"/>`).join("")}</g>
+     <circle class="core" cx="50" cy="50" r="8" fill="#fff"/></svg>`; }
+  function keySVG(ch,cls="key"){ const [c,l]=KCOL[ch];
+    return `<svg class="${cls}" viewBox="0 0 100 100"><circle cx="32" cy="50" r="19" fill="${c}" stroke="#0D3049" stroke-width="4.5"/><circle cx="32" cy="50" r="7" fill="#fff" stroke="#0D3049" stroke-width="3.5"/>
+     <path d="M50 43 H86 V57 H80 V68 H71 V57 H64 V65 H56 V57 H50Z" fill="${c}" stroke="#0D3049" stroke-width="4.5" stroke-linejoin="round"/><path d="M22 40 a12 12 0 0 1 10 -4" stroke="${l}" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`; }
+  function doorSVG(ch){ const [c,l]=KCOL[DOORS[ch]];
+    return `<svg class="door" viewBox="0 0 100 100"><rect x="12" y="6" width="76" height="90" rx="12" fill="#5B4331" stroke="#0D3049" stroke-width="4"/>
+     <g class="panel"><rect x="18" y="12" width="64" height="80" rx="9" fill="${l}" stroke="#0D3049" stroke-width="3.5"/><path d="M28 28h44M28 46h44M28 64h44M28 80h44" stroke="${c}" stroke-width="4" stroke-linecap="round"/></g>
+     <g class="lock"><path class="shackle" d="M39 52 v-9 a11 11 0 0 1 22 0 v9" fill="none" stroke="#0D3049" stroke-width="6" stroke-linecap="round"/><rect x="31" y="50" width="38" height="30" rx="7" fill="${c}" stroke="#0D3049" stroke-width="4"/><path d="M50 60 v9" stroke="#0D3049" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="60" r="4.5" fill="#0D3049"/></g></svg>`; }
   function starIco(on,dim="#D6E6F2"){ return `<svg viewBox="0 0 100 100"><polygon points="${starPts(46,50,53)}" fill="${on?"#FFC21A":dim}" stroke="${on?"#0D3049":"none"}" stroke-width="4" stroke-linejoin="round"/></svg>`; }
   
   function starRow(k,dim,n=3){ return Array.from({length:n},(_,i)=>starIco(i<k,dim)).join(""); }
@@ -249,7 +269,11 @@ export function boot(hidden?: Record<string, number[]>) {
   
     check:()=>`<svg viewBox="0 0 32 32"><path d="M6 17l6 6L26 9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 
-    code:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M11 9 4 16l7 7M21 9l7 7-7 7M18.5 5.5l-5 21" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+    code:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M11 9 4 16l7 7M21 9l7 7-7 7M18.5 5.5l-5 21" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+
+    portal:(c="#fff")=>`<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="${c}" stroke-width="2.8"/><path d="M16 16c0-4 4-6 7-3M16 16c-4 0-6 4-3 7M16 16c3 2 2 7-2 7" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/></svg>`,
+
+    key:(c="#fff")=>`<svg viewBox="0 0 32 32"><circle cx="10" cy="16" r="6.5" fill="none" stroke="${c}" stroke-width="3"/><path d="M16.5 16H29M25 16v5M21 16v4" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round"/></svg>`
 
   };
   
@@ -300,6 +324,10 @@ export function boot(hidden?: Record<string, number[]>) {
   
     buy:()=>[988,1319,1568].forEach((f,i)=>tone(f,.16,"square",.05,i*.08)),
   
+    portal:()=>{ [330,440,587,784,1046,1397].forEach((f,i)=>tone(f,.16,"sine",.08,i*.045)); tone(1760,.35,"triangle",.04,.28); tone(2093,.3,"sine",.03,.36); },
+    key:()=>[1319,1568,1319,1976,2349].forEach((f,i)=>tone(f,.1,"triangle",.08,i*.06)),
+    door:()=>{ tone(240,.07,"square",.06); tone(480,.1,"triangle",.08,.07); [523,659,784,1047].forEach((f,i)=>tone(f,.18,"triangle",.09,.2+i*.08)); },
+    locked:()=>{ tone(170,.12,"square",.08); tone(140,.18,"square",.08,.11); },
     dizzy:()=>[392,330,392,311,370,294,349,262].forEach((f,i)=>tone(f,.2,"sine",.1,i*.15)),
     boom:()=>{ tone(60,.9,"sawtooth",.2); tone(90,.7,"square",.1,.02); [220,170,130,90,60].forEach((f,i)=>tone(f,.3,"sawtooth",.14,i*.06)); tone(1400,.25,"square",.05,.01); tone(800,.4,"triangle",.07,.1); }, win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.22,"triangle",.12,i*.11)), fail:()=>{tone(330,.18,"triangle");tone(262,.28,"triangle",.12,.16)} };
   
@@ -413,7 +441,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }
   
-  function partIco(P){ const p=P.id; if(P.py) return ICO.code(); return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===4.5||p===5.5?ICO.repeat():ICO.ifq(); }
+  function partIco(P){ const p=P.id; if(P.py) return ICO.code(); if(P.icon) return ICO[P.icon](); return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===4.5||p===5.5?ICO.repeat():ICO.ifq(); }
   
   function lockWhy(st){ return st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }
   
@@ -661,11 +689,11 @@ export function boot(hidden?: Record<string, number[]>) {
   
     for(let r=0;r<n;r++) for(let c=0;c<m;c++){ const ch=rows[r][c];
   
-      const inner=ch==="#"?rockSVG():ch==="E"?goalSVG():ch==="B"?batSVG():(ch==="R"&&!withRobot)?`<svg class="rsvg" viewBox="-50 -50 100 100" data-look="r">${robotSVG()}</svg>`:"";
+      const inner=ch==="#"?rockSVG():ch==="E"?goalSVG():ch==="B"?batSVG():PCOL[ch]?portalSVG(ch):KCOL[ch]?keySVG(ch):DOORS[ch]?doorSVG(ch):(ch==="R"&&!withRobot)?`<svg class="rsvg" viewBox="-50 -50 100 100" data-look="r">${robotSVG()}</svg>`:"";
   
-      h+=`<div class="cell${(r+c)%2?" alt":""}${ch==="X"?" red":ch==="V"?" green":""}" data-r="${r}" data-c="${c}" style="--i:${r+c}">${inner}</div>`; }
+      h+=`<div class="cell${(r+c)%2?" alt":""}${ch==="X"?" red":ch==="V"?" green":PCOL[ch]?" portalc po-"+ch:DOORS[ch]?" doorc":""}" data-r="${r}" data-c="${c}" style="--i:${r+c}">${inner}</div>`; }
   
-    if(withRobot) h+=`<div class="robot noanim${intro?" drop":""}" id="bot" data-look="r"><div class="shadow"></div><div class="bob"><svg viewBox="-50 -50 100 100">${robotSVG()}</svg></div><span class="penmark">${ICO.brush()}</span></div>`;
+    if(withRobot) h+=`<div class="robot noanim${intro?" drop":""}" id="bot" data-look="r"><div class="shadow"></div><div class="bob"><svg viewBox="-50 -50 100 100">${robotSVG()}</svg></div><span class="penmark">${ICO.brush()}</span><span class="keymark"></span></div>`;
   
     holder.innerHTML=h+"</div>";
   
@@ -700,6 +728,7 @@ export function boot(hidden?: Record<string, number[]>) {
     G.tries=0; G.pathLen=(shortest(map,S)||[]).length; /* adv: intentos fallidos y largo del camino más corto, para las estrellas */
     G.wm=map; G.worlds=map.worlds?pickWorlds(map):null; G.wi=null; G.keepW=false; G.conds=map.conds||(tools.includes("b")?["x","v"]:["x"]);
     /* Python: el programa es texto (G.code); se lee con parsePy al tocar Ir */
+    G.fun=/[OUkjcKJC]/.test(map.rows.join("")); G.nK=[...new Set(map.rows.join("").match(/[kjc]/g)||[])]; /* portales y llaves */
     G.py=!!map.py; G.code=G.py?(PYCODE[map.id]??(map.pre??PY_START)):""; G.pyAst=null; $("game").classList.toggle("pymode",G.py);
 
 
@@ -714,7 +743,7 @@ export function boot(hidden?: Record<string, number[]>) {
     if(map.ch&&map.num===1){ const ch=CHALLENGES.find(c=>c.id===map.ch);
   
       say("",ICO.clock(),"El reloj mide cuánto tardás",`3 estrellas: menos de ${fmtTime(ch.t3)} · 2 estrellas: menos de ${fmtTime(ch.t2)}`); }
-    else if(map.tip) say("",G.py?ICO.code("#3776AB"):ICO.blocks(),map.tip[0],map.tip[1]+(map.goal?` · Meta: ${map.goal} líneas`:""));
+    else if(map.tip) say("",G.py?ICO.code("#3776AB"):G.fun?(/[kjc]/.test(map.rows.join(""))&&!/[OU]/.test(map.rows.join(""))?ICO.key("#B98500"):ICO.portal("#06B6D4")):ICO.blocks(),map.tip[0],map.tip[1]+(map.goal?` · Meta: ${map.goal} líneas`:""));
     else if(G.py) say("",ICO.code("#3776AB"),"¡Escribí el programa en Python!","Tocá un comando de la izquierda para agregarlo · Ir para probar");
 
     else if(map.adv) say("",ICO.blocks(),"¡Una función que se llama a sí misma!",`Creá tu función y llamala adentro de ella misma: se repite hasta llegar a la estrella${G.nX||G.nV?" · Pintá las rojas y bailá en las verdes":""} · ${lim}`);
@@ -749,13 +778,19 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const mark=(keys,cls)=>keys.forEach(k=>{ const [r,c]=k.split(",").map(Number); cellEl(r,c).classList.add(cls); });
   
-    mark(G.S.got,"got"); mark(G.S.pnt,"pnt"); mark(G.S.dan,"danced"); $("bot").classList.toggle("pen",!!G.S.pen);
+    mark(G.S.got,"got"); mark(G.S.pnt,"pnt"); mark(G.S.dan,"danced"); mark(G.S.open||[],"open"); keyCells(G.S.keys||[]).forEach(el=>el.classList.add("got")); $("bot").classList.toggle("pen",!!G.S.pen);
   
     placeNow();
   
   }
   
   function cellEl(r,c){ return $("gBoard").querySelector(`.cell[data-r="${r}"][data-c="${c}"]`); }
+  /* celdas de las llaves ya agarradas (para dibujarlas como juntadas) */
+  function keyCells(ks){ return [...$("gBoard").querySelectorAll(".cell")].filter(el=>ks.includes(G.rows[+el.dataset.r][+el.dataset.c])); }
+  /* GENI cambia de cara un momento (wow, sorpresa, triste) y vuelve a la suya; null la vuelve ya */
+  let faceT=null;
+  function setFace(f,ms=900){ clearTimeout(faceT); const sv=()=>$("bot")&&$("bot").querySelector(".bob svg"); if(!sv()) return;
+    sv().innerHTML=robotSVG(f?{face:f}:{}); if(f) faceT=setTimeout(()=>{ if(sv()) sv().innerHTML=robotSVG(); },ms); }
   
   function place(S,dx=0,dy=0){ $("bot").style.transform=`translate(${(S.c+dx)*G.step}px,${(S.r+dy)*G.step}px)`; }
   
@@ -767,7 +802,7 @@ export function boot(hidden?: Record<string, number[]>) {
     if(G.worlds&&!G.keepW){ const back=G.wi>0; G.wi=null; if(back) return setWorld(0); }
     G.S=startState(G.wm); G.trail=0; G.lastGot=null; clearHint();
   
-    $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","scorch"));
+    $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","scorch","open","warping","nokey"));
   
     $("gBoard").classList.remove("win","bump");
   
@@ -775,7 +810,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     document.querySelectorAll("#canvas .running, #canvas .yes, #canvas .nope").forEach(b=>b.classList.remove("running","yes","nope"));
   
-    $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen","boom","dizzy"); $("bot").querySelectorAll(".dz").forEach(e=>e.remove()); $("gBoard").classList.remove("kaboom"); placeNow();
+    $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen","boom","dizzy","warpout","warpin","haskey"); setFace(null); $("bot").querySelectorAll(".dz").forEach(e=>e.remove()); $("gBoard").classList.remove("kaboom"); placeNow();
     pyMark(null);
   
   }
@@ -798,6 +833,8 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(G.map.need) h+=chip("var(--paint)",Math.min(G.S.pnt.length,G.map.need),G.map.need,"Pintadas");
   
+    if(G.nK.length){ const ks=G.S.keys||[]; h+=`<span class="chip keych${G.nK.every(k=>ks.includes(k))?" full":""}">${G.nK.map(k=>`<span class="kslot${ks.includes(k)?" on":""}">${keySVG(k,"")}</span>`).join("")} Llaves ${G.nK.filter(k=>ks.includes(k)).length} / ${G.nK.length}</span>`; }
+    { const km=$("bot")&&$("bot").querySelector(".keymark"), ks=G.S.keys||[]; if(km){ km.innerHTML=ks.map(k=>keySVG(k,"")).join(""); $("bot").classList.toggle("haskey",ks.length>0); } }
     if(G.tools.includes("n")) h+=`<span class="chip pench${G.S.pen?" on":""}">${ICO.brush(G.S.pen?"#fff":"#7E3DB0")}${G.S.pen?"Pincel en uso":"Pincel guardado"}</span>`;
   
     if(G.worlds&&G.wi!=null) h+=`<span class="chip wchip">Mundo ${G.wi+1} de ${G.worlds.length}</span>`;
@@ -1323,8 +1360,11 @@ export function boot(hidden?: Record<string, number[]>) {
   
   async function animate(r,dir){
   
-    const bot=$("bot"), t=T(); bot.dataset.look=dir;
+    const bot=$("bot"), t=T(), id=G.run; bot.dataset.look=dir; /* id: si se toca Parar a mitad, la animación se corta */
   
+    if(r.k==="crash"&&r.why==="door"){ const [dr,dc]=DIRS[dir], d=cellEl(r.r,r.c); place(G.S,dc*.3,dr*.3); SND.locked(); setFace("triste",t*2.4);
+      d.classList.remove("nokey"); void d.offsetWidth; d.classList.add("nokey"); await sleep(t*.45); place(G.S);
+      bot.classList.add("shake"); setTimeout(()=>bot.classList.remove("shake"),400); const [x,y]=center(d); floatText(x,y-20,"¡Cerrada!","#B98500"); await sleep(t*.6); return; }
     if(r.k==="crash"){ const [dr,dc]=DIRS[dir]; place(G.S,dc*.32,dr*.32); SND.crash(); await sleep(t*.45); place(G.S);
   
       bot.classList.add("shake"); setTimeout(()=>bot.classList.remove("shake"),400); bumpEl($("gBoard"));
@@ -1333,7 +1373,19 @@ export function boot(hidden?: Record<string, number[]>) {
   
       if(r.why==="rock") cellEl(r.r,r.c).classList.add("flash"); await sleep(t*.5); return; }
   
+    /* puerta: con la llave se abre antes de pasar */
+    if(r.door){ const [dr,dc]=DIRS[dir], d=cellEl(G.S.r+dr,G.S.c+dc), [x,y]=center(d); d.classList.add("open"); SND.door(); setFace("wow",t*1.6);
+      burst(x,y,["#FFC21A","#FFE27A","#FFFFFF",KCOL[DOORS[G.rows[G.S.r+dr][G.S.c+dc]]][0]],20,6); floatText(x,y-24,"¡Abierta!","#B98500"); await sleep(t*.7); if(id!==G.run) return; }
     const prev=cellEl(G.S.r,G.S.c); prev.style.setProperty("--tc",RAIN[G.trail++%RAIN.length]); prev.classList.add("trail");
+    /* portal: GENI llega al portal, se lo traga el remolino y aparece girando en el otro */
+    if(r.tp){ const [pr,pc]=r.tp.from, [er,ec]=r.tp.to, pin=cellEl(pr,pc), pout=cellEl(er,ec), col=PCOL[G.rows[pr][pc]];
+      bot.classList.add("moving"); place({r:pr,c:pc}); SND.move(); await sleep(t); bot.classList.remove("moving"); if(id!==G.run) return;
+      pin.classList.add("warping"); pout.classList.add("warping"); setFace("sorpresa",t*2.6); SND.portal();
+      const [x0,y0]=center(pin); burst(x0,y0,[col[0],col[1],"#FFFFFF"],22,6); floatText(x0,y0-24,"¡Fiuuu!",col[0]);
+      bot.classList.add("warpout"); await sleep(Math.max(260,t*.75)); if(id!==G.run) return;
+      bot.classList.add("noanim"); G.S=r.S; place(G.S); void bot.offsetWidth; bot.classList.remove("noanim","warpout"); bot.classList.add("warpin");
+      const [x1,y1]=center(pout); burst(x1,y1,[col[0],col[1],"#FFFFFF","#FFC21A"],26,7); sparkle(x1,y1);
+      await sleep(Math.max(300,t*.8)); if(id!==G.run) return; bot.classList.remove("warpin"); pin.classList.remove("warping"); pout.classList.remove("warping"); renderStatus(); return; }
   
     G.S=r.S; bot.classList.add("moving"); place(G.S); SND.move();
   
@@ -1346,6 +1398,8 @@ export function boot(hidden?: Record<string, number[]>) {
     if(r.bat){ const c=cellEl(G.S.r,G.S.c); c.classList.add("got"); SND.bat();
   
       const [x,y]=center(c); burst(x,y,["#1EC48C","#7BE6BD","#FFC21A","#FFFFFF"],22,6); floatText(x,y-24,"+1 ⚡","#11986A"); }
+    if(r.gotKey){ const c=cellEl(G.S.r,G.S.c); c.classList.add("got"); SND.key(); setFace("wow",t*1.8);
+      const [x,y]=center(c), kc=KCOL[r.gotKey]; burst(x,y,[kc[0],kc[1],"#FFFFFF","#FFC21A"],26,7); floatText(x,y-26,`¡Llave ${kc[2].toLowerCase()}!`,kc[0]==="#FFC21A"?"#B98500":kc[0]); }
   
     renderStatus();
   
@@ -1403,6 +1457,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(res.k==="crash"){ const el=!G.py&&last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err"); if(G.py) pyMark(last,"err");
 
+      if(res.why==="door"){ const kc=KCOL[DOORS[G.rows[res.r][res.c]]]; return say("err",ICO.lock(kc[0]==="#FFC21A"?"#B98500":kc[0]),"¡La puerta está cerrada!",`Primero buscá la llave ${kc[2].toLowerCase()} · Mirá el bloque rojo`); }
       say("err",ICO.burst(),res.why==="out"?"¡Ahí no hay camino!":"¡Chocó!",G.py?`Mirá la línea ${last}`:"Mirá el bloque rojo"); return; }
 
     if(res.k==="bad"){ const el=!G.py&&last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err"); if(G.py) pyMark(last,"err");
@@ -1449,7 +1504,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     SND.win(); confetti(); $("gBoard").classList.add("win");
   
-    const bot=$("bot"); bot.classList.add("happy"); setTimeout(()=>bot.classList.remove("happy"),2100);
+    const bot=$("bot"); bot.classList.add("happy"); setTimeout(()=>bot.classList.remove("happy"),2100); if(G.fun) setFace("wow",2400);
   
     const [x,y]=center(cellEl(G.S.r,G.S.c)); burst(x,y,["#FFC21A","#FFE27A","#FFFFFF","#FF6FB5"],26,8);
   
