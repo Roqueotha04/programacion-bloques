@@ -111,12 +111,12 @@ export const MISSIONS=[
     pre: cuerpos ya armados; lock: funciones que no se pueden editar; fns: cuántas funciones hay (1 por defecto) */
  {id:"o1",grp:"O",title:"Llamá a la función",max:7,pre:{A:"r r u"},lock:["A"],rows:["######E","####...","##...##","R..####"],sol:"A=(r r u); A A A"},
  {id:"o2",grp:"O",title:"Falta un bloque",max:7,pre:{A:"r r"},rows:["R..####","##...##","####...","######E"],sol:"A=(r r d); A A A"},
- {id:"o4",grp:"O",title:"Tu primera función",max:7,rows:["######","#####E","###...","R...##"],sol:"A=(r r u); r A A"},
- {id:"p2",grp:"P",title:"La función que pinta",max:10,rows:["##..X..XE","R.X######"],sol:"A=(r r p); A u A r A r"},
- {id:"p3",grp:"P",title:"La función que baila",max:10,rows:["######V.R","EV..V..##"],sol:"A=(l l b); A d A l A l"},
+ {id:"o4",grp:"O",title:"Tu primera función",max:7,rows:["####E","####.","##...","R..##"],sol:"A=(r r u); A A u"},
+ {id:"p2",grp:"P",title:"La función que pinta",max:9,rows:["##..X.XE","R.X#####"],sol:"A=(r r p); A u A A r"},
+ {id:"p3",grp:"P",title:"La función que baila",max:9,rows:["#####V.R","EV.V..##"],sol:"A=(l l b); A d A A l"},
  {id:"q1",grp:"P",title:"Arreglá la función",max:11,pre:{A:"d p"},rows:["R####",".####","X.###","#.###","#X..#","###.#","###XE"],sol:"A=(d d p); A r A r r A r"},
  {id:"o3",grp:"Q",title:"Función y pasos",max:10,rows:["#########","########E","####.....","##...####","##.######","R..######"],sol:"A=(r r u); A u A r r A"},
- {id:"p1",grp:"Q",title:"Función en repetir",max:9,rows:["########.","######..E","####.#.##","##.....##","##.######","R..######"],sol:"A=(r r u); 2(A u A d)"},
+ {id:"p1",grp:"Q",title:"Función en repetir",max:8,rows:["########E","########.","######...","####...##","####.####","##...####","R..######"],sol:"A=(r r u); 2(A A u)"},
 // q2 y q3 sacados de momento (Funciones quedó en 8 niveles)
 // {id:"q2",grp:"Q",title:"Una llama a otra",max:10,fns:2,rows:["RX####","#.X.X#","####.X","#####E"],sol:"A=(r p); B=(A d A); B r B d"},
 // {id:"q3",grp:"Q",title:"Gran final",max:12,rows:["####.#VE","##..X.X#","R.X#####"],sol:"A=(r r p); 2(A u) d A u b r"},
