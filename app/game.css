@@ -534,6 +534,38 @@ canvas#conf{ position:fixed; inset:0; pointer-events:none; z-index:150; width:10
 .pyhl.err{ background:#FFE3E5; box-shadow:inset 3px 0 0 var(--red); }
 .pyhl.pop{ animation:pyhlpop .3s; }
 @keyframes pyhlpop{ 0%{ opacity:.4; } }
+/* modo «Elegir» (ui.ts, pick…): una fila por línea con selects; la sangría la pone el juego (guías cada 4 espacios) */
+.picksw{ display:inline-flex; gap:4px; padding:4px; margin-bottom:10px; border-radius:999px; background:var(--bg2); border:1.5px solid var(--line); }
+.picksw button{ font-family:inherit; padding:6px 14px; border-radius:999px; font-size:14px; font-weight:700; color:var(--muted); background:transparent; border:0; }
+.picksw button.on{ background:#fff; color:var(--navy); box-shadow:0 2px 6px rgba(22,137,201,.15); }
+.picked{ --mono:"Cascadia Code","JetBrains Mono","Fira Code",Consolas,ui-monospace,monospace; padding:8px 0; background:#fff; border:1.5px solid var(--line2); border-radius:14px;
+  box-shadow:0 4px 14px rgba(22,137,201,.08); font-family:var(--mono); font-size:15px; }
+.pickadd{ display:block; margin:2px 10px 8px 48px; padding:4px 12px; border-radius:10px; border:1.5px dashed var(--line2); background:#fff; color:var(--muted); font-size:13px; font-weight:700; }
+.pickrow{ display:flex; align-items:center; gap:6px; min-height:40px; padding:3px 8px 3px 0; border-left:3px solid transparent; }
+.pickrow.blank{ min-height:14px; }
+.pickrow.sel{ background:#F4FAFE; }
+.pickrow.hole .pickk{ border-style:dashed; color:var(--muted); }
+.pickrow.on{ background:#E1F5FF; border-left-color:var(--cel); }
+.pickrow.on.yes{ background:#DDF7EC; border-left-color:var(--ok); }
+.pickrow.on.no{ background:#EEF2F6; border-left-color:#9DB2C4; }
+.pickrow.on.err{ background:#FFE3E5; border-left-color:var(--red); }
+.pickn{ flex:none; width:36px; text-align:right; color:#9DB4C8; font-size:13px; user-select:none; }
+.pickrow.on .pickn{ color:var(--cel-d); font-weight:700; }
+.pickind{ flex:none; align-self:stretch; background:repeating-linear-gradient(90deg,transparent 0 11px,#D5E4F0 11px 13px,transparent 13px 24px); }
+.pickrow.fix code{ padding:0 4px; color:#1E3A5F; white-space:pre; }
+.pickmain{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; flex:1; min-width:0; }
+.pickk,.pickf{ font:inherit; font-size:15px; font-weight:600; color:var(--navy); padding:4px 8px; border-radius:9px; border:1.5px solid var(--line2); background:#fff; max-width:100%; }
+.pickk{ min-width:130px; }
+.pickf.name{ width:9.5em; font-weight:600; }
+.pickk:focus,.pickf:focus{ outline:none; border-color:var(--cel); box-shadow:0 0 0 3px rgba(47,176,240,.2); }
+.pickw{ font-family:"Lexend","Segoe UI",system-ui,sans-serif; font-size:13px; color:var(--muted); }
+.pickout{ font-size:14px; color:#1E3A5F; padding:2px 8px; border-radius:8px; background:#F1F7FC; white-space:pre; }
+.pickctl{ flex:none; display:flex; gap:3px; margin-left:auto; }
+.pickctl button{ width:30px; height:30px; border-radius:8px; border:1.5px solid var(--line); background:#fff; color:var(--navy); font-size:15px; font-weight:700; line-height:1; }
+.pickctl button:hover:not(:disabled){ border-color:var(--cel); }
+.pickctl button:disabled{ opacity:.3; cursor:default; }
+.pickctl [data-pick-del]:hover{ border-color:var(--red); color:var(--red); }
+body.busy .picked,body.busy .picksw{ pointer-events:none; }
 /* colores del código (editor, espejo y comandos): palabra de Python, comando de GENI, función propia, número, comentario */
 .pk{ color:#A626A4; font-weight:700; } .pb{ color:#2563C9; font-weight:600; } .pf{ color:#C2410C; font-weight:600; } .pn{ color:#0F8A63; font-weight:600; } .pc{ color:#8DA3B5; font-style:italic; }
 /* el código como bloques: los mismos bloques del juego, más chicos y solo para mirar */

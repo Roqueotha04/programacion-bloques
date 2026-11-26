@@ -371,9 +371,12 @@ export function applyKids(){
    ?python, para 13 a 15 años que ya programaron con bloques (VEXcode: secuencias, giros, bucles, «mientras»). Reemplaza todas las
    partes del juego por estas, guarda en robot-bloques-python y se combina con ?profe y ?test. Va de a poco, primero con bloques
    (con el espejo: debajo se arma solo el mismo programa en Python) y después escribiendo lo mismo:
-   - Parte 1 «Bloques y Python»: secuencia, repetir, pintar y bailar con bloques y el espejo (main() y repetir(n):).
-   - Parte 1.5 «Repetir avanzado» (extra): niveles de repetir más difíciles, con bloques (copiados de ra… del juego normal).
-   - Parte 2 «Escribí en Python»: ya escriben el código con lo de la parte 1: completar, el main, repetir(n):, pintar() y bailar().
+   - Parte 1 «Secuencia»: mover, pintar y bailar con bloques y el espejo (main()).
+   - Parte 1.5 «Repetir»: el bloque repetir con bloques y el espejo (repetir(n):), también con colores y uno adentro de otro.
+   - Parte 1.7 «Repetir avanzado» (extra): niveles de repetir más difíciles, con bloques (copiados de ra… del juego normal).
+   - Parte 2 «Armá el código»: arman el código con lo de las partes 1 y 1.5 eligiendo cada línea con un select (pick:"only":
+     no se escribe, así no se equivocan con la sangría ni la ortografía): completar, el main, repetir(n):, pintar() y bailar().
+     Desde la parte 4, los niveles de código se pueden escribir o armar con los selects (botón «Escribir / Elegir»).
    - Parte 3 «Funciones»: los niveles de Funciones del juego de 9 a 12 con bloques (con el espejo: def) y una función que llama a otra.
    - Parte 4 «Escribí funciones»: completar, el main con funciones hechas, crear funciones, colores y funciones que llaman funciones.
    - Parte 5 «Variables y parámetros»: variables (y que cambian) y def avanzar(n).
@@ -388,23 +391,24 @@ export function applyKids(){
    Los ids (pa…, pr…, pc…, pf…, py…, xp…) no se renombran aunque cambie la parte: las estrellas se guardan por id */
 const MAIN0="def main():\n    ...\n\nmain()\n";
 export const PY_PARTS=[
- {id:1,title:"Bloques y Python",sub:"secuencia, repetir, pintar y bailar: mirá cómo queda el código",c:"#3776AB",l:"#DCE9F7",after:[],py:true},
- {id:1.5,title:"Repetir avanzado",sub:"más difícil: colores, baterías y un repetir adentro de otro",c:"#F97316",l:"#FFE4CC",after:[1],extra:true,py:true},
- {id:2,title:"Escribí en Python",sub:"secuencia, repetir, pintar y bailar: ahora lo escribís vos",c:"#A35BD6",l:"#F0E1FF",after:[1],py:true},
+ {id:1,title:"Secuencia",sub:"mover, pintar y bailar: mirá cómo queda el código",c:"#3776AB",l:"#DCE9F7",after:[],py:true},
+ {id:1.5,title:"Repetir",sub:"el bloque repetir se escribe repetir(n):",c:"#FF9A2E",l:"#FFE2C2",after:[1],py:true},
+ {id:1.7,title:"Repetir avanzado",sub:"más difícil: colores, baterías y un repetir adentro de otro",c:"#F97316",l:"#FFE4CC",after:[1.5],extra:true,py:true},
+ {id:2,title:"Armá el código",sub:"secuencia, repetir, pintar y bailar: ahora armás el código vos",c:"#A35BD6",l:"#F0E1FF",after:[1.5],py:true,pick:"only"},
  {id:3,title:"Funciones",sub:"crear y llamar funciones (def) con bloques",c:"#5B6CF0",l:"#E3E6FF",after:[2],py:true},
  {id:4,title:"Escribí funciones",sub:"tus funciones escritas en Python",c:"#C026D3",l:"#FAE1FD",after:[3],py:true},
  {id:5,title:"Variables y parámetros",sub:"guardar números y pasárselos a las funciones",c:"#C99400",l:"#FFF4C7",after:[4],py:true},
  {id:5.5,title:"Mientras",sub:"while e if: repetir hasta llegar y decidir",c:"#0EA5E9",l:"#D3F0FC",after:[5],extra:true,py:true}];
 export const PY_GROUPS=[
  {id:"PA",part:1,blocks:true,cls:1,tools:"",title:"Secuencia",sub:"mover a GENI paso a paso",need:0,c:"#3776AB",l:"#DCE9F7"},
- {id:"PH",part:1,blocks:true,cls:2,tools:"r",title:"Repetir",sub:"el bloque repetir se escribe repetir(n):",need:2,c:"#FF9A2E",l:"#FFE2C2"},
- {id:"PP",part:1,blocks:true,cls:1,tools:"pb",strict:true,title:"Pintar y bailar",sub:"rojas: pintar · verdes: bailar",need:4,c:"#E64C55",l:"#FFD9DB"},
- {id:"PQ",part:1,blocks:true,cls:2,tools:"rpb",strict:true,title:"Repetir con colores",sub:"pintar y bailar adentro del repetir",need:6,c:"#A35BD6",l:"#F0E1FF"},
- {id:"PR",part:1.5,blocks:true,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
- {id:"PX",part:1.5,blocks:true,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:4,c:"#DC2626",l:"#FFD9D9"},
- {id:"PS",part:2,tools:"",title:"Escribí los pasos",sub:"una orden por línea",need:0,c:"#3776AB",l:"#DCE9F7"},
- {id:"PT",part:2,tools:"r",title:"Escribí el repetir",sub:"repetir(6): y lo de adentro con sangría",need:2,c:"#FF9A2E",l:"#FFE2C2"},
- {id:"PU",part:2,tools:"rpb",strict:true,title:"Colores escritos",sub:"pintar() y bailar() desde el código",need:6,c:"#A35BD6",l:"#F0E1FF"},
+ {id:"PP",part:1,blocks:true,cls:1,tools:"pb",strict:true,title:"Pintar y bailar",sub:"rojas: pintar · verdes: bailar",need:2,c:"#E64C55",l:"#FFD9DB"},
+ {id:"PH",part:1.5,blocks:true,cls:2,tools:"r",title:"Repetir",sub:"el bloque repetir se escribe repetir(n):",need:0,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"PQ",part:1.5,blocks:true,cls:2,tools:"rpb",strict:true,title:"Repetir con colores",sub:"pintar y bailar adentro del repetir",need:4,c:"#A35BD6",l:"#F0E1FF"},
+ {id:"PR",part:1.7,blocks:true,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
+ {id:"PX",part:1.7,blocks:true,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:4,c:"#DC2626",l:"#FFD9D9"},
+ {id:"PS",part:2,tools:"",title:"Armá los pasos",sub:"una orden por línea",need:0,c:"#3776AB",l:"#DCE9F7"},
+ {id:"PT",part:2,tools:"r",title:"El repetir en Python",sub:"repetir(6): y lo de adentro con sangría",need:2,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"PU",part:2,tools:"rpb",strict:true,title:"Colores en el código",sub:"pintar() y bailar() desde el código",need:6,c:"#A35BD6",l:"#F0E1FF"},
  {id:"PI",part:3,blocks:true,cls:3,tools:"rf",title:"Primeras funciones",sub:"un grupo de pasos con nombre",need:0,c:"#5B6CF0",l:"#E3E6FF"},
  {id:"PK",part:3,blocks:true,cls:3,tools:"rpbf",strict:true,title:"Funciones y colores",sub:"pintar y bailar con funciones",need:6,c:"#8B6CF0",l:"#E6DFFF"},
  {id:"PL",part:3,blocks:true,cls:3,tools:"rpbf",strict:true,title:"Armá tu función",sub:"armala desde cero",need:12,c:"#3E6FA8",l:"#D7E6F8"},
@@ -417,41 +421,42 @@ export const PY_GROUPS=[
  {id:"PF",part:5,tools:"rfvpb",strict:true,title:"Parámetros",sub:"def avanzar(n):",need:4,c:"#E64C55",l:"#FFD9DB"},
  {id:"PG",part:5.5,tools:"rfvwipb",strict:true,title:"Mientras",sub:"while not en_estrella():",need:0,c:"#0EA5E9",l:"#D3F0FC"}];
 export const PY_MISSIONS=[
- /* Parte 1: secuencia, repetir, pintar y bailar con bloques (espejo en Python) */
+ /* Parte 1: secuencia, pintar y bailar con bloques (espejo en Python) */
  {id:"pa1",grp:"PA",notes:true,title:"Tus bloques en Python",rows:["#####","R.#..","#...E","#####"],sol:"r d r r r",
   tip:["Abajo está tu programa en Python","Cada bloque que ponés aparece escrito: derecha(), abajo()… · Llevá a GENI a la estrella"]},
+ {id:"pa2",grp:"PP",title:"pintar() y bailar()",rows:["#####","RXV.E","#####"],sol:"r p r b r r",
+  tip:["Rojas: pintar · Verdes: bailar","Mirá abajo: en Python se escriben pintar() y bailar()"]},
+ /* Parte 1.5: repetir con bloques (espejo en Python) */
  {id:"pa3",grp:"PH",notes:true,title:"El bloque repetir",max:3,rows:["#######","R.....E","#######"],sol:"6(r)",
   tip:["¡Usá el bloque repetir!","Mirá abajo: repetir 6 veces se escribe repetir(6):"]},
  {id:"pa9",grp:"PH",notes:true,title:"Pasillo con vuelta",max:5,rows:["R....#","####.#","####.#","####E#"],sol:"4(r) 3(d)",
   tip:["Dos repetir, uno después del otro","Mirá abajo: lo que está adentro de cada repetir va con sangría"]},
- {id:"pa2",grp:"PP",title:"pintar() y bailar()",rows:["#####","RXV.E","#####"],sol:"r p r b r r",
-  tip:["Rojas: pintar · Verdes: bailar","Mirá abajo: en Python se escriben pintar() y bailar()"]},
  {id:"pa4",grp:"PQ",title:"Repetir que pinta",max:5,rows:["########","RXXXXXXE","########"],sol:"6(r p) r",
   tip:["Repetí moverte y pintar","Mirá abajo: lo que está adentro del repetir va con sangría (más a la derecha)"]},
  {id:"pa5",grp:"PQ",title:"Escalera bailarina",max:7,rows:["####E","###V.","##V.#","#V.##","R.###"],sol:"3(r u b) r u"},
  {id:"pa6",grp:"PQ",title:"Un repetir adentro de otro",max:6,rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],sol:"2(3(r) 3(d))",
   tip:["Un repetir adentro de otro","Mirá abajo: el repetir de adentro tiene más sangría"]},
- /* Parte 1.5: repetir avanzado (extra), con bloques: los de Repetir avanzado del juego normal (ra1, ra3, ra4, ra5, ra7) */
+ /* Parte 1.7: repetir avanzado (extra), con bloques: los de Repetir avanzado del juego normal (ra1, ra3, ra4, ra5, ra7) */
  {id:"pr1",grp:"PR",title:"Pasillo de colores",max:7,rows:["########","RXVXVXVE","########"],sol:"3(r p r b) r"},
  {id:"pr2",grp:"PR",title:"Torres de baterías",max:9,rows:["##B#B#B#","##.#.#.#","R......E"],sol:"3(2(r) 2(u) 2(d)) r"},
  {id:"pr3",grp:"PR",title:"Montaña de colores",max:10,rows:["###X.###","##X.V.##","#X.##V.#","R.####VE"],sol:"3(r u p) 3(r d b) r"},
  {id:"pr4",grp:"PX",title:"Escalones de baile",max:8,rows:["R..V######","###.######","###...V###","######.###","######...V","#########.","#########E"],sol:"3(3(r) b 2(d))"},
  {id:"pr5",grp:"PX",title:"El gran recorrido",max:9,rows:["R.B.#####","###.#####","###V.B.##","######.##","######V.E"],sol:"2(3(r) 2(d) b) 2(r)"},
- /* Parte 2: escriben el código con lo de la parte 1 (sin funciones propias: todo adentro de main) */
+ /* Parte 2: arman el código con selects (pick:"only") con lo de las partes 1 y 1.5 (sin funciones propias: todo adentro de main) */
  {id:"pc1",grp:"PS",title:"Completá los pasos",goal:7,rows:["#####","R.#..","#...E","#####"],
   pre:"def main():\n    derecha()\n    ___\n    derecha()\n    ___\n    derecha()\n\nmain()\n",
   sol:"def main():\n    derecha()\n    abajo()\n    derecha()\n    derecha()\n    derecha()\n\nmain()\n",
-  tip:["¡Ahora escribís vos!","Cambiá cada ___ por la orden que falta y tocá Ir"]},
+  tip:["¡Ahora armás el código vos!","En cada ___ elegí la orden que falta y tocá Ir"]},
  {id:"pc2",grp:"PS",title:"Escribí el main",goal:10,rows:["R.#####","#...###","###...E"],pre:MAIN0,
   sol:"def main():\n    derecha()\n    abajo()\n    derecha()\n    derecha()\n    abajo()\n    derecha()\n    derecha()\n    derecha()\n\nmain()\n",
-  tip:["Escribí el programa entero","Adentro de main(), una orden por línea, con 4 espacios de sangría · Borrá el ..."]},
+  tip:["Armá el programa entero","Adentro de main(), una orden por línea · Con ＋ agregás una línea y en cada una elegís la orden"]},
  {id:"pc3",grp:"PT",title:"Escribí el repetir",goal:4,req:["for"],rows:["#######","R.....E","#######"],
   pre:"def main():\n    repetir(___):\n        derecha()\n\nmain()\n",
   sol:"def main():\n    repetir(6):\n        derecha()\n\nmain()\n",
-  tip:["repetir(6): repite 6 veces","Poné cuántas veces y mirá: lo que se repite va abajo, con más sangría"]},
+  tip:["repetir(6): repite 6 veces","Elegí cuántas veces y mirá: lo que se repite va abajo, con más sangría"]},
  {id:"pc4",grp:"PT",title:"Dos repetir",goal:6,req:["for"],rows:["R....#","####.#","####.#","####E#"],pre:MAIN0,
   sol:"def main():\n    repetir(4):\n        derecha()\n    repetir(3):\n        abajo()\n\nmain()\n",
-  tip:["Uno después del otro","Cuando termina la sangría, termina lo que se repite"]},
+  tip:["Uno después del otro","Cuando termina la sangría, termina lo que se repite · Con ← sacás una línea del repetir"]},
  {id:"pc5",grp:"PU",title:"pintar() y bailar()",goal:8,rows:["#####","RXV.E","#####"],pre:MAIN0,
   sol:"def main():\n    derecha()\n    pintar()\n    derecha()\n    bailar()\n    derecha()\n    derecha()\n\nmain()\n",
   tip:["Rojas: pintar() · Verdes: bailar()","pintar() y bailar() van en su propia línea, como los movimientos"]},
@@ -461,9 +466,6 @@ export const PY_MISSIONS=[
  {id:"pc6",grp:"PU",title:"Escalera bailarina",goal:8,req:["for"],rows:["####E","###V.","##V.#","#V.##","R.###"],pre:MAIN0,
   sol:"def main():\n    repetir(3):\n        derecha()\n        arriba()\n        bailar()\n    derecha()\n    arriba()\n\nmain()\n",
   tip:["Repetí el escalón","Moverte y bailar adentro del repetir"]},
- {id:"pc7",grp:"PU",title:"Un repetir adentro de otro",goal:7,req:["for"],rows:["R..B...","#.#.###","#...#..","##....B","#..###.","#..#...","#.....E"],pre:MAIN0,
-  sol:"def main():\n    repetir(2):\n        repetir(3):\n            derecha()\n        repetir(3):\n            abajo()\n\nmain()\n",
-  tip:["Un repetir adentro de otro","El de adentro va con más sangría: 8 espacios, y lo que repite, 12"]},
  /* Parte 3: funciones con bloques (los niveles de Funciones de 9 a 12) y al final una función que llama a otra */
  {id:"pf1",grp:"PI",title:"Llamá a la función",max:7,pre:{A:"r r u"},lock:["A"],rows:["######E","####...","##...##","R..####"],sol:"A=(r r u); A A A",
   tip:["¡Llamá a la función para ahorrar bloques!","Mirá abajo: la función se crea con def y se llama con su nombre y ()"]},
@@ -528,13 +530,13 @@ export const PY_MISSIONS=[
  {id:"py15",grp:"PG",title:"Seguí el camino",goal:7,req:["while","if"],rows:["R..#####","##.....#","######.#","######.E"],pre:MAIN0,
   sol:"def main():\n    while not en_estrella():\n        if pared_derecha():\n            abajo()\n        else:\n            derecha()\n\nmain()\n",
   tip:["Si hay pared, bajá","if pared_derecha(): … else: …"]}];
-/* desafíos: xpr (repetir) y xp0 (funciones) son de bloques, con el espejo; xpc, xp1 y xp2 son de código. Los ids no cambian aunque cambie la parte */
+/* desafíos: xpr (repetir) y xp0 (funciones) son de bloques, con el espejo; xpc (con selects), xp1 y xp2 son de código. Los ids no cambian aunque cambie la parte */
 export const PY_CHALLENGES=[
- {id:"xpr",part:1,blocks:true,cls:2,tools:"rpb",strict:true,title:"Desafío de repetir",t3:150,t2:240,levels:[
+ {id:"xpr",part:1.5,blocks:true,cls:2,tools:"rpb",strict:true,title:"Desafío de repetir",t3:150,t2:240,levels:[
    {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"},
    {title:"La montaña bailarina",max:8,rows:["R.####E","#..#...","##.....","###V.##"],sol:"3(r d) b 3(r u)"},
    {title:"Dos pasillos",max:10,rows:["RXVXV","####V","####V","####E"],sol:"2(r p r b) 2(d b) d"}]},
- {id:"xpc",part:2,tools:"rpb",strict:true,title:"Desafío de escribir en Python",t3:240,t2:400,levels:[
+ {id:"xpc",part:2,tools:"rpb",strict:true,title:"Desafío de armar el código",t3:240,t2:400,levels:[
    {title:"La gran escalera",rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],pre:MAIN0,sol:"def main():\n    repetir(3):\n        repetir(2):\n            derecha()\n        repetir(2):\n            abajo()\n\nmain()\n"},
    {title:"La montaña bailarina",rows:["R.####E","#..#...","##.....","###V.##"],pre:MAIN0,sol:"def main():\n    repetir(3):\n        derecha()\n        abajo()\n    bailar()\n    repetir(3):\n        derecha()\n        arriba()\n\nmain()\n"},
    {title:"Dos pasillos",rows:["RXVXV","####V","####V","####E"],pre:MAIN0,sol:"def main():\n    repetir(2):\n        derecha()\n        pintar()\n        derecha()\n        bailar()\n    repetir(2):\n        abajo()\n        bailar()\n    abajo()\n\nmain()\n"}]},
@@ -556,8 +558,8 @@ export function applyPython(){
   const put=(arr,items)=>arr.splice(0,arr.length,...items);
   put(PARTS,PY_PARTS); put(GROUPS,PY_GROUPS);
   put(MISSIONS,PY_MISSIONS.map(m=>{ const g=GROUPS.find(x=>x.id===m.grp);
-    return Object.assign(m,{part:g.part,cls:g.blocks?g.cls:4,py:!g.blocks,tools:m.tools??g.tools,strict:m.strict??!!g.strict,adv:false}); }));
-  put(CHALLENGES,PY_CHALLENGES); CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.blocks?ch.cls:4,py:!ch.blocks,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
+    return Object.assign(m,{part:g.part,cls:g.blocks?g.cls:4,py:!g.blocks,tools:m.tools??g.tools,strict:m.strict??!!g.strict,adv:false,pick:PARTS.find(P=>P.id===g.part).pick}); }));
+  put(CHALLENGES,PY_CHALLENGES); CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.blocks?ch.cls:4,py:!ch.blocks,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id,pick:PARTS.find(P=>P.id===ch.part).pick})));
   CLASS_CODES.length=0;
   numberMissions();
 }
