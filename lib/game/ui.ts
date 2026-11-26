@@ -445,64 +445,71 @@ export function boot(hidden?: Record<string, number[]>) {
   
   function lockWhy(st){ return st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }
   
-  function renderMenu(){
+  let ADV_OPEN=false; /* «Niveles avanzados» empieza plegado */
+  function renderMenu(onlyAdv=false){
   
-    $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();
+    if(!onlyAdv){ $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();
   
-    $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`;
+    $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`; }
   
     const GS=groupsNow(); let h="", i=0, fresh=false;
-  
-    for(const P of PARTS){
-  
-      /* una card por parte; cada grupo de niveles se abre por separado */
-  
+
+    /* una card por parte; cada grupo de niveles se abre por separado */
+    const partHTML=P=>{
       const sts=GS.filter(s=>s.g.part===P.id), ms=MISSIONS.filter(m=>m.part===P.id), got=ms.reduce((a,m)=>a+(SAVE.stars[m.id]||0),0);
-  
-      h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+
-  
+      let o=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+
         `<span class="gdot">${partIco(P)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+(P.extra&&ms.length&&ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m))?`<span class="plat">${starIco(true)}Platino</span>`:"")+
         (PROFE&&P.code?`<span class="profe">Código: ${P.code}</span>`:"")+(P.hidden?`<span class="profe poff">Oculta para alumnos</span>`:"")+
         `<span class="gprog">${starIco(true)} ${got} / ${ms.reduce((a,m)=>a+maxStars(m),0)}</span></div><div class="cards">`;
       for(const st of sts){
-  
         const g=st.g, isNew=st.open&&!SAVE.seen.includes(g.id);
-  
         if(isNew){ SAVE.seen.push(g.id); fresh=true; }
-  
         const need=st.gate?gateTxt(SAVE.stars,st.gate):st.needCode?"Pedile el código a tu profe":st.prevLeft?"Terminá los anteriores":`Juntá ${g.need}${starIco(true)}`;
-        h+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;
+        o+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;
           return `<button class="card${k>=maxStars(m)?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}"${st.needCode?` data-code="${st.needCode}"`:""} style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+
             (st.open?`<div class="stars">${starRow(k,undefined,maxStars(m))}</div>`:`<span class="need">${need}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`; }).join("");
-  
       }
-  
+      return o+`</div></section>`;
+    };
+
+    /* niveles avanzados (partes extra): opcionales, abajo de todo y plegados.
+       Sus cards cuentan la demora de la animación desde 0, así aparecen enseguida al abrirlos */
+    const EXTRA=PARTS.filter(P=>P.extra);
+    const advHTML=()=>{
+      const xs=GS.filter(s=>EXTRA.some(P=>P.id===s.g.part)), xOpen=xs.some(s=>s.open), xNew=xs.some(s=>s.open&&!SAVE.seen.includes(s.g.id));
+      const base=[...new Set(EXTRA.flatMap(P=>P.after))].map(id=>PARTS.find(P=>P.id===id)).filter(Boolean).map(P=>`«${P.title}»`);
+      const why=`Terminá ${base.join(" o ")} (con su desafío) para abrirlos`;
+      let o=`<section class="grp advgrp${ADV_OPEN?" on":""}"><div class="grph">`+
+        `<span class="gdot">${ICO.star()}</span><div><h3>Niveles avanzados</h3><span class="gsub">más difíciles, para los que quieren más</span></div></div>`+
+        `<button class="advcard${xOpen?"":" locked"}${xNew?" new":""}" id="advBtn" data-why="${why}" aria-expanded="${ADV_OPEN}">`+
+        `<span class="advtag">Opcional</span><span class="advtxt">${EXTRA.map(P=>P.title).join(" · ")}</span>`+
+        (xOpen?`<span class="advgo">${ADV_OPEN?"Ocultar":"Ver niveles"}${ICO.next()}</span>`:`<span class="need">${ICO.lock("#9A5A00")}${why}</span>`)+`</button>`;
+      if(ADV_OPEN&&xOpen){ i=0; o+=`<div class="advparts">${EXTRA.map(partHTML).join("")}</div>`; }
+      return o+`</section>`;
+    };
+    const celebrateNew=()=>{ if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); } };
+
+    /* abrir o cerrar los avanzados: se redibuja solo esa sección, no todo el menú */
+    if(onlyAdv){ const sec=document.querySelector("#parts .advgrp"); if(sec){ sec.outerHTML=advHTML(); if(fresh) persist(); return; } } /* sin confeti: abrirlos no es desbloquear nada */
+
+    for(const P of PARTS) if(!P.extra) h+=partHTML(P);
+
+    /* los desafíos: una sección más, con una card por desafío (como los niveles) */
+    if(CHALLENGES.length){
+      const chGot=CHALLENGES.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0);
+      h+=`<section class="grp chgrp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+
+        `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos</h3><span class="gsub">3 niveles seguidos, con cronómetro · se abren al terminar cada parte</span></div>`+
+        `<span class="gprog">${starIco(true)} ${chGot} / ${CHALLENGES.length*3}</span></div><div class="cards chcards">`;
+      for(const ch of CHALLENGES){
+        const open=chOpen(ch), isNew=open&&!SAVE.seen.includes(ch.id);
+        if(isNew){ SAVE.seen.push(ch.id); fresh=true; }
+        h+=chCard(ch,i++,open,isNew);
+      }
       h+=`</div></section>`;
-  
     }
-  
-    /* card aparte: los desafíos extra, para los que terminan antes */
-  
-    const chGot=CHALLENGES.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0);
-  
-    h+=`<section class="grp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+
-  
-      `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos extra</h3><span class="gsub">3 niveles seguidos, con cronómetro</span></div>`+
-  
-      `<span class="gprog">${starIco(true)} ${chGot} / ${CHALLENGES.length*3}</span></div>`;
-  
-    for(const ch of CHALLENGES){
-  
-      const open=chOpen(ch), isNew=open&&!SAVE.seen.includes(ch.id);
-  
-      if(isNew){ SAVE.seen.push(ch.id); fresh=true; }
-  
-      h+=chCard(ch,i++,open,isNew);
-  
-    }
-  
-    h+=`</section>`;
-  
+
+    if(EXTRA.length){ const n=i; h+=advHTML(); i=n; }
+
     $("parts").innerHTML=h;
   
     let c=`<button class="card make" id="makeBtn" style="--i:${i++}"><span class="plus">+</span><h3>Creá tu mapa</h3></button>`;
@@ -511,25 +518,17 @@ export function boot(hidden?: Record<string, number[]>) {
   
     $("cards3").innerHTML=c;
   
-    if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); }
+    celebrateNew();
   
   }
   
   function chCard(ch,i,open,isNew){
-  
-    const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la ${partName(ch.part)}`;
-  
-    return `<button class="chcard${open?"":" locked"}${k===3?" s3":""}${isNew?" new":""}" data-ch="${ch.id}" data-why="${why}" style="--i:${i}">`+
-  
-      `<span class="chico">${ICO.clock()}</span><div class="chtxt"><span class="chtag">Desafío extra</span><h3>${ch.title}</h3>`+
-  
-      `<span class="chsub">3 niveles seguidos · con cronómetro</span>`+
-  
-      (open?`<div class="chrow"><span class="stars">${starRow(k)}</span>${best!=null?`<span class="chbest">${ICO.clock()}Récord ${fmtTime(best)}</span>`:""}</div>`
-  
-           :`<span class="need">${ICO.lock("#9A5A00")}${why}</span>`)+
-  
-      `</div><div class="chmaps">${ch.levels.map(m=>miniMap(m.rows,9)).join("")}</div></button>`;
+    const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la ${partName(ch.part)}`, P=PARTS.find(p=>p.id===ch.part);
+    return `<button class="chcard${open?"":" locked"}${k===3?" s3":""}${isNew?" new":""}" data-ch="${ch.id}" data-why="${why}" style="--i:${i}${P?`;--gc:${P.c};--gl:${P.l}`:""}">`+
+      `<span class="chico">${ICO.clock()}</span><span class="chtag">${P?P.title:"Desafío"}</span>`+
+      `<div class="chmaps">${ch.levels.map(m=>miniMap(m.rows,6)).join("")}</div><h3>${ch.title}</h3>`+
+      (open?`<div class="chrow"><span class="stars">${starRow(k)}</span>${best!=null?`<span class="chbest">${ICO.clock()}${fmtTime(best)}</span>`:""}</div>`
+           :`<span class="need">Terminá la parte ${ch.part}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`;
   }
   /* ventana emergente (aviso del desafío y código del profe) */
   function openModal(html){ closeModal();
@@ -656,6 +655,10 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(e.target.closest("#resetBtn")) return askReset();
   
+    const a=e.target.closest("#advBtn");
+    if(a){ if(a.classList.contains("locked")){ bumpEl(a,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),a.dataset.why); }
+      ADV_OPEN=!ADV_OPEN; renderMenu(true); if(ADV_OPEN){ const el=document.querySelector(".advparts"); el&&el.scrollIntoView({block:"start",behavior:RM.matches?"auto":"smooth"}); } return; }
+
     const x=e.target.closest(".chcard");
   
     if(x){ if(x.classList.contains("locked")){ bumpEl(x,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),x.dataset.why); }
@@ -1447,7 +1450,7 @@ export function boot(hidden?: Record<string, number[]>) {
       /* se acaba de terminar la parte y falta su desafío: volver al menú e invitar a jugarlo */
       const ch=part&&!wasDone&&partDone(SAVE.stars,part)&&chOf(part), toCh=ch&&!SAVE.stars[ch.id];
       if(toCh) extra+=`<div class="unl">${ICO.clock()} ¡Se abrió el ${ch.title}!</div>`;
-      else if(idx>=0&&gs&&gs.open) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;
+      else if(idx>=0&&gs&&gs.open&&!(PARTS.find(P=>P.id===nxt.part)?.extra&&!PARTS.find(P=>P.id===part)?.extra)) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;
       say("ok",ICO.star(),hasE(G.map)?"¡Llegó!":"¡Listo!",sub,extra);
       celebrate(gained);
       if(toCh) setTimeout(()=>{ if(SCREEN!=="game"||G.map!==map) return; stopRun(); renderMenu(); show("menu"); chModal(ch); },2800);
@@ -1548,7 +1551,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const sec=Math.floor(CH.acc/1000), k=timeStars(ch,sec), old=SAVE.stars[ch.id]||0, prev=SAVE.best[ch.id], rec=prev==null||sec<prev;
   
-    const gained=Math.max(0,k-old), lockedBefore=lockedSecrets();
+    const gained=Math.max(0,k-old), lockedBefore=lockedSecrets(), before=groupsNow();
   
     if(k>old) SAVE.stars[ch.id]=k; if(rec) SAVE.best[ch.id]=sec; persist();
   
@@ -1561,11 +1564,34 @@ export function boot(hidden?: Record<string, number[]>) {
     if(rec&&prev!=null) extra+=`<div class="unl">${ICO.clock()} ¡Nuevo récord!</div>`;
     extra+=secretMsgs(lockedBefore);
   
-    extra+=`<button class="nextbtn" data-chagain>Jugar otra vez${ICO.next()}</button>`;
+    /* desafío completo: no se vuelve a jugar solo; se sale al menú y se felicita */
+    const opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g), map=G.map;
+    extra+=`<button class="nextbtn" data-chdone>Volver al menú${ICO.next()}</button>`;
   
     say("ok",ICO.star(),`¡Desafío completo en ${fmtTime(sec)}!`,sub,extra);
   
     celebrate(gained);
+    CH.done={ch,k,sec,rec:rec&&prev!=null,opened};
+    setTimeout(()=>{ if(SCREEN==="game"&&G.map===map&&CH&&CH.done) chDone(); },3200);
+  }
+  /* sale del desafío terminado y muestra la felicitación en el menú */
+  function chDone(){ const d=CH&&CH.done; if(!d) return;
+    stopRun(); renderMenu(); show("menu"); chCongrats(d); }
+  function chCongrats({ch,k,sec,rec,opened}){
+    const names=[...new Set(opened.map(g=>g.part))].map(id=>PARTS.find(P=>P.id===id)).filter(Boolean);
+    const norm=names.filter(P=>!P.extra), adv=names.some(P=>P.extra);
+    let msg=`<p>Terminaste el <b>${ch.title}</b> en <b>${fmtTime(sec)}</b>${rec?" · ¡nuevo récord!":""}.</p>`;
+    if(norm.length) msg+=`<p>${ICO.unlock()} Se abrió ${norm.map(P=>`<b>${P.title}</b>`).join(" y ")}.</p>`;
+    if(adv) msg+=`<p>${ICO.unlock()} También se abrieron los <b>Niveles avanzados</b> (opcionales, abajo de todo).</p>`;
+    const dlg=openModal(`<span class="mico">${ICO.star()}</span><h2>¡Felicitaciones! Superaste la ${partName(ch.part)}</h2>`+
+      `<div class="bigstars">${starRow(k)}</div>${msg}`+
+      `<div class="mbtns"><button class="mbtn" data-go>Seguir${ICO.next()}</button></div>`);
+    confetti(); SND.unlock&&SND.unlock();
+    dlg.querySelector("[data-go]").onclick=()=>{ closeModal();
+      /* llevar a la primera card que se abrió (si es de una parte normal) */
+      const g=opened.find(g=>!PARTS.find(P=>P.id===g.part)?.extra), m=g&&MISSIONS.find(m=>m.grp===g.id);
+      const el=m&&document.querySelector(`.card[data-id="${m.id}"]`);
+      if(el){ el.scrollIntoView({block:"center",behavior:RM.matches?"auto":"smooth"}); bumpEl(el,"hey"); } };
   
   }
   
@@ -1579,7 +1605,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(CH&&e.target.closest("[data-chnext]")){ stopRun(); CH.idx++; return playLevel(); }
   
-    if(CH&&e.target.closest("[data-chagain]")){ stopRun(); return startChallenge(CH.ch); }
+    if(CH&&e.target.closest("[data-chdone]")) return chDone();
   
     const b=e.target.closest("[data-next]"); if(!b) return;
   
