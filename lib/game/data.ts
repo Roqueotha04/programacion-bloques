@@ -2,21 +2,25 @@
 /* Código extraído del juego original. No reescribir en React. */
 /* partes = cards del menú. after: partes que hay que superar (niveles + desafío extra) para abrirla.
    code: código que da el profe para abrirla (sin importar mayúsculas, espacios ni tildes) */
-/* mundos = páginas del menú. Cada uno agrupa partes (PARTS[].world) y tiene su propio look (data-world en el body, ver game.css).
-   need: el mundo se abre al juntar `stars` estrellas (niveles y desafíos) en el mundo `from`. soon: sin niveles todavía */
-export const WORLDS=[
- {id:1,title:"Órdenes",sub:"el robot sigue tus órdenes, paso a paso",c:"#3B82F0",l:"#DCE9FF"},
- {id:2,title:"Decisiones",sub:"el robot mira el mapa y decide solo",c:"#0EA5A4",l:"#CCF5F0",need:{from:1,stars:100}},
- {id:3,title:"Eventos",sub:"el robot reacciona a lo que pasa",c:"#8B5CF6",l:"#E9DEFF",need:{from:2,stars:15}}
+/* mundos = carrusel del menú (cada uno es una página con sus partes). Cada edición tiene los suyos (applyKids, applyPython).
+   parts: partes del mundo (setWorlds les pone PARTS[].world). theme: aspecto (data-world en el body, ver game.css; también elige el dibujo).
+   lock: bloqueado para los alumnos (sin código; ?profe lo abre). Sin partes en la edición = «Próximamente».
+   Los mundos se eligen libres; adentro, la primera parte está abierta y las demás van en orden (PARTS[].after) */
+export const WORLDS=[];
+export const NORMAL_WORLDS=[
+ {id:1,theme:"seq",title:"Secuencia",sub:"el robot sigue tus órdenes, paso a paso",c:"#3B82F0",l:"#DCE9FF",parts:[1,2,3]},
+ {id:2,theme:"opt",title:"Optimización",sub:"menos bloques: repetir y funciones",c:"#FF9A2E",l:"#FFE2C2",parts:[4,4.5,5,5.5]},
+ {id:3,theme:"cond",title:"Condicionales",sub:"el robot mira el mapa y decide solo",c:"#0EA5A4",l:"#CCF5F0",parts:[6,7]},
+ {id:4,theme:"ev",title:"Eventos",sub:"el robot reacciona a las teclas",c:"#8B5CF6",l:"#E9DEFF",parts:[8,9,10],lock:true}
 ];
 export const PARTS=[
- {id:1,world:1,title:"Secuencia",sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
- {id:2,world:1,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
- {id:3,world:1,title:"Bailar",sub:"pintar, bailar y juntar baterías",c:"#EC4899",l:"#FCE0EF",after:[2]},
- {id:4,world:1,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[3],code:"genIArepetir"},
- {id:5,world:1,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[2],code:"funcionesGENia"},
+ {id:1,title:"Secuencia",sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
+ {id:2,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
+ {id:3,title:"Bailar",sub:"pintar, bailar y juntar baterías",c:"#EC4899",l:"#FCE0EF",after:[2]},
+ {id:4,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[]},
+ {id:5,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[4]},
  /* la parte 6 (Mundos) se agrega más abajo; la 7 (Si) va última */
- {id:7,world:3,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[2,4]}
+ {id:7,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[6]}
 ];
 /* cls: reglas (1 = meta de bloques, 2 = máximo de bloques).
    tools: bloques extra (r repetir, n pincel, p pintar de un toque, b bailar, i si).
@@ -47,7 +51,7 @@ export const GROUPS=[
 /* ===== Repetir avanzado (inicio) ===== */
 /* PARTE 4.5: repetir avanzado, opcional para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir
    otras partes y no tiene desafío. No está en la edición chicos. */
-PARTS.push({id:4.5,world:1,title:"Repetir avanzado",sub:"repetir con colores, baterías y repetir adentro",c:"#F97316",l:"#FFE4CC",after:[4],extra:true});
+PARTS.push({id:4.5,title:"Repetir avanzado",sub:"repetir con colores, baterías y repetir adentro",c:"#F97316",l:"#FFE4CC",after:[4],extra:true});
 GROUPS.push(
  {id:"I",part:4.5,cls:2,tools:"rpb",strict:true,title:"Repetir con todo",sub:"pintar, bailar y juntar adentro del repetir",need:0,c:"#F97316",l:"#FFE4CC"},
  {id:"X",part:4.5,cls:2,tools:"rpb",strict:true,title:"Mapas grandes",sub:"un repetir adentro de otro",need:8,c:"#DC2626",l:"#FFD9D9"});
@@ -55,7 +59,7 @@ GROUPS.push(
 /* ===== Funciones avanzadas (inicio) ===== */
 /* PARTE 5.5: funciones avanzadas (recursión). Se abre al superar la parte 5, no cuenta para abrir otras partes. No está en la edición chicos.
    (Mundos y Si, antes partes 6 y 7, están comentadas de momento) */
-PARTS.push({id:5.5,world:1,title:"Funciones avanzadas",sub:"una función que se llama a sí misma",c:"#7C3AED",l:"#EDE4FF",after:[5],extra:true});
+PARTS.push({id:5.5,title:"Funciones avanzadas",sub:"una función que se llama a sí misma",c:"#7C3AED",l:"#EDE4FF",after:[5],extra:true});
 GROUPS.push(
  {id:"Y",part:5.5,cls:3,adv:true,tools:"pf",strict:true,title:"Se llama a sí misma",sub:"la función se repite hasta llegar a la estrella",need:0,c:"#7C3AED",l:"#EDE4FF"},
  {id:"Z",part:5.5,cls:3,adv:true,tools:"rpbf",strict:true,title:"Recursión con todo",sub:"repetir, pintar y bailar",need:6,c:"#C026D3",l:"#FAE1FD"},
@@ -64,7 +68,7 @@ GROUPS.push(
 /* ===== Mundos (inicio) ===== */
 /* el mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
    reveal: se muestran las miniaturas de los mundos antes de correr. conds: condiciones del bloque si. pool+show: se sortean show mundos del pool */
-PARTS.push({id:6,world:2,title:"Condicional",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[2,4]});
+PARTS.push({id:6,title:"Condicional",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[]});
 GROUPS.push(
  {id:"S",part:6,cls:2,tools:"rpbie",strict:true,title:"El mapa cambia",sub:"las celdas cambian de lugar",need:0,c:"#6366F1",l:"#E0E1FF"},
  {id:"T",part:6,cls:2,tools:"rie",strict:true,title:"Paredes",sub:"el robot siente las paredes",need:6,c:"#0EA5E9",l:"#D3F0FC"},
@@ -208,7 +212,7 @@ MISSIONS.push(...MUNDOS);
    keys: teclas del nivel (u d l r flechas, s espacio). sol: «tecla:acciones» (una letra por acción). play: teclas que ganan con la sol.
    goal: bloques de la meta («al tocar» + cada evento + cada acción), max = goal + 2. Estrellas (starsAdv): 1 llegó, +1 dentro de goal,
    +1 sin acciones de más (camino más corto) */
-PARTS.push({id:8,world:3,title:"Eventos",sub:"al apretar una tecla, el robot actúa",c:"#8B5CF6",l:"#E9DEFF",after:[1]});
+PARTS.push({id:8,title:"Eventos",sub:"al apretar una tecla, el robot actúa",c:"#8B5CF6",l:"#E9DEFF",after:[]});
 GROUPS.push(
  {id:"EV",part:8,cls:2,tools:"k",title:"Una tecla, una acción",sub:"asociá cada tecla con lo que hace el robot",need:0,c:"#8B5CF6",l:"#E9DEFF"},
  {id:"EW",part:8,cls:2,tools:"kp",strict:true,title:"Pilas y colores",sub:"una tecla puede hacer varias cosas",need:6,c:"#EC4899",l:"#FCE0EF"});
@@ -227,7 +231,7 @@ MISSIONS.push(...[
 /* PARTE 9 (Mundo 3, experimental): eventos libres. Igual que la parte 8 pero el alumno elige la tecla de cada evento (selector: apretar una tecla,
    letras, números, flechas o espacio, o tocar una en pantalla) y puede poner hasta evmax eventos. Si dos eventos usan la misma tecla, corren los
    dos (de arriba hacia abajo). free:true. sol/play con teclas u d l r s (el selector acepta más). maxAct: tope de acciones antes de explotar */
-PARTS.push({id:9,world:3,title:"Eventos libres",sub:"elegí vos qué tecla hace cada cosa",c:"#A855F7",l:"#F1E1FF",after:[8]});
+PARTS.push({id:9,title:"Eventos libres",sub:"elegí vos qué tecla hace cada cosa",c:"#A855F7",l:"#F1E1FF",after:[8]});
 GROUPS.push(
  {id:"EL",part:9,cls:2,tools:"kp",strict:true,title:"Elegí tus teclas",sub:"cada evento con la tecla que quieras",need:0,c:"#A855F7",l:"#F1E1FF"},
  {id:"EM",part:9,cls:2,tools:"kp",strict:true,title:"Mapas grandes",sub:"pilas largas y pocos eventos",need:6,c:"#6366F1",l:"#E0E1FF"});
@@ -247,7 +251,7 @@ MISSIONS.push(...[
    sola al pasar y abre la puerta de su color («K», «J», «C»); el portal («O» azul, «U» naranja) lleva al otro del mismo color. Los mapas lo necesitan:
    sin las llaves no se llega a la estrella. La mecánica es la de siempre (engine: tryMove, shortest). Mismas reglas de eventos que la parte 9 (free,
    evmax, goal = «al tocar» + eventos + acciones, max = goal + 2). maxAct alto: los caminos son largos (hasta ~40 acciones) */
-PARTS.push({id:10,world:3,title:"Llaves y portales",sub:"puzzles: llaves, puertas y portales",c:"#06B6D4",l:"#CFF6FC",after:[9],icon:"key"});
+PARTS.push({id:10,title:"Llaves y portales",sub:"puzzles: llaves, puertas y portales",c:"#06B6D4",l:"#CFF6FC",after:[9],icon:"key"});
 GROUPS.push(
  {id:"LP",part:10,cls:2,tools:"kp",strict:true,title:"Llaves y portales",sub:"una llave, una puerta, un portal",need:0,c:"#06B6D4",l:"#CFF6FC"},
  {id:"LQ",part:10,cls:2,tools:"kp",strict:true,title:"Puzzles grandes",sub:"mapas grandes: pensá el camino antes de apretar",need:6,c:"#F5B800",l:"#FFF3C4"});
@@ -269,6 +273,10 @@ const byPart=(a,b)=>a.part-b.part;
 PARTS.sort((a,b)=>a.id-b.id); GROUPS.sort(byPart); MISSIONS.sort(byPart);
 function numberMissions(){ PARTS.forEach(p=>MISSIONS.filter(m=>m.part===p.id).forEach((m,i)=>m.num=i+1)); } /* numeración dentro de cada parte */
 numberMissions();
+/* pone los mundos de la edición y le marca a cada parte su mundo */
+function setWorlds(list){ WORLDS.splice(0,WORLDS.length,...list.map(w=>({...w})));
+  PARTS.forEach(p=>{ const w=WORLDS.find(x=>x.parts.includes(p.id)); p.world=w?w.id:1; }); }
+setWorlds(NORMAL_WORLDS);
 export const NORMAL_COUNT={}; PARTS.forEach(p=>NORMAL_COUNT[p.id]=MISSIONS.filter(m=>m.part===p.id).length); /* niveles por parte del juego normal */
 /* desafíos extra: 3 niveles seguidos con cronómetro (no hay límite de tiempo, solo se mide).
    Estrellas por el tiempo total: hasta t3 segundos = 3, hasta t2 = 2, más = 1.
@@ -358,7 +366,7 @@ export const KIDS_CHALLENGES=[
    icon: ícono de la tarjeta del menú. tip = [título, ayuda] del cartel. Los ids (pt…, ll…, ge…, xpt, xll) no se renombran */
 export const KIDS_PARTS={
  parts:[
-  {id:5,title:"Portales",sub:"entrás por uno y salís por el otro",c:"#06B6D4",l:"#CFF6FC",after:[4],kidsOnly:true,icon:"portal"},
+  {id:5,title:"Portales",sub:"entrás por uno y salís por el otro",c:"#06B6D4",l:"#CFF6FC",after:[],kidsOnly:true,icon:"portal"},
   {id:6,title:"Llaves",sub:"cada llave abre la puerta de su color",c:"#F5B800",l:"#FFF3C4",after:[5],kidsOnly:true,icon:"key"}],
  groups:[
   {id:"PO",part:5,cls:1,tools:"",title:"Primeros portales",sub:"entrás por uno y salís por el otro",need:0,c:"#06B6D4",l:"#CFF6FC"},
@@ -412,6 +420,12 @@ export const KIDS_PARTS={
    {title:"La llave celeste",rows:["R.#c.","..#.#","C....","E####"],sol:"d r d r r u u d d l l l d"},
    {title:"Todo junto",rows:["R.U#E","####K","U.#..","k...#"],sol:"r r d r r r u r u u"}]}]};
 /* ===== Portales y llaves (fin) ===== */
+/* mundos de chicos: el 3 es Portales (no tienen condicionales) y Eventos queda bloqueado (todavía no tiene niveles acá) */
+export const KIDS_WORLDS=[
+ {id:1,theme:"seq",title:"Secuencia",sub:"el robot sigue tus órdenes, paso a paso",c:"#3B82F0",l:"#DCE9FF",parts:[1,2,3]},
+ {id:2,theme:"opt",title:"Optimización",sub:"menos bloques con repetir",c:"#FF9A2E",l:"#FFE2C2",parts:[4]},
+ {id:3,theme:"portal",title:"Portales",sub:"portales, llaves y puertas",c:"#06B6D4",l:"#CFF6FC",parts:[5,6]},
+ {id:4,theme:"ev",title:"Eventos",sub:"el robot reacciona a las teclas",c:"#8B5CF6",l:"#E9DEFF",parts:[],lock:true}];
 export const KIDS={missions:["a3","a4","b1","b2","b3","c1","h1","h2","h3","h4","h5","l1","l2","m1","m2","m3","w1","w2","d1","d2","d3","d4","f2","r2","r4","r5"],need:{B:4,C:10,H:0,F:8,R:10},extra:30};
 /* edición activa: "normal", "chicos" (applyKids) o "python" (applyPython). selfTest la mira para sus reglas */
 export const ED={kind:"normal"};
@@ -433,7 +447,7 @@ export function applyKids(){
     CHALLENGES[i]=ch; });
   GROUPS.forEach(g=>{ if(g.id in KIDS.need) g.need=KIDS.need[g.id]; });
   CHALLENGES.forEach(c=>{ c.t3+=KIDS.extra; c.t2+=KIDS.extra; });
-  numberMissions();
+  numberMissions(); setWorlds(KIDS_WORLDS);
 }
 
 /* ===== Edición Python (inicio) =====
@@ -456,7 +470,7 @@ export function applyKids(){
 const MAIN0="def main():\n    ...\n\nmain()\n";
 export const PY_PARTS=[
  {id:1,title:"Bloques y Python",sub:"secuencia, pintar, bailar y repetir: mirá cómo queda el código",c:"#3776AB",l:"#DCE9F7",after:[],py:true},
- {id:2,title:"Funciones",sub:"crear y llamar funciones (def)",c:"#5B6CF0",l:"#E3E6FF",after:[1],py:true},
+ {id:2,title:"Funciones",sub:"crear y llamar funciones (def)",c:"#5B6CF0",l:"#E3E6FF",after:[],py:true},
  {id:3,title:"Escribí en Python",sub:"ahora el código lo escribís vos",c:"#A35BD6",l:"#F0E1FF",after:[2],py:true},
  {id:4,title:"Variables y parámetros",sub:"guardar números y pasárselos a las funciones",c:"#C99400",l:"#FFF4C7",after:[3],py:true},
  {id:4.5,title:"Mientras",sub:"while e if: repetir hasta llegar y decidir",c:"#0EA5E9",l:"#D3F0FC",after:[4],extra:true,py:true}];
@@ -572,6 +586,11 @@ export const PY_CHALLENGES=[
    {title:"Avanzar n",rows:["R...#####","###..####","####....E"],pre:MAIN0,sol:"def avanzar(n):\n    for i in range(n):\n        derecha()\n\ndef main():\n    avanzar(3)\n    abajo()\n    avanzar(1)\n    abajo()\n    avanzar(4)\n\nmain()\n"},
    {title:"Ida y vuelta",rows:["R....#","####.#","E....#"],pre:MAIN0,sol:"largo = 4\n\ndef main():\n    for i in range(largo):\n        derecha()\n    abajo()\n    abajo()\n    for i in range(largo):\n        izquierda()\n\nmain()\n"},
    {title:"Filas que crecen",rows:["RX#####","#.XX###","###.XXX","######E"],pre:MAIN0,sol:"def fila(n):\n    for i in range(n):\n        derecha()\n        pintar()\n\ndef main():\n    largo = 1\n    for i in range(3):\n        fila(largo)\n        abajo()\n        largo = largo + 1\n\nmain()\n"}]}];
+/* mundos de Python: solo el 1 se abre de momento */
+export const PY_WORLDS=[
+ {id:1,theme:"seq",title:"Secuencia",sub:"bloques y su código en Python",c:"#3776AB",l:"#DCE9F7",parts:[1]},
+ {id:2,theme:"opt",title:"Funciones",sub:"def, escribir código, variables y while",c:"#5B6CF0",l:"#E3E6FF",parts:[2,3,4,4.5],lock:true},
+ {id:3,theme:"ev",title:"Eventos",sub:"el robot reacciona a las teclas",c:"#8B5CF6",l:"#E9DEFF",parts:[],lock:true}];
 /* pasa a la edición Python: reemplaza partes, grupos, niveles y desafíos, y saca los códigos de clase (son del juego de bloques) */
 export function applyPython(){
   ED.kind="python";
@@ -581,7 +600,7 @@ export function applyPython(){
     return Object.assign(m,{part:g.part,cls:g.blocks?g.cls:4,py:!g.blocks,tools:m.tools??g.tools,strict:m.strict??!!g.strict,adv:false}); }));
   put(CHALLENGES,PY_CHALLENGES); CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.blocks?ch.cls:4,py:!ch.blocks,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
   CLASS_CODES.length=0;
-  numberMissions();
+  numberMissions(); setWorlds(PY_WORLDS);
 }
 /* ===== Edición Python (fin) ===== */
 

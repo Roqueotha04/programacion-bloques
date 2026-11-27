@@ -57,15 +57,17 @@ export function boot(hidden?: Record<string, number[]>) {
   
   applyProfe();
   
-  /* mundos: un mundo se abre al juntar estrellas en otro (WORLDS[].need); ?profe lo abre todo */
+  /* mundos: se eligen libres en el carrusel; los que tienen lock quedan cerrados (?profe los abre) y los que no tienen partes son «Próximamente» */
   const worldOf=p=>(PARTS.find(x=>x.id===p)||{}).world||1;
   const worldParts=w=>PARTS.filter(p=>(p.world||1)===w);
   const worldStars=w=>worldParts(w).reduce((a,p)=>a+MISSIONS.filter(m=>m.part===p.id).reduce((b,m)=>b+(SAVE.stars[m.id]||0),0)
     +CHALLENGES.filter(c=>c.part===p.id).reduce((b,c)=>b+(SAVE.stars[c.id]||0),0),0);
   const worldMax=w=>worldParts(w).reduce((a,p)=>a+3*(MISSIONS.filter(m=>m.part===p.id).length+CHALLENGES.filter(c=>c.part===p.id).length),0);
-  function worldLocked(w){ const n=WORLDS.find(x=>x.id===w).need; return !PROFE&&!!n&&worldStars(n.from)<n.stars; }
-  function worldWhy(w){ const n=WORLDS.find(x=>x.id===w).need; return `Juntá ${n.stars} estrellas en el Mundo ${n.from} (tenés ${worldStars(n.from)})`; }
-  let WORLD=null; /* mundo abierto en el menú; null = pantalla de mundos */
+  const worldSoon=w=>!worldParts(w).length;
+  function worldLocked(w){ const W=WORLDS.find(x=>x.id===w); return !W||worldSoon(w)||(!PROFE&&!!W.lock); }
+  function worldWhy(w){ return `El mundo ${WORLDS.find(x=>x.id===w).title} todavía está bloqueado: ¡muy pronto!`; }
+  let WORLD=null; /* mundo abierto en el menú: null = carrusel de mundos, número = página del mundo, "map" = mapa propio */
+  let CAR=0; /* índice del mundo que se ve en el carrusel */
   function groupsNow(){ const gs=groupState(SAVE.stars,SAVE.codes);
     if(PROFE) gs.forEach(s=>s.open=true);
     else gs.forEach(s=>{ const w=worldOf(s.g.part); if(worldLocked(w)){ s.open=false; s.worldLock=w; } });
@@ -299,7 +301,8 @@ export function boot(hidden?: Record<string, number[]>) {
   
   $("edPlay").innerHTML=ICO.flag()+"Jugar este mapa";
   
-  $("shopBtn").innerHTML=ICO.palette()+"<span>Taller del robot</span>";
+  { let i=0; $("heroTitle").innerHTML="Programa con GENI".split(" ").map(w=>`<b class="word">${[...w].map(ch=>`<span aria-hidden="true" style="--i:${i++};color:${w==="GENI"?"#3E6FA8":"#14325C"}">${ch}</span>`).join("")}</b>`).join(" "); }
+  $("shopBtn").innerHTML=ICO.palette()+"<span>Taller del robot</span>"; $("mapBtn").innerHTML=ICO.pencil()+"<span>Mapa propio</span>";
   
   $("resetBtn").innerHTML=ICO.trash("currentColor")+"Borrar progreso";
   
@@ -307,7 +310,6 @@ export function boot(hidden?: Record<string, number[]>) {
   
   const pick=a=>a[Math.random()*a.length|0];
   
-  { let i=0; $("heroTitle").innerHTML="Programa con GENI".split(" ").map(w=>`<b class="word">${[...w].map(ch=>`<span aria-hidden="true" style="--i:${i++};color:${w==="GENI"?"#3E6FA8":"#14325C"}">${ch}</span>`).join("")}</b>`).join(" "); }
   $("sky").innerHTML=Array.from({length:30},(_,i)=>{ const navy=i%10<3;
     return `<i class="${i%3===0?"st":""}${navy?" nv":""}" style="--x:${Math.random()*100}%;--s:${18+Math.random()*46}px;--c:${navy?"#14325C":pick(RAIN)};--d:${18+Math.random()*22}s;--dl:-${Math.random()*40}s"></i>`; }).join("");
   
@@ -429,13 +431,13 @@ export function boot(hidden?: Record<string, number[]>) {
   
   let SCREEN="menu";
   
-  function show(id){ SCREEN=id; document.body.dataset.scr=id; document.body.dataset.world=(id==="menu"||id==="game")&&WORLD?WORLD:""; ["menu","game","editor","shop"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); scrollTo(0,0);
+  function show(id){ SCREEN=id; document.body.dataset.scr=id; const WW=typeof WORLD==="number"?WORLDS.find(w=>w.id===WORLD):null; document.body.dataset.world=(id==="menu"||id==="game")&&WW?WW.theme:""; ["menu","game","editor","shop"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); scrollTo(0,0);
   
     if(id!=="game"&&CH) endChallenge(); /* salir del juego cancela el desafío en curso */
   
     const inCh=id==="game"&&!!(G&&G.map.ch);
   
-    const inW=id==="menu"&&!!WORLD; if(inW) setTop(WORLD,"Mundo "+WORLD+" · "+WORLDS.find(w=>w.id===WORLD).title);
+    const inW=id==="menu"&&!!WORLD; if(inW){ if(WW) setTop(WORLD,"Mundo "+WORLD+" · "+WW.title); else setTop(ICO.pencil(),"Mapa propio"); }
     $("backBtn").classList.toggle("hidden",id==="menu"&&!WORLD); $("codeBtn").classList.toggle("hidden",id!=="menu"); $("logo").classList.toggle("hidden",id!=="menu"||inW);
   
     $("tTitle").classList.toggle("hidden",id==="menu"&&!inW); $("tStars").classList.toggle("hidden",id!=="game"||inCh); $("tTimer").classList.toggle("hidden",!inCh); }
@@ -466,9 +468,9 @@ export function boot(hidden?: Record<string, number[]>) {
   
     $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`;
   
-    const GS=groupsNow(); let h="", i=0, fresh=false; const HW={1:"",2:"",3:""}, IW={1:0,2:0,3:0}; /* IW: contador de entrada por mundo, así la animación no espera a las cards de otros mundos */
+    const GS=groupsNow(); let h="", i=0, fresh=false; const HW={}, IW={}; WORLDS.forEach(W=>{ HW[W.id]=""; IW[W.id]=0; }); /* IW: contador de entrada por mundo, así la animación no espera a las cards de otros mundos */
   
-    for(const P of PARTS){ const pw=P.world||1; h=""; i=IW[pw];
+    for(const P of PARTS){ const pw=P.world||1; if(!(pw in HW)){ HW[pw]=""; IW[pw]=0; } h=""; i=IW[pw];
   
       /* una card por parte; cada grupo de niveles se abre por separado */
   
@@ -505,7 +507,7 @@ export function boot(hidden?: Record<string, number[]>) {
         if(isNew){ SAVE.seen.push(ch.id); fresh=true; }
         h+=chCard(ch,i++,open,isNew);
       }
-      HW[W.id]+=h+`</section>`; IW[W.id]=i; }
+      HW[W.id]=(HW[W.id]||"")+h+`</section>`; IW[W.id]=i; }
     i=0; renderWorlds(HW);
   
     let c=`<button class="card make" id="makeBtn" style="--i:${i++}"><span class="plus">+</span><h3>Creá tu mapa</h3></button>`;
@@ -513,7 +515,8 @@ export function boot(hidden?: Record<string, number[]>) {
     if(SAVE.custom) c+=`<button class="card" data-id="custom" style="--i:${i}">${miniMap(SAVE.custom.rows)}<h3>Mi mapa</h3></button>`;
   
     $("cards3").innerHTML=c;
-    ["hero","worlds","sec3","cards3"].forEach(id=>$(id).classList.toggle("hidden",!!WORLD)); $("parts").classList.toggle("hidden",!WORLD);
+    ["hero","worlds"].forEach(id=>$(id).classList.toggle("hidden",!!WORLD)); $("parts").classList.toggle("hidden",typeof WORLD!=="number");
+    ["sec3","cards3"].forEach(id=>$(id).classList.toggle("hidden",WORLD!=="map"));
   
     if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); }
   
@@ -523,14 +526,69 @@ export function boot(hidden?: Record<string, number[]>) {
   const SOON_EV=`<section class="soonev"><div class="evpad"><span class="ek u">${ICO.arrow("u")}</span><span class="ek l">${ICO.arrow("l")}</span><span class="ek d">${ICO.arrow("d")}</span><span class="ek r">${ICO.arrow("r")}</span></div>`+
     `<div class="evtxt"><span class="evtag">Próximamente</span><h3>Eventos con flechas</h3><p>Cada flecha va a tener su propio programa. El robot junta cosas, las guarda en el inventario y termina cruzando un portal.</p>`+
     `<div class="evinv"><i></i><i></i><i></i><i></i></div></div><div class="evportal"></div></section>`;
+  /* carrusel: un mundo por vez, con su número, su dibujo y flechas (o deslizar / flechas del teclado) */
   function renderWorlds(HW){
-    $("worlds").innerHTML=WORLDS.map(W=>{ const soon=!worldParts(W.id).length, locked=!soon&&worldLocked(W.id), got=worldStars(W.id), max=worldMax(W.id),
-      ico=W.id===1?ICO.blocks():W.id===2?ICO.ifq():ICO.arrow("r"), names=worldParts(W.id).map(p=>`<span class="wchip">${p.title}</span>`).join("");
-      return `<button class="wcard${locked?" locked":""}${soon?" soon":""}" data-w="${W.id}" data-world="${W.id}" data-why="${soon?"Próximamente":locked?worldWhy(W.id):""}" style="--wc:${W.c};--wl:${W.l};--i:${W.id}">`+
-        `<span class="wnum">Mundo ${W.id}</span><span class="wico">${ico}</span><h2>${W.title}</h2><p>${W.sub}</p><div class="wchips">${names}</div>`+
-        (soon?`<span class="need">Próximamente</span>`:locked?`<span class="need">${ICO.lock("#9A5A00")}${worldWhy(W.id)}</span>`:`<span class="gprog">${starIco(true)} ${got} / ${max}</span>`)+`</button>`; }).join("");
-    if(WORLD){ const W=WORLDS.find(w=>w.id===WORLD);
-      $("parts").innerHTML=`<section class="wbanner"><h2>${W.title}</h2><span>${W.sub}</span></section>`+HW[WORLD]+(WORLD===3?SOON_EV:""); }
+    CAR=Math.max(0,Math.min(CAR,WORLDS.length-1));
+    const slides=WORLDS.map((W,k)=>{ const soon=worldSoon(W.id), locked=worldLocked(W.id), got=worldStars(W.id), max=worldMax(W.id),
+      names=worldParts(W.id).map(p=>`<span class="wchip">${p.title}</span>`).join(""), why=soon?"Próximamente":locked?worldWhy(W.id):"";
+      return `<div class="wslide${locked?" locked":""}" data-world="${W.theme}" style="--wc:${W.c};--wl:${W.l}">`+
+        `<span class="wnum">${W.id}</span><h2>${W.title}</h2><p>${W.sub}</p>`+
+        `<button class="wart" data-w="${W.id}" data-why="${why}" aria-label="Entrar al mundo ${W.title}">${worldArt(W)}${locked?`<span class="wlock">${ICO.lock("#fff")}</span>`:""}</button>`+
+        `<div class="wchips">${names}</div>`+
+        (locked?`<span class="need">${ICO.lock("#9A5A00")}Próximamente</span>`
+               :`<button class="wgo" data-w="${W.id}"><span class="wst">${starIco(true)} ${got} / ${max}</span><span>Jugar</span>${ICO.next()}</button>`)+
+        (PROFE&&W.lock?`<span class="profe">Bloqueado para alumnos</span>`:"")+`</div>`; }).join("");
+    $("worlds").innerHTML=`<button class="carr prev" id="carPrev" aria-label="Mundo anterior">${CHEV}</button>`+
+      `<div class="carview"><div class="cartrack" id="carTrack">${slides}</div></div>`+
+      `<button class="carr next" id="carNext" aria-label="Mundo siguiente">${CHEV}</button>`+
+      `<div class="cardots">${WORLDS.map((W,k)=>`<button class="cdot" data-k="${k}" aria-label="Mundo ${W.id}: ${W.title}"></button>`).join("")}</div>`;
+    carGo(CAR,true);
+    if(typeof WORLD==="number"){ const W=WORLDS.find(w=>w.id===WORLD);
+      $("parts").innerHTML=`<section class="wbanner"><h2>${W.title}</h2><span>${W.sub}</span></section>`+(HW[WORLD]||"")+(W.theme==="ev"?SOON_EV:""); }
+  }
+  const CHEV=`<svg viewBox="0 0 40 64"><path d="M8 6 L33 32 L8 58" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  function carGo(k,quiet){ const n=WORLDS.length; k=Math.max(0,Math.min(n-1,k)); if(!quiet&&k!==CAR) SND.pick(); CAR=k;
+    const t=$("carTrack"); if(!t) return; t.style.setProperty("--k",k);
+    t.querySelectorAll(".wslide").forEach((el,i)=>{ el.setAttribute("aria-hidden",String(i!==k)); el.querySelectorAll("button").forEach(b=>b.tabIndex=i===k?0:-1); });
+    $("carPrev").classList.toggle("off",k===0); $("carNext").classList.toggle("off",k===n-1);
+    document.querySelectorAll("#worlds .cdot").forEach((d,i)=>d.classList.toggle("on",i===k)); }
+  /* dibujo de cada mundo: GENI sobre unas baldosas en perspectiva y algo de lo que enseña el mundo (según W.theme) */
+  function worldArt(W){
+    const iso=(x,y)=>[124+(x-y)*36,92+(x+y)*21];
+    const tile=(x,y,top="#C9D6E8",side="#9FB2CC")=>{ const [cx,cy]=iso(x,y), st=`stroke="#53657E" stroke-width="2" stroke-linejoin="round"`;
+      return `<path d="M${cx-36} ${cy} L${cx} ${cy+21} L${cx} ${cy+33} L${cx-36} ${cy+12}Z" fill="${side}" ${st}/>`+
+        `<path d="M${cx} ${cy+21} L${cx+36} ${cy} L${cx+36} ${cy+12} L${cx} ${cy+33}Z" fill="${side}" opacity=".85" ${st}/>`+
+        `<path d="M${cx} ${cy-21} L${cx+36} ${cy} L${cx} ${cy+21} L${cx-36} ${cy}Z" fill="${top}" ${st}/>`; };
+    const GOAL=["#F6D77A","#D2AE45"];
+    const floor=cells=>cells.slice().sort((a,b)=>(a[0]+a[1])-(b[0]+b[1])).map(c=>tile(...c)).join("");
+    const bot=(x,y)=>{ const [cx,cy]=iso(x,y); return `<ellipse cx="${cx}" cy="${cy+2}" rx="20" ry="7" fill="rgba(13,48,73,.25)"/><g class="wbot"><svg x="${cx-38}" y="${cy-74}" width="76" height="76" viewBox="-50 -50 100 100" overflow="visible">${robotSVG()}</svg></g>`; };
+    const star=(x,y)=>{ const [cx,cy]=iso(x,y); return `<g class="wstar"><polygon points="${starPts(17,cx,cy-26)}" fill="#FFC21A" stroke="#B98500" stroke-width="2.5" stroke-linejoin="round"/></g>`; };
+    const arrow=(cx,cy,r,rot)=>`<path transform="rotate(${rot} ${cx} ${cy})" d="M${cx-r} ${cy} H${cx+r*.6} M${cx+r*.1} ${cy-r*.6} L${cx+r} ${cy} L${cx+r*.1} ${cy+r*.6}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const chip=(x,y,w,h,fill,inner,cls="")=>`<g class="wfloat ${cls}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9" fill="${fill}" stroke="#0D3049" stroke-width="2.5"/>${inner}</g>`;
+    const txt=(x,y,t,size=22)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="700" fill="#fff" font-family="inherit">${t}</text>`;
+    let h="";
+    if(W.theme==="seq"){ /* una fila de órdenes, una después de la otra */
+      h=floor([[0,0],[1,0],[2,0],[2,1],[2,2,...GOAL]])+bot(0,0)+star(2,2)+
+        [0,0,90].map((r,i)=>chip(250,22+i*42,54,34,"#3B82F0",arrow(277,39+i*42,13,r),"d"+i)).join(""); }
+    else if(W.theme==="opt"){ /* repetir y funciones: menos bloques */
+      h=floor([[0,0],[1,0],[2,0],[3,0],[3,1,...GOAL]])+bot(0,0)+star(3,1)+
+        chip(232,22,78,50,"#FF9A2E",`<path d="M250 47a10 10 0 0 1 17-7M266 49a10 10 0 0 1-17 7" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>`+txt(290,56,"×4"),"d0")+
+        chip(240,90,62,40,"#5B6CF0",txt(271,117,"f( )"),"d1"); }
+    else if(W.theme==="cond"){ /* el robot mira la celda y decide */
+      h=floor([[0,0],[1,0,"#FF8A8F","#D9545B"],[2,0],[0,1],[1,1],[2,1,"#7EE0A8","#3FAE70"],[1,2],[2,2,...GOAL]])+bot(0,0)+star(2,2)+
+        `<g class="wfloat d0"><path d="M272 16 L306 50 L272 84 L238 50Z" fill="#0EA5A4" stroke="#0D3049" stroke-width="2.5" stroke-linejoin="round"/>${txt(272,62,"?",34)}</g>`+
+        `<g class="wfloat d1"><circle cx="255" cy="114" r="13" fill="#FF5A62" stroke="#0D3049" stroke-width="2.5"/><circle cx="290" cy="114" r="13" fill="#1EC48C" stroke="#0D3049" stroke-width="2.5"/></g>`; }
+    else if(W.theme==="portal"){ /* portales y llaves */
+      const [ax,ay]=iso(1,0), [bx,by]=iso(2,1);
+      h=floor([[0,0],[1,0],[2,1],[3,1,...GOAL]])+
+        `<g class="wportal"><ellipse cx="${ax}" cy="${ay}" rx="21" ry="11" fill="#57E1FF" stroke="#0E7490" stroke-width="3"/><ellipse cx="${bx}" cy="${by}" rx="21" ry="11" fill="#57E1FF" stroke="#0E7490" stroke-width="3"/></g>`+
+        bot(0,0)+star(3,1)+
+        `<g class="wfloat d0"><circle cx="252" cy="44" r="13" fill="none" stroke="#F5B800" stroke-width="6"/><path d="M265 44 H300 M292 44 v11 M282 44 v8" fill="none" stroke="#F5B800" stroke-width="6" stroke-linecap="round"/></g>`; }
+    else { /* eventos: cada tecla, una acción */
+      h=floor([[0,0],[1,0],[1,1],[2,1,...GOAL]])+bot(0,0)+star(2,1)+
+        [[0,0,-90],[-1,1,180],[0,1,90],[1,1,0]].map(([dx,dy,r],i)=>{ const x=268+dx*38, y=22+dy*38;
+          return chip(x-16,y,34,34,"#8B5CF6",arrow(x+1,y+17,10,r),"d"+(i%3)); }).join(""); }
+    return `<svg class="wsvg" viewBox="0 0 320 210" aria-hidden="true">${h}</svg>`;
   }
   function chCard(ch,i,open,isNew){
   
@@ -672,9 +730,14 @@ export function boot(hidden?: Record<string, number[]>) {
     if(e.target.closest("#shopBtn")) return openShop();
   
     if(e.target.closest("#resetBtn")) return askReset();
-    const wc=e.target.closest(".wcard");
-    if(wc){ if(wc.classList.contains("locked")||wc.classList.contains("soon")){ bumpEl(wc,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),wc.dataset.why); }
-      WORLD=+wc.dataset.w; renderMenu(); return show("menu"); }
+    if(e.target.closest("#mapBtn")){ WORLD="map"; renderMenu(); return show("menu"); }
+    if(e.target.closest("#carPrev")) return carGo(CAR-1);
+    if(e.target.closest("#carNext")) return carGo(CAR+1);
+    const dot=e.target.closest(".cdot"); if(dot) return carGo(+dot.dataset.k);
+    const wc=e.target.closest("[data-w]");
+    if(wc){ const w=+wc.dataset.w, k=WORLDS.findIndex(x=>x.id===w); if(k!==CAR) return carGo(k);
+      if(worldLocked(w)){ bumpEl(wc.closest(".wslide"),"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),wc.dataset.why||worldWhy(w)); }
+      WORLD=w; renderMenu(); return show("menu"); }
   
   
     const x=e.target.closest(".chcard");
@@ -1868,6 +1931,13 @@ export function boot(hidden?: Record<string, number[]>) {
   if(PY_ED){ $("logo").insertAdjacentHTML("beforeend",`<span class="pytag">${ICO.code()}Python</span>`);
     $("heroSub").textContent="Escribí programas en Python, con funciones y variables, y llevá a GENI hasta la estrella."; }
   
+  /* carrusel: flechas del teclado y deslizar con el dedo */
+  addEventListener("keydown",e=>{ if(SCREEN!=="menu"||WORLD||$("modal")||/INPUT|TEXTAREA/.test(document.activeElement?.tagName||"")) return;
+    if(e.key==="ArrowLeft"){ e.preventDefault(); carGo(CAR-1); } else if(e.key==="ArrowRight"){ e.preventDefault(); carGo(CAR+1); } });
+  { let x0=null; const v=$("worlds");
+    v.addEventListener("pointerdown",e=>{ if(e.pointerType!=="mouse") x0=e.clientX; });
+    v.addEventListener("pointerup",e=>{ if(x0==null) return; const dx=e.clientX-x0; x0=null; if(Math.abs(dx)>50) carGo(CAR+(dx<0?1:-1)); });
+    v.addEventListener("pointercancel",()=>{ x0=null; }); }
   renderMenu();
   
   if(/[?&]test/.test(location.search)){ const box=document.createElement("div"); box.className="testbox";

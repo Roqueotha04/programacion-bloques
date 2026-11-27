@@ -17,6 +17,7 @@ export function MenuScreen() {
           </p>
           <div className="herobtns">
             <button className="shopbtn" id="shopBtn" />
+            <button className="mapbtn" id="mapBtn" />
             <span className="total" id="total" />
             <button
               className="resetbtn"
@@ -26,7 +27,8 @@ export function MenuScreen() {
           </div>
         </div>
       </section>
-      <div id="worlds" />
+      {/* carrusel de mundos (lo arma renderWorlds en ui.ts) */}
+      <div className="car" id="worlds" />
       <div id="parts" />
       <div className="sec" id="sec3">
         <span className="sico" style={{ background: "#DDF6FF" }} id="ico3" />

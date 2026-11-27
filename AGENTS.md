@@ -12,21 +12,31 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Juego para el aula: el alumno arma un programa arrastrando bloques y lleva a GENI hasta la estrella. No hay cuentas ni menús nuevos. El producto es este juego, en español.
 
+## Mundos (carrusel de inicio)
+
+El inicio es el encabezado «Programa con GENI» (Taller, «Mapa propio» —página aparte, `WORLD="map"`—, estrellas y borrar progreso) y debajo un **carrusel de mundos** chico y cuadrado (un mundo por vez: número, nombre, dibujo propio `worldArt` en `ui.ts`, flechas, puntos, deslizar o flechas del teclado). Tocar el dibujo o «Jugar» abre la página del mundo con sus partes. Cada edición tiene sus mundos (`NORMAL_WORLDS`, `KIDS_WORLDS`, `PY_WORLDS` en `data.ts`; `setWorlds` le pone `world` a cada parte). `theme` da el aspecto (`body[data-world]` en `game.css`) y el dibujo.
+
+- **Los mundos se eligen libres.** Adentro, la primera parte de cada mundo está abierta (`after:[]`) y las demás van en orden. Repetir y Funciones **ya no piden código**.
+- `lock:true` = bloqueado para los alumnos, sin código («Próximamente»; `?profe` lo abre). Un mundo sin partes en la edición no se abre nunca.
+- Normal: 1 Secuencia (1, 2, 3) · 2 Optimización (4, 4.5, 5, 5.5) · 3 Condicionales (6, 7) · 4 Eventos (8, 9, 10, `lock`).
+- Chicos: 1 Secuencia (1, 2, 3) · 2 Optimización (4) · 3 Portales (5 Portales, 6 Llaves) · 4 Eventos (`lock`, sin niveles).
+- Python: 1 Secuencia (1) · 2 Funciones (2, 3, 4, 4.5, `lock`) · 3 Eventos (`lock`, sin niveles).
+
 ## Partes
 
-Partes, siempre en este orden (**Mundos y Si están comentadas en `data.ts` de momento: no se ven**; los extras «Repetir avanzado» y «Funciones avanzadas» son las partes 4.5 y 5.5) (el número de parte es el orden del menú; `data.ts` ordena partes, grupos, niveles y desafíos por número de parte):
+Partes, siempre en este orden (Condicional y Si forman el mundo Condicionales, cuyos niveles se están diseñando; los extras «Repetir avanzado» y «Funciones avanzadas» son las partes 4.5 y 5.5) (el número de parte es el orden del menú; `data.ts` ordena partes, grupos, niveles y desafíos por número de parte):
 
 | N.º | Parte | Se abre con | Qué enseña |
 | --- | --- | --- | --- |
 | 1 | Secuencia | — | Mover el robot, baterías. |
 | 2 | Pintar | Parte 1 | Pincel (usar y guardar). |
 | 3 | Bailar | Parte 2 | Pintar de un toque y bailar (rojas: pintar, verdes: bailar), con baterías. Sin repetir. |
-| 4 | Repetir | Parte 3 + código del profe (`genIArepetir`) | Bloque repetir; incluye niveles de repetir con baile y pintura. |
+| 4 | Repetir | — (primera de Optimización) | Bloque repetir; incluye niveles de repetir con baile y pintura. |
 | 4.5 | Repetir avanzado *(extra)* | Parte 4 | Niveles opcionales de repetir más difíciles (colores, baterías, repetir adentro). |
-| 5 | Funciones | Parte 2 | Funciones con nombre libre: se definen y se llaman. |
+| 5 | Funciones | Parte 4 | Funciones con nombre libre: se definen y se llaman. |
 | 5.5 | Funciones avanzadas *(extra)* | Parte 5 | Recursión: una función que se llama a sí misma. |
-| ~~6~~ | Mundos *(oculta)* | Partes 2 y 4 | Cada nivel trae varios mapas y el programa tiene que ganar en todos (`si`, `si no`, paredes). |
-| ~~7~~ | Si *(oculta)* | Partes 2 y 4 | Condicional por color de celda. Siempre es la última. |
+| 6 | Condicional | — (primera de Condicionales) | Cada nivel trae varios mapas y el programa tiene que ganar en todos (`si`, `si no`, paredes). |
+| 7 | Si | Parte 6 | Condicional por color de celda. Siempre es la última. |
 
 - **Parte 4.5 «Repetir avanzado» (`extra:true`)**: opcional, para los que terminan Repetir rápido. Se abre al superar la parte 4, no cuenta para abrir otras partes, no tiene desafío y no está en `?chicos`. 7 niveles `ra1`–`ra7` (grupos `I` y `X`, `cls 2`, `tools:"rpb"`, `strict`).
 - **Parte 5.5 «Funciones avanzadas» (`extra:true`)**: no cuenta para abrir otras partes. Se abre al superar la parte 5 y no está en `?chicos`. Son niveles `adv` (grupos `Y`, `Z` y `N`): hay que ganar con una función que se llama a sí misma (la recursión corta al llegar a la estrella). Dan hasta **3 estrellas** como todos (`starsAdv`: llegar con recursión, meta de bloques, camino más corto). **En cualquier nivel** (menos «Mi mapa») más de `MAXACT` (30) acciones, o 400 eventos, devuelve `boom`: GENI se marea y explota. `selfTest` valida que cada solución use recursión, el `boom` y que ganar sin recursión no cuenta. Los ids `v1`–`v9` no se renombran. Mundos y Si (partes 6 y 7 anteriores) y sus desafíos `x5` y `x8` están comentados en `data.ts`.
@@ -56,7 +66,7 @@ Partes, siempre en este orden (**Mundos y Si están comentadas en `data.ts` de m
 ## Reglas del juego
 
 - Estrellas (1–3) según bloques usados, pista y errores. Progreso en `localStorage` (`robot-bloques-v2`; con `?profe` usa `robot-bloques-profe`). Las estrellas se guardan por id de nivel y el código del profe por número de parte (`SAVE.codes`): **no renombres ids de nivel ni renumeres partes sin migrar el guardado** (hay una migración en `ui.ts`: el código de Repetir pasó de la parte 3 a la 4).
-- **Códigos** (botón «Código» arriba a la izquierda del menú): `CLASS_CODES` en `data.ts`. `nivel1-clase2` marca Secuencia y Pintar (niveles y desafío) con 3 estrellas; `nivel2-clase2` marca Secuencia, Pintar y Bailar (así se empieza directo con Repetir); `nivel3-clase2` marca Secuencia, Pintar y Repetir (Bailar queda sin hacer). Las estrellas se acreditan al taller y repetir el código no suma dos veces. Los tres dan por ingresado el código de Repetir (así se hacen Bailar y Repetir de corrido). Funciones pide `funcionesGENia`. El mismo cuadro acepta los códigos de cada parte.
+- **Códigos** (botón «Código» arriba a la izquierda del menú): `CLASS_CODES` en `data.ts`. `nivel1-clase2` marca Secuencia y Pintar (niveles y desafío) con 3 estrellas; `nivel2-clase2` marca Secuencia, Pintar y Bailar (así se empieza directo con Repetir); `nivel3-clase2` marca Secuencia, Pintar y Repetir (Bailar queda sin hacer). Las estrellas se acreditan al taller y repetir el código no suma dos veces. Los tres dan por ingresado el código de Repetir (así se hacen Bailar y Repetir de corrido). Ninguna parte pide código hoy (el cuadro sigue aceptando `PARTS[].code` si se vuelve a poner).
 - Taller: diseños, caras (guiño, enojado, cool) y dos colores (cuerpo y detalle). Editor de mapa propio, borrar progreso (doble toque).
 - `?profe` abre todo y muestra códigos. `?test` corre `selfTest()` del motor.
 - **Configuración del profe** (botón «Configuración» en el menú, solo con `?profe`): login con usuario y contraseña y un interruptor por parte en cada vista (Normal, Chicos, Python). Lo oculto desaparece para los alumnos de esa vista; con `?profe` se ve marcado «Oculta para alumnos» y con `?test` no se oculta nada. `hideParts()` en `data.ts` saca la parte (con sus grupos, niveles y desafío) y las que dependían de ella pasan a pedir lo que pedía la oculta (no quedan trabadas). `EDITION_PARTS` lista las partes de cada vista para el panel. Se guarda en Postgres (tabla `game_config`, una fila por vista con `hidden` jsonb, ver `db/game_config.sql`); `app/page.tsx` la lee en el servidor y la pasa a `boot(hidden)`. Si la base falla, no se oculta nada. Es el único login: no agregues cuentas de alumnos.
