@@ -458,7 +458,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     for(const row of rows) for(const ch of row) h+=`<i class="${ch==="#"?"r":ch==="."?"":ch}"></i>`; return h+"</div>"; }
   
-  function partIco(P){ const p=P.id; if(P.py) return ICO.code(); if(P.icon) return ICO[P.icon](); return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===4.5||p===5.5?ICO.repeat():p===8||p===9?ICO.key():ICO.ifq(); }
+  function partIco(P){ const p=P.id; if(P.py) return ICO.code(); if(P.icon) return ICO[P.icon](); return p===1?ICO.arrow("r"):p===2?ICO.brush():p===3?ICO.repeat():p===5?ICO.music():p===4.5||p===5.5?ICO.repeat():p===9||p===10?ICO.key():ICO.ifq(); }
   
   function lockWhy(st){ return st.worldLock?worldWhy(st.worldLock):st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }
   

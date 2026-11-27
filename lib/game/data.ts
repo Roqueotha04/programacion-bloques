@@ -10,8 +10,8 @@ export const WORLDS=[];
 export const NORMAL_WORLDS=[
  {id:1,theme:"seq",title:"Secuencia",sub:"el robot sigue tus órdenes, paso a paso",c:"#3B82F0",l:"#DCE9FF",parts:[1,2,3]},
  {id:2,theme:"opt",title:"Optimización",sub:"menos bloques: repetir y funciones",c:"#FF9A2E",l:"#FFE2C2",parts:[4,4.5,5,5.5]},
- {id:3,theme:"cond",title:"Condicionales",sub:"el robot mira el mapa y decide solo",c:"#0EA5A4",l:"#CCF5F0",parts:[6,7,7.5]},
- {id:4,theme:"ev",title:"Eventos",sub:"el robot reacciona a las teclas",c:"#8B5CF6",l:"#E9DEFF",parts:[8,9,10],lock:true}
+ {id:3,theme:"cond",title:"Condicionales",sub:"el robot mira el mapa y decide solo",c:"#0EA5A4",l:"#CCF5F0",parts:[6,7,7.5,8]},
+ {id:4,theme:"ev",title:"Eventos",sub:"el robot reacciona a las teclas",c:"#8B5CF6",l:"#E9DEFF",parts:[9,10,11],lock:true}
 ];
 export const PARTS=[
  {id:1,title:"Secuencia",sub:"un bloque después del otro",c:"#3B82F0",l:"#DCE9FF",after:[]},
@@ -63,19 +63,24 @@ GROUPS.push(
  {id:"N",part:5.5,cls:3,adv:true,tools:"rpbf",strict:true,title:"Para pensar",sub:"un arranque, dos carriles y una serpiente",need:10,c:"#0EA5E9",l:"#D3F0FC"});
 /* ===== Funciones avanzadas (fin) ===== */
 /* ===== Condicionales (inicio) ===== */
-/* Mundo Condicionales: 6 «Si», 7 «Si avanzado», 7.5 «Si no». El mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño,
-   robot y estrella) y el programa tiene que ganar en TODOS. reveal: se muestran los mapas antes de correr. conds: lo que se puede elegir
-   en el si (sin conds: roja o verde). pool+show: se sortean show mundos del pool. norep: el nivel no pide repetir (3 estrellas sin él) */
+/* Mundo Condicionales: 6 «Si», 7 «Si avanzado», 7.5 «Colores con repetir», 8 «Si no». Todo con colores (sin paredes).
+   El mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
+   reveal: se muestran los mapas antes de correr. conds: lo que se puede elegir en el si (sin conds: roja o verde).
+   pool+show: se sortean show mundos del pool. norep: el nivel no pide repetir (3 estrellas sin él) */
 PARTS.push(
  {id:6,title:"Si",sub:"si la celda es roja, pintala",c:"#6366F1",l:"#E0E1FF",after:[]},
  {id:7,title:"Si avanzado",sub:"rojas y verdes: pintar o bailar",c:"#14B8A6",l:"#CCF5EF",after:[6]},
- {id:7.5,title:"Si no",sub:"si hay pared, doblá; si no, seguí",c:"#0EA5E9",l:"#D3F0FC",after:[7]});
+ {id:7.5,title:"Colores con repetir",sub:"pasillos y escaleras: el si adentro del repetir",c:"#FF9A2E",l:"#FFE2C2",after:[7]},
+ {id:8,title:"Si no",sub:"si es roja… si no…",c:"#0EA5E9",l:"#D3F0FC",after:[7.5]});
 GROUPS.push(
  {id:"CA",part:6,cls:2,norep:true,tools:"pi",strict:true,title:"Una celda",sub:"¿es roja o no? el si decide",need:0,c:"#6366F1",l:"#E0E1FF"},
  {id:"CB",part:6,cls:2,tools:"rpi",strict:true,title:"Si y repetir",sub:"el si adentro del repetir",need:6,c:"#FF9A2E",l:"#FFE2C2"},
- {id:"CV",part:7,cls:2,tools:"rpbi",strict:true,title:"Roja o verde",sub:"rojas: pintar · verdes: bailar",need:0,c:"#14B8A6",l:"#CCF5EF"},
- {id:"CN",part:7.5,cls:2,norep:true,tools:"ie",conds:["wr","wd"],title:"Pared o camino",sub:"si hay pared… si no…",need:0,c:"#0EA5E9",l:"#D3F0FC"},
- {id:"CO",part:7.5,cls:2,tools:"rie",conds:["wr","wd"],title:"Si no y repetir",sub:"el robot encuentra el camino solo",need:4,c:"#8B5CF6",l:"#E9DEFF"});
+ {id:"CV",part:7,cls:2,norep:true,tools:"pbi",strict:true,title:"Roja o verde",sub:"rojas: pintar · verdes: bailar",need:0,c:"#14B8A6",l:"#CCF5EF"},
+ {id:"CW",part:7,cls:2,norep:true,tools:"pbi",strict:true,title:"Dos celdas",sub:"dos celdas cambian: un si para cada una",need:8,c:"#0EA5A4",l:"#CCF5F0"},
+ {id:"CR",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Pasillos",sub:"el si adentro del repetir",need:0,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"CS",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Escaleras",sub:"subir, bajar y doblar con colores",need:6,c:"#E2671A",l:"#FFE4CC"},
+ {id:"CN",part:8,cls:2,norep:true,tools:"pbie",strict:true,title:"Si no",sub:"si es roja, pintá; si no, bailá",need:0,c:"#0EA5E9",l:"#D3F0FC"},
+ {id:"CO",part:8,cls:2,tools:"rpbie",strict:true,title:"Si no y repetir",sub:"el color dice qué hacer",need:4,c:"#8B5CF6",l:"#E9DEFF"});
 /* ===== Condicionales (fin) ===== */
 export const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
@@ -170,36 +175,68 @@ const CONDS=[
   worlds:[["R.##","#..#","##X.","###E"],["R.##","#..#","##..","###E"]]},
  {id:"ci5",grp:"CB",title:"Pasillo con si",max:5,reveal:true,sol:"7(r ?x(p))",
   worlds:[["########","R.X....E","########"],["########","R....X.E","########"]]},
- {id:"cv1",grp:"CV",title:"¿Roja o verde?",max:9,norep:true,reveal:true,sol:"r r ?x(p) ?v(b) r r",
+ /* parte 7: rojas y verdes, sin repetir (la celda es roja en un mapa y verde en el otro) */
+ {id:"cv1",grp:"CV",title:"¿Roja o verde?",max:9,reveal:true,sol:"r r ?x(p) ?v(b) r r",
   tip:["¿Roja o verde?","La celda cambia de color: un si para la roja (pintar) y otro para la verde (bailar). Tocá el color del si para cambiarlo"],
   worlds:[["#####","R.X.E","#####"],["#####","R.V.E","#####"]]},
- {id:"cv2",grp:"CV",title:"Pasillo de colores",max:7,reveal:true,sol:"6(r ?x(p) ?v(b))",
+ {id:"cv2",grp:"CV",title:"El pasillo dobla",max:10,reveal:true,sol:"r r ?x(p) ?v(b) r d d",
+  worlds:[["R.X.","###.","###E"],["R.V.","###.","###E"]]},
+ {id:"cv3",grp:"CV",title:"Para abajo",max:10,reveal:true,sol:"d ?x(p) ?v(b) d r r r",
+  worlds:[["R###","X###","...E"],["R###","V###","...E"]]},
+ {id:"cv4",grp:"CV",title:"Color en la esquina",max:9,reveal:true,sol:"r r ?x(p) ?v(b) d d",
+  worlds:[["R.X","##.","##E"],["R.V","##.","##E"]]},
+ {id:"cv5",grp:"CW",title:"Dos celdas",max:13,reveal:true,sol:"r ?x(p) ?v(b) r r ?x(p) ?v(b) r",
+  tip:["Dos celdas","Ahora cambian dos celdas: poné los dos si en cada una"],
+  worlds:[["#####","RX.VE","#####"],["#####","RV.XE","#####"]]},
+ {id:"cv6",grp:"CW",title:"Dos colores y una esquina",max:14,reveal:true,sol:"r r ?x(p) ?v(b) r d ?x(p) ?v(b) d",
+  worlds:[["R.X.","###V","###E"],["R.V.","###X","###E"]]},
+ {id:"cv7",grp:"CW",title:"Bajada de dos colores",max:13,reveal:true,sol:"d ?x(p) ?v(b) d d ?x(p) ?v(b) d",
+  worlds:[["R##","X##",".##","V##","E##"],["R##","V##",".##","X##","E##"]]},
+ /* parte 7.5: rojas y verdes con repetir: pasillos y escaleras */
+ {id:"ca1",grp:"CR",title:"Pasillo de colores",max:7,reveal:true,sol:"6(r ?x(p) ?v(b))",
+  tip:["El si adentro del repetir","Cada vuelta el robot avanza y mira la celda: poné los dos si adentro del repetir"],
   worlds:[["#######","R.X.V.E","#######"],["#######","R.V.X.E","#######"]]},
- {id:"cv3",grp:"CV",title:"Escalera de colores",max:8,reveal:true,sol:"3(r d ?x(p) ?v(b))",
+ {id:"ca2",grp:"CR",title:"Pasillo largo",max:7,reveal:true,sol:"9(r ?x(p) ?v(b))",
+  worlds:[["##########","RX.VX..V.E","##########"],["##########","RV.XV..X.E","##########"]]},
+ {id:"ca3",grp:"CR",title:"Bajada de colores",max:7,reveal:true,sol:"5(d ?x(p) ?v(b))",
+  worlds:[["R#","X#","V#",".#","X#","E#"],["R#","V#",".#","X#","V#","E#"]]},
+ {id:"ca4",grp:"CS",title:"Escalera de colores",max:8,reveal:true,sol:"3(r d ?x(p) ?v(b))",
   worlds:[["R.##","#X.#","##V.","###E"],["R.##","#V.#","##X.","###E"]]},
- {id:"cn1",grp:"CN",title:"¿Pared o camino?",max:8,reveal:true,sol:"r ?wr(d r) !(r d)",
-  tip:["Si… si no…","Si hay pared a la derecha, bajá; si no, seguí a la derecha. El si no va justo debajo del si"],
-  worlds:[["R.#","#.E"],["R..","##E"]]},
- {id:"cn2",grp:"CN",title:"¿Bajo o sigo?",max:8,reveal:true,sol:"d ?wd(r d) !(d r)",
-  worlds:[["R#","..","#E"],["R#",".#",".E"]]},
- {id:"cn3",grp:"CO",title:"El codo",max:6,reveal:true,sol:"6(?wr(d) !(r))",
-  worlds:[["R...","###.","###.","###E"],["R###",".###",".###","...E"]]},
- {id:"cn4",grp:"CO",title:"Caer y seguir",max:6,reveal:true,sol:"6(?wd(r) !(d))",
-  worlds:[["R###",".###",".###","...E"],["R.##","#.##","#.##","#..E"],["R...","###.","###.","###E"]]}
+ {id:"ca5",grp:"CS",title:"Escalera hacia arriba",max:8,reveal:true,sol:"3(r u ?x(p) ?v(b))",
+  worlds:[["###E","##V.","#X.#","R.##"],["###E","##X.","#V.#","R.##"]]},
+ {id:"ca6",grp:"CS",title:"Escalera larga",max:8,reveal:true,sol:"4(r d ?x(p) ?v(b))",
+  worlds:[["R.###","#X.##","##V.#","###X.","####E"],["R.###","#V.##","##X.#","###V.","####E"]]},
+ {id:"ca7",grp:"CS",title:"Pasillo y bajada",max:13,reveal:true,sol:"3(r ?x(p) ?v(b)) 3(d ?x(p) ?v(b))",
+  worlds:[["RX.V","###X","###V","###E"],["RV.X","###V","###.","###E"]]},
+ /* parte 8: si no, con colores. «Si es roja, pintá; si no, bailá» y el color como señal («si es roja, pintá y bajá; si no, seguí») */
+ {id:"cs1",grp:"CN",title:"Si no",max:9,reveal:true,sol:"r r ?x(p) !(b) r r",
+  tip:["Si… si no…","Si la celda es roja, pintá; si no, bailá. El si no va justo debajo del si: corre cuando el si no se cumple"],
+  worlds:[["#####","R.X.E","#####"],["#####","R.V.E","#####"]]},
+ {id:"cs2",grp:"CN",title:"Si no en la esquina",max:9,reveal:true,sol:"r r ?x(p) !(b) d d",
+  worlds:[["R.X","##.","##E"],["R.V","##.","##E"]]},
+ {id:"cs3",grp:"CO",title:"Pasillo de si no",max:8,reveal:true,sol:"5(r ?x(p) !(b)) r",
+  worlds:[["#######","RXVVXVE","#######"],["#######","RVXXVXE","#######"]]},
+ {id:"cs4",grp:"CO",title:"Escalera de si no",max:9,reveal:true,sol:"3(r d ?x(p) !(b)) r",
+  worlds:[["R.###","#X.##","##V.#","###XE"],["R.###","#V.##","##X.#","###VE"]]},
+ {id:"cs5",grp:"CO",title:"La roja dice bajá",max:7,reveal:true,sol:"5(?x(p d) !(r))",
+  tip:["El color dice el camino","Si es roja, pintá y bajá; si no, seguí a la derecha"],
+  worlds:[["RX##","#..X","###E"],["R.X#","##.X","###E"]]},
+ {id:"cs6",grp:"CO",title:"La verde dice subí",max:7,reveal:true,sol:"5(?v(b u) !(r))",
+  worlds:[["###E","#..V","RV##"],["###E","##.V","R.V#"]]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds;
   return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,norep:m.norep??!!g.norep,conds:m.conds??g.conds}); });
 MISSIONS.push(...CONDS);
 /* ===== Condicionales (fin) ===== */
 /* ===== Eventos (inicio) ===== */
-/* PARTE 8 (Mundo 3, experimental): eventos. Los bloques «al apretar [tecla]» son bloques de inicio (como «al tocar»): se ponen donde se quiera,
+/* PARTE 9 (Mundo 4, experimental): eventos. Los bloques «al apretar [tecla]» son bloques de inicio (como «al tocar»): se ponen donde se quiera,
    uno por tecla, y cada uno lleva su pila de hasta 3 acciones. Tras Ir, cada tecla (teclado o botones en pantalla) hace toda la pila de su evento.
    keys: teclas del nivel (u d l r flechas, s espacio). sol: «tecla:acciones» (una letra por acción). play: teclas que ganan con la sol.
    goal: bloques de la meta («al tocar» + cada evento + cada acción), max = goal + 2. Estrellas (starsAdv): 1 llegó, +1 dentro de goal,
    +1 sin acciones de más (camino más corto) */
-PARTS.push({id:8,title:"Eventos",sub:"al apretar una tecla, el robot actúa",c:"#8B5CF6",l:"#E9DEFF",after:[]});
+PARTS.push({id:9,title:"Eventos",sub:"al apretar una tecla, el robot actúa",c:"#8B5CF6",l:"#E9DEFF",after:[]});
 GROUPS.push(
- {id:"EV",part:8,cls:2,tools:"k",title:"Una tecla, una acción",sub:"asociá cada tecla con lo que hace el robot",need:0,c:"#8B5CF6",l:"#E9DEFF"},
- {id:"EW",part:8,cls:2,tools:"kp",strict:true,title:"Pilas y colores",sub:"una tecla puede hacer varias cosas",need:6,c:"#EC4899",l:"#FCE0EF"});
+ {id:"EV",part:9,cls:2,tools:"k",title:"Una tecla, una acción",sub:"asociá cada tecla con lo que hace el robot",need:0,c:"#8B5CF6",l:"#E9DEFF"},
+ {id:"EW",part:9,cls:2,tools:"kp",strict:true,title:"Pilas y colores",sub:"una tecla puede hacer varias cosas",need:6,c:"#EC4899",l:"#FCE0EF"});
 MISSIONS.push(...[
  {id:"ev1",grp:"EV",title:"Una tecla",goal:3,max:5,keys:"r",rows:["#######","R.....E","#######"],sol:"r:r",play:"rrrrrr",
   tip:["Al apretar una tecla, GENI actúa","Poné «escuchar eventos» debajo de «al tocar» y un «al apretar» con una acción adentro · Tocá Ir y apretá la flecha"]},
@@ -212,13 +249,13 @@ MISSIONS.push(...[
  {id:"ev5",grp:"EW",title:"Todo en un mapa",goal:9,max:11,keys:"udlrs",rows:["..X.E",".#.#.","R.X.B"],sol:"r:r l:l u:u s:p",play:"rrsrr" + "ll" + "uusrr",
   tip:["Flechas y espacio juntas","Pintá las rojas, juntá la batería y llegá a la estrella"]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,ev:true}); }));
-/* PARTE 9 (Mundo 3, experimental): eventos libres. Igual que la parte 8 pero el alumno elige la tecla de cada evento (selector: apretar una tecla,
+/* PARTE 10 (Mundo 4, experimental): eventos libres. Igual que la parte 9 pero el alumno elige la tecla de cada evento (selector: apretar una tecla,
    letras, números, flechas o espacio, o tocar una en pantalla) y puede poner hasta evmax eventos. Si dos eventos usan la misma tecla, corren los
    dos (de arriba hacia abajo). free:true. sol/play con teclas u d l r s (el selector acepta más). maxAct: tope de acciones antes de explotar */
-PARTS.push({id:9,title:"Eventos libres",sub:"elegí vos qué tecla hace cada cosa",c:"#A855F7",l:"#F1E1FF",after:[8]});
+PARTS.push({id:10,title:"Eventos libres",sub:"elegí vos qué tecla hace cada cosa",c:"#A855F7",l:"#F1E1FF",after:[9]});
 GROUPS.push(
- {id:"EL",part:9,cls:2,tools:"kp",strict:true,title:"Elegí tus teclas",sub:"cada evento con la tecla que quieras",need:0,c:"#A855F7",l:"#F1E1FF"},
- {id:"EM",part:9,cls:2,tools:"kp",strict:true,title:"Mapas grandes",sub:"pilas largas y pocos eventos",need:6,c:"#6366F1",l:"#E0E1FF"});
+ {id:"EL",part:10,cls:2,tools:"kp",strict:true,title:"Elegí tus teclas",sub:"cada evento con la tecla que quieras",need:0,c:"#A855F7",l:"#F1E1FF"},
+ {id:"EM",part:10,cls:2,tools:"kp",strict:true,title:"Mapas grandes",sub:"pilas largas y pocos eventos",need:6,c:"#6366F1",l:"#E0E1FF"});
 MISSIONS.push(...[
  {id:"evl1",grp:"EL",title:"Tu primera tecla",goal:3,max:5,evmax:1,maxAct:20,rows:["#######","R.....E","#######"],sol:"r:r",
   tip:["Elegí vos la tecla","Poné «escuchar eventos», un «al apretar» y tocá su «?» para elegir la tecla · Poné una acción adentro"]},
@@ -231,14 +268,14 @@ MISSIONS.push(...[
  {id:"evl5",grp:"EM",title:"El gran recorrido",goal:9,max:11,evmax:2,maxAct:40,rows:["######E","######.","######.","###....","###B###","###.###","R.B.###"],sol:"r:rrr u:uuu",play:"ruru",
   tip:["Pilas de tres acciones","Solo tenés dos eventos: ¡que cada uno haga tres pasos!"]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,ev:true,free:true}); }));
-/* PARTE 10 (Mundo 3, experimental): llaves y portales con eventos libres. Puzzles en mapas grandes: la llave («k» dorada, «j» rosa, «c» celeste) se agarra
+/* PARTE 11 (Mundo 4, experimental): llaves y portales con eventos libres. Puzzles en mapas grandes: la llave («k» dorada, «j» rosa, «c» celeste) se agarra
    sola al pasar y abre la puerta de su color («K», «J», «C»); el portal («O» azul, «U» naranja) lleva al otro del mismo color. Los mapas lo necesitan:
-   sin las llaves no se llega a la estrella. La mecánica es la de siempre (engine: tryMove, shortest). Mismas reglas de eventos que la parte 9 (free,
+   sin las llaves no se llega a la estrella. La mecánica es la de siempre (engine: tryMove, shortest). Mismas reglas de eventos que la parte 10 (free,
    evmax, goal = «al tocar» + eventos + acciones, max = goal + 2). maxAct alto: los caminos son largos (hasta ~40 acciones) */
-PARTS.push({id:10,title:"Llaves y portales",sub:"puzzles: llaves, puertas y portales",c:"#06B6D4",l:"#CFF6FC",after:[9],icon:"key"});
+PARTS.push({id:11,title:"Llaves y portales",sub:"puzzles: llaves, puertas y portales",c:"#06B6D4",l:"#CFF6FC",after:[10],icon:"key"});
 GROUPS.push(
- {id:"LP",part:10,cls:2,tools:"kp",strict:true,title:"Llaves y portales",sub:"una llave, una puerta, un portal",need:0,c:"#06B6D4",l:"#CFF6FC"},
- {id:"LQ",part:10,cls:2,tools:"kp",strict:true,title:"Puzzles grandes",sub:"mapas grandes: pensá el camino antes de apretar",need:6,c:"#F5B800",l:"#FFF3C4"});
+ {id:"LP",part:11,cls:2,tools:"kp",strict:true,title:"Llaves y portales",sub:"una llave, una puerta, un portal",need:0,c:"#06B6D4",l:"#CFF6FC"},
+ {id:"LQ",part:11,cls:2,tools:"kp",strict:true,title:"Puzzles grandes",sub:"mapas grandes: pensá el camino antes de apretar",need:6,c:"#F5B800",l:"#FFF3C4"});
 MISSIONS.push(...[
  {id:"lq1",grp:"LP",title:"La llave del otro lado",goal:9,max:11,evmax:4,maxAct:45,rows:["R..#..k",".#.#.##",".O.#.O.",".#.####","...K..E"],sol:"u:u d:d l:l r:r",
   tip:["Portal, llave y puerta","El portal te lleva a la llave y la puerta te cierra el camino a la estrella · No te olvides de «escuchar eventos»"]},
@@ -297,15 +334,19 @@ CHALLENGES.push(
    {title:"Pasillo rojo",max:5,reveal:true,sol:"5(r ?x(p))",worlds:[["######","R..X.E","######"],["######","R.X..E","######"]]},
    {title:"La bajada",max:5,reveal:true,sol:"3(d ?x(p))",worlds:[["R##",".##","X##","E##"],["R##","X##",".##","E##"]]},
    {title:"La escalera",max:6,reveal:true,sol:"3(r d ?x(p))",worlds:[["R.##","#X.#","##..","###E"],["R.##","#..#","##X.","###E"]]}]},
- {id:"xsa",part:7,cls:2,tools:"rpbi",strict:true,title:"Desafío de colores",t3:150,t2:240,levels:[
+ {id:"xsa",part:7,cls:2,norep:true,tools:"pbi",strict:true,title:"Desafío de colores",t3:150,t2:240,levels:[
+   {title:"Roja o verde",max:9,reveal:true,sol:"r ?x(p) ?v(b) r r r",worlds:[["#####","RX..E","#####"],["#####","RV..E","#####"]]},
+   {title:"Bajada",max:8,reveal:true,sol:"d ?x(p) ?v(b) d d",worlds:[["R##","X##",".##","E##"],["R##","V##",".##","E##"]]},
+   {title:"Esquina doble",max:13,reveal:true,sol:"r r ?x(p) ?v(b) d ?x(p) ?v(b) d",worlds:[["R.X","##V","##E"],["R.V","##X","##E"]]}]},
+ {id:"xsb",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Desafío de colores con repetir",t3:150,t2:240,levels:[
    {title:"Fila de colores",max:7,reveal:true,sol:"4(r ?x(p) ?v(b))",worlds:[["#####","RXV.E","#####"],["#####","RVX.E","#####"]]},
    {title:"Bajada de colores",max:7,reveal:true,sol:"3(d ?x(p) ?v(b))",worlds:[["R##","X##","V##","E##"],["R##","V##","X##","E##"]]},
-   {title:"Escalera hacia arriba",max:8,reveal:true,sol:"3(r u ?x(p) ?v(b))",worlds:[["###E","##V.","#X.#","R.##"],["###E","##X.","#V.#","R.##"]]}]},
- {id:"xsn",part:7.5,cls:2,tools:"rie",conds:["wr","wd"],title:"Desafío del si no",t3:150,t2:240,levels:[
-   {title:"El codo",max:6,reveal:true,sol:"4(?wr(d) !(r))",worlds:[["R..","##.","##E"],["R##",".##","..E"]]},
-   {title:"Caer y avanzar",max:6,reveal:true,sol:"5(?wd(r) !(d))",worlds:[["R###",".###","...E"],["R...","###.","###E"],["R.##","#...","###E"]]},
-   {title:"Escalera de paredes",max:6,reveal:true,sol:"6(?wr(d) !(r))",worlds:[["R...","###.","###.","###E"],["R###",".###",".###","...E"],["R.##","#..#","##..","###E"]]}]});
-CHALLENGES.forEach(c=>c.levels.forEach(m=>{ if(m.worlds) m.rows=m.worlds[0]; if(c.conds) m.conds=c.conds; }));
+   {title:"Escalera hacia arriba",max:8,reveal:true,sol:"3(r u ?x(p) ?v(b))",worlds:[["###E","##X.","#X.#","R.##"],["###E","##V.","#V.#","R.##"]]}]},
+ {id:"xsn",part:8,cls:2,tools:"rpbie",strict:true,title:"Desafío del si no",t3:150,t2:240,levels:[
+   {title:"Escalerita",max:9,reveal:true,sol:"2(r d ?x(p) !(b)) r",worlds:[["R.##","#X.#","##VE"],["R.##","#V.#","##XE"]]},
+   {title:"Pasillo de si no",max:8,reveal:true,sol:"4(r ?x(p) !(b)) r",worlds:[["######","RXVVXE","######"],["######","RVXXVE","######"]]},
+   {title:"La roja dice bajá",max:7,reveal:true,sol:"4(?x(p d) !(r))",worlds:[["RX#","#.X","##E"],["R.X","##X","##E"]]}]});
+CHALLENGES.forEach(c=>c.levels.forEach(m=>{ if(m.worlds) m.rows=m.worlds[0]; if(c.conds) m.conds=c.conds; if(c.norep) m.norep=true; }));
 /* ===== Condicionales (fin) ===== */
 CHALLENGES.sort(byPart);
 CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
