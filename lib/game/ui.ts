@@ -462,52 +462,72 @@ export function boot(hidden?: Record<string, number[]>) {
   
   function lockWhy(st){ return st.worldLock?worldWhy(st.worldLock):st.gate?`Primero ${gateTxt(SAVE.stars,st.gate,true).replace(/^./,c=>c.toLowerCase())}`:st.needCode?"Pedile el código a tu profe":st.prevLeft?`Primero terminá «${st.prevTitle}»`:`Necesitás ${st.g.need} estrellas de esta parte (tenés ${st.earned})`; }
   
-  function renderMenu(){
+  const ADV_OPEN={}; /* «Niveles avanzados» de cada mundo: empieza plegado */
+  function renderMenu(onlyAdv=false){
   
-    $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();
+    if(!onlyAdv){ $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();
   
-    $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`;
+    $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`; }
   
-    const GS=groupsNow(); let h="", i=0, fresh=false; const HW={}, IW={}; WORLDS.forEach(W=>{ HW[W.id]=""; IW[W.id]=0; }); /* IW: contador de entrada por mundo, así la animación no espera a las cards de otros mundos */
-  
-    for(const P of PARTS){ const pw=P.world||1; if(!(pw in HW)){ HW[pw]=""; IW[pw]=0; } h=""; i=IW[pw];
-  
-      /* una card por parte; cada grupo de niveles se abre por separado */
-  
+    const GS=groupsNow(); let h="", i=0, fresh=false;
+
+    /* una card por parte; cada grupo de niveles se abre por separado */
+    const partHTML=P=>{
       const sts=GS.filter(s=>s.g.part===P.id), ms=MISSIONS.filter(m=>m.part===P.id), got=ms.reduce((a,m)=>a+(SAVE.stars[m.id]||0),0);
-  
-      h+=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+
-  
+      let o=`<section class="grp" style="--gc:${P.c};--gl:${P.l}"><div class="grph">`+
         `<span class="gdot">${partIco(P)}</span><div><h3>Parte ${P.id} · ${P.title}</h3><span class="gsub">${P.sub}</span></div>`+(P.extra&&ms.length&&ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m))?`<span class="plat">${starIco(true)}Platino</span>`:"")+
         (PROFE&&P.code?`<span class="profe">Código: ${P.code}</span>`:"")+(P.hidden?`<span class="profe poff">Oculta para alumnos</span>`:"")+
         `<span class="gprog">${starIco(true)} ${got} / ${ms.reduce((a,m)=>a+maxStars(m),0)}</span></div><div class="cards">`;
       for(const st of sts){
-  
         const g=st.g, isNew=st.open&&!SAVE.seen.includes(g.id);
-  
         if(isNew){ SAVE.seen.push(g.id); fresh=true; }
-  
         const need=st.gate?gateTxt(SAVE.stars,st.gate):st.needCode?"Pedile el código a tu profe":st.prevLeft?"Terminá los anteriores":`Juntá ${g.need}${starIco(true)}`;
-        h+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;
+        o+=st.ms.map(m=>{ const k=SAVE.stars[m.id]||0;
           return `<button class="card${k>=maxStars(m)?" s3":""}${st.open?"":" locked"}${isNew?" new":""}" data-id="${m.id}" data-why="${lockWhy(st)}"${st.needCode?` data-code="${st.needCode}"`:""} style="--i:${i++};--gc:${g.c};--gl:${g.l}"><span class="num">${m.num}</span>${miniMap(m.rows)}<h3>${m.title}</h3>`+
             (st.open?`<div class="stars">${starRow(k,undefined,maxStars(m))}</div>`:`<span class="need">${need}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`; }).join("");
-  
       }
-  
-      h+=`</div></section>`; HW[pw]+=h; IW[pw]=i;
-    }
-    /* en cada mundo, una card aparte con los desafíos extra de sus partes, para los que terminan antes */
-    for(const W of WORLDS){ const chs=CHALLENGES.filter(c=>worldOf(c.part)===W.id); if(!chs.length) continue;
-      const chGot=chs.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0); i=IW[W.id];
-      h=`<section class="grp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+
-        `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos extra</h3><span class="gsub">3 niveles seguidos, con cronómetro</span></div>`+
-        `<span class="gprog">${starIco(true)} ${chGot} / ${chs.length*3}</span></div>`;
-      for(const ch of chs){
-        const open=chOpen(ch), isNew=open&&!SAVE.seen.includes(ch.id);
-        if(isNew){ SAVE.seen.push(ch.id); fresh=true; }
-        h+=chCard(ch,i++,open,isNew);
+      return o+`</div></section>`;
+    };
+
+    /* niveles avanzados (partes extra) de un mundo: opcionales, abajo de todo y plegados (ADV_OPEN por mundo).
+       Sus cards cuentan la demora de la animación desde 0, así aparecen enseguida al abrirlos */
+    const advHTML=w=>{ const EXTRA=worldParts(w).filter(P=>P.extra), on=!!ADV_OPEN[w];
+      const xs=GS.filter(s=>EXTRA.some(P=>P.id===s.g.part)), xOpen=xs.some(s=>s.open), xNew=xs.some(s=>s.open&&!SAVE.seen.includes(s.g.id));
+      const base=[...new Set(EXTRA.flatMap(P=>P.after))].map(id=>PARTS.find(P=>P.id===id)).filter(Boolean).map(P=>`«${P.title}»`);
+      const why=`Terminá ${base.join(" o ")} (con su desafío) para abrirlos`;
+      let o=`<section class="grp advgrp${on?" on":""}"><div class="grph">`+
+        `<span class="gdot">${ICO.star()}</span><div><h3>Niveles avanzados</h3><span class="gsub">más difíciles, para los que quieren más</span></div></div>`+
+        `<button class="advcard${xOpen?"":" locked"}${xNew?" new":""}" id="advBtn" data-why="${why}" aria-expanded="${on}">`+
+        `<span class="advtag">Opcional</span><span class="advtxt">${EXTRA.map(P=>P.title).join(" · ")}</span>`+
+        (xOpen?`<span class="advgo">${on?"Ocultar":"Ver niveles"}${ICO.next()}</span>`:`<span class="need">${ICO.lock("#9A5A00")}${why}</span>`)+`</button>`;
+      if(on&&xOpen){ i=0; o+=`<div class="advparts">${EXTRA.map(partHTML).join("")}</div>`; }
+      return o+`</section>`;
+    };
+    const celebrateNew=()=>{ if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); } };
+
+    /* abrir o cerrar los avanzados del mundo abierto: se redibuja solo esa sección, no todo el menú */
+    if(onlyAdv){ const sec=document.querySelector("#parts .advgrp"); if(sec&&typeof WORLD==="number"){ sec.outerHTML=advHTML(WORLD); if(fresh) persist(); return; } } /* sin confeti: abrirlos no es desbloquear nada */
+
+    /* cada mundo es una página: sus partes, sus desafíos (una card por desafío, como los niveles) y sus niveles avanzados plegados.
+       La demora de la animación empieza en 0 en cada mundo, así no espera a las cards de los otros */
+    const HW={};
+    for(const W of WORLDS){ i=0; h="";
+      for(const P of worldParts(W.id)) if(!P.extra) h+=partHTML(P);
+      const chs=CHALLENGES.filter(c=>worldOf(c.part)===W.id);
+      if(chs.length){
+        const chGot=chs.reduce((a,c)=>a+(SAVE.stars[c.id]||0),0);
+        h+=`<section class="grp chgrp" style="--gc:#8B6CF0;--gl:#E6DFFF"><div class="grph">`+
+          `<span class="gdot">${ICO.clock()}</span><div><h3>Desafíos</h3><span class="gsub">3 niveles seguidos, con cronómetro · se abren al terminar cada parte</span></div>`+
+          `<span class="gprog">${starIco(true)} ${chGot} / ${chs.length*3}</span></div><div class="cards chcards">`;
+        for(const ch of chs){
+          const open=chOpen(ch), isNew=open&&!SAVE.seen.includes(ch.id);
+          if(isNew){ SAVE.seen.push(ch.id); fresh=true; }
+          h+=chCard(ch,i++,open,isNew);
+        }
+        h+=`</div></section>`;
       }
-      HW[W.id]=(HW[W.id]||"")+h+`</section>`; IW[W.id]=i; }
+      if(worldParts(W.id).some(P=>P.extra)) h+=advHTML(W.id);
+      HW[W.id]=h; }
     i=0; renderWorlds(HW);
   
     let c=`<button class="card make" id="makeBtn" style="--i:${i++}"><span class="plus">+</span><h3>Creá tu mapa</h3></button>`;
@@ -518,7 +538,7 @@ export function boot(hidden?: Record<string, number[]>) {
     ["hero","worlds"].forEach(id=>$(id).classList.toggle("hidden",!!WORLD)); $("parts").classList.toggle("hidden",typeof WORLD!=="number");
     ["sec3","cards3"].forEach(id=>$(id).classList.toggle("hidden",WORLD!=="map"));
   
-    if(fresh){ persist(); setTimeout(()=>{ confetti(); SND.unlock(); toast(ICO.unlock(),"¡Desbloqueaste niveles nuevos!"); },500); }
+    celebrateNew();
   
   }
   
@@ -591,20 +611,12 @@ export function boot(hidden?: Record<string, number[]>) {
     return `<svg class="wsvg" viewBox="0 0 320 210" aria-hidden="true">${h}</svg>`;
   }
   function chCard(ch,i,open,isNew){
-  
-    const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la ${partName(ch.part)}`;
-  
-    return `<button class="chcard${open?"":" locked"}${k===3?" s3":""}${isNew?" new":""}" data-ch="${ch.id}" data-why="${why}" style="--i:${i}">`+
-  
-      `<span class="chico">${ICO.clock()}</span><div class="chtxt"><span class="chtag">Desafío extra</span><h3>${ch.title}</h3>`+
-  
-      `<span class="chsub">3 niveles seguidos · con cronómetro</span>`+
-  
-      (open?`<div class="chrow"><span class="stars">${starRow(k)}</span>${best!=null?`<span class="chbest">${ICO.clock()}Récord ${fmtTime(best)}</span>`:""}</div>`
-  
-           :`<span class="need">${ICO.lock("#9A5A00")}${why}</span>`)+
-  
-      `</div><div class="chmaps">${ch.levels.map(m=>miniMap(m.rows,9)).join("")}</div></button>`;
+    const k=SAVE.stars[ch.id]||0, best=SAVE.best[ch.id], why=`Terminá todos los niveles de la ${partName(ch.part)}`, P=PARTS.find(p=>p.id===ch.part);
+    return `<button class="chcard${open?"":" locked"}${k===3?" s3":""}${isNew?" new":""}" data-ch="${ch.id}" data-why="${why}" style="--i:${i}${P?`;--gc:${P.c};--gl:${P.l}`:""}">`+
+      `<span class="chico">${ICO.clock()}</span><span class="chtag">${P?P.title:"Desafío"}</span>`+
+      `<div class="chmaps">${ch.levels.map(m=>miniMap(m.rows,6)).join("")}</div><h3>${ch.title}</h3>`+
+      (open?`<div class="chrow"><span class="stars">${starRow(k)}</span>${best!=null?`<span class="chbest">${ICO.clock()}${fmtTime(best)}</span>`:""}</div>`
+           :`<span class="need">Terminá la parte ${ch.part}</span><span class="lock">${ICO.lock()}</span>`)+`</button>`;
   }
   /* ventana emergente (aviso del desafío y código del profe) */
   function openModal(html){ closeModal();
@@ -740,6 +752,10 @@ export function boot(hidden?: Record<string, number[]>) {
       WORLD=w; renderMenu(); return show("menu"); }
   
   
+    const a=e.target.closest("#advBtn");
+    if(a){ if(a.classList.contains("locked")){ bumpEl(a,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),a.dataset.why); }
+      const w=WORLD; ADV_OPEN[w]=!ADV_OPEN[w]; renderMenu(true); if(ADV_OPEN[w]){ const el=document.querySelector(".advparts"); el&&el.scrollIntoView({block:"start",behavior:RM.matches?"auto":"smooth"}); } return; }
+
     const x=e.target.closest(".chcard");
   
     if(x){ if(x.classList.contains("locked")){ bumpEl(x,"no"); SND.nope(); return toast(ICO.lock("#FFC21A"),x.dataset.why); }
@@ -792,6 +808,7 @@ export function boot(hidden?: Record<string, number[]>) {
   let G=null; const PROGS={}, FUNCS={}, NAMES={}, EVS={}; /* EVS: eventos por nivel {tecla:{x,y,body}} (tampoco se guardan en localStorage) */ /* funciones y sus nombres por nivel (no se guardan en localStorage, como PROGS) */
   const PYCODE={}; /* código de Python por nivel (tampoco se guarda en localStorage) */
   const PY_START="def main():\n    ...\n\nmain()\n";
+  let PY_PICK=true; /* en los niveles que dejan elegir: true = «Elegir» (selects), false = «Escribir». Se recuerda entre niveles */
   
   function startPlay(map){
   
@@ -815,6 +832,8 @@ export function boot(hidden?: Record<string, number[]>) {
     /* Python: el programa es texto (G.code); se lee con parsePy al tocar Ir */
     G.fun=/[OUkjcKJC]/.test(map.rows.join("")); G.nK=[...new Set(map.rows.join("").match(/[kjc]/g)||[])]; /* portales y llaves */
     G.py=!!map.py; G.code=G.py?(PYCODE[map.id]??(map.pre??PY_START)):""; G.pyAst=null; $("game").classList.toggle("pymode",G.py);
+    /* modo «Elegir» (cada línea con selects): obligatorio con pick:"only" (parte 2); en los demás niveles de código se elige con el botón */
+    G.pickOnly=G.py&&map.pick==="only"; G.pick=G.py&&(G.pickOnly||PY_PICK); G.pkSel=null;
 
 
     setTop(map.num||ICO.pencil(),map.ch?`Desafío · Nivel ${map.num} de 3`:map.title); renderTopStars();
@@ -829,6 +848,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
       say("",ICO.clock(),"El reloj mide cuánto tardás",`3 estrellas: menos de ${fmtTime(ch.t3)} · 2 estrellas: menos de ${fmtTime(ch.t2)}`); }
     else if(map.tip) say("",G.py?ICO.code("#3776AB"):G.fun?(/[kjc]/.test(map.rows.join(""))&&!/[OU]/.test(map.rows.join(""))?ICO.key("#B98500"):ICO.portal("#06B6D4")):ICO.blocks(),map.tip[0],map.tip[1]+(map.goal?` · Meta: ${map.goal} líneas`:""));
+    else if(G.py&&G.pick) say("",ICO.code("#3776AB"),"¡Armá el programa en Python!","En cada línea elegí la orden · ＋ agrega una línea · Ir para probar");
     else if(G.py) say("",ICO.code("#3776AB"),"¡Escribí el programa en Python!","Tocá un comando de la izquierda para agregarlo · Ir para probar");
 
     else if(map.adv) say("",ICO.blocks(),"¡Una función que se llama a sí misma!",`Creá tu función y llamala adentro de ella misma: se repite hasta llegar a la estrella${G.nX||G.nV?" · Pintá las rojas y bailá en las verdes":""} · ${lim}`);
@@ -952,7 +972,7 @@ export function boot(hidden?: Record<string, number[]>) {
   const PY_PAL=[
     {id:"pg-mov",title:"Movimiento",col:"var(--mov)",items:[["arriba()","sube una celda"],["abajo()","baja una celda"],["izquierda()","va a la izquierda"],["derecha()","va a la derecha"]]},
     {id:"pg-act",title:"Acciones",col:"var(--pnt)",items:[["pintar()","pinta la celda roja","p"],["bailar()","baila en la celda verde","b"]]},
-    {id:"pg-py",title:"Python",col:"var(--fn)",items:[["def nombre():","crea una función","f"],["nombre()","llama a tu función","f"],["for i in range(3):","repite 3 veces","r"],
+    {id:"pg-py",title:"Python",col:"var(--fn)",items:[["def nombre():","crea una función","f"],["nombre()","llama a tu función","f"],["repetir(3):","repite 3 veces","r"],
       ["nombre = 1","crea una variable","v"],["nombre = nombre + 1","la variable suma 1","v"],["def nombre(n):","función con parámetro n","v"],
       ["while not en_estrella():","repite hasta llegar","w"],["if celda_roja():","hace algo solo si…","i"],["else:","si no…","i"]]},
     {id:"pg-ask",title:"Preguntas",col:"var(--ctl)",tool:"wi",items:[["en_estrella()","¿llegó a la estrella?","",1],["celda_roja()","¿está en una roja?","",1],["celda_verde()","¿está en una verde?","b",1],
@@ -1101,10 +1121,14 @@ export function boot(hidden?: Record<string, number[]>) {
     const n=pyLines(G.code), c=$("count"); c.innerHTML=ICO.code("#3776AB")+`${n} ${n===1?"línea":"líneas"}`; c.classList.remove("full","no");
     $("goal").classList.toggle("hidden",G.map.goal==null); if(G.map.goal!=null) $("goal").innerHTML=starIco(true)+"meta "+G.map.goal;
     $("runBtn").classList.toggle("ready",!!G.code.trim()); resetClear();
+    const blocksBox=`<div class="pyblocks"><h5>${ICO.blocks()}Así se ve en bloques</h5><div id="pybl"></div></div>`;
+    const sw=G.pickOnly?"":`<div class="picksw" role="group" aria-label="Cómo armar el código"><button data-pymode="pick"${G.pick?' class="on"':""}>☰ Elegir</button><button data-pymode="write"${G.pick?"":' class="on"'}>✎ Escribir</button></div>`;
+    if(G.pick){ if(!full&&$("pickrows")){ pickRender(); pyBlocks(G.code); return; }
+      $("canvas").innerHTML=sw+`<div class="picked" id="pickrows"></div>`+blocksBox; G.pyBlocksLn=null; pickRender(); pyBlocks(G.code); return; }
     if(!full&&$("pyta")) return;
-    $("canvas").innerHTML=`<div class="pyed"><div class="pygut" id="pygut" aria-hidden="true"></div><div class="pywrap" id="pywrap"><div class="pyhl hidden" id="pyhl"></div><pre class="pyhi" id="pyhi" aria-hidden="true"></pre>`+
+    $("canvas").innerHTML=sw+`<div class="pyed"><div class="pygut" id="pygut" aria-hidden="true"></div><div class="pywrap" id="pywrap"><div class="pyhl hidden" id="pyhl"></div><pre class="pyhi" id="pyhi" aria-hidden="true"></pre>`+
       `<textarea id="pyta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Código en Python"></textarea></div></div>`+
-      `<div class="pyblocks"><h5>${ICO.blocks()}Así se ve en bloques</h5><div id="pybl"></div></div>`;
+      blocksBox;
     G.pyBlocksLn=null; $("pyta").value=G.code; pyGrow(); }
   function pyGrow(){ const ta=$("pyta"); if(!ta) return; const n=ta.value.split("\n").length;
     $("pygut").innerHTML=Array.from({length:n},(_,i)=>`<i data-ln="${i+1}">${i+1}</i>`).join("");
@@ -1142,7 +1166,11 @@ export function boot(hidden?: Record<string, number[]>) {
   function pyMarkBlock(ln,cls){ document.querySelectorAll("#pybl .on,#pybl .err").forEach(x=>x.classList.remove("on","err"));
     if(!ln) return; const el=document.querySelector(`#pybl [data-ln="${ln}"]`); if(el) el.classList.add(cls==="err"?"err":"on"); }
   /* marca una línea: cls "" (corriendo), "yes"/"no" (respuesta de if/while), "err" (error); sin línea, la saca. También su bloque */
-  function pyMark(ln,cls=""){ const hl=$("pyhl"); if(!hl) return; document.querySelectorAll("#pygut i.on,#pygut i.err").forEach(x=>x.classList.remove("on","err"));
+  function pyMark(ln,cls=""){
+    const rows=$("pickrows"); if(rows){ G.pyBlocksLn=ln?{ln,cls}:null; pyMarkBlock(ln,cls); /* modo «Elegir»: se marca la fila */
+      rows.querySelectorAll(".pickrow.on").forEach(x=>x.classList.remove("on","yes","no","err"));
+      const r=ln&&rows.querySelector(`.pickrow[data-ln="${ln}"]`); if(r){ r.classList.add("on"); if(cls) r.classList.add(cls); r.scrollIntoView({block:"nearest"}); } return; }
+    const hl=$("pyhl"); if(!hl) return; document.querySelectorAll("#pygut i.on,#pygut i.err").forEach(x=>x.classList.remove("on","err"));
     G.pyBlocksLn=ln?{ln,cls}:null; pyMarkBlock(ln,cls);
     if(!ln){ hl.className="pyhl hidden"; return; }
     hl.className="pyhl"+(cls?" "+cls:""); hl.style.top=(PY_PAD+(ln-1)*PY_LH)+"px"; void hl.offsetWidth; hl.classList.add("pop");
@@ -1165,7 +1193,8 @@ export function boot(hidden?: Record<string, number[]>) {
     if(k>=0) ta.setSelectionRange(at+k,at+k+6);
     else if(txt.endsWith(":")) taInsert(ta,"\n"+ins.split("\n").pop().match(/^ */)[0]+"    ");
     pySync(); }
-  $("pal").addEventListener("click",e=>{ const b=e.target.closest(".pyins"); if(!b||!G||!G.py||G.busy) return; SND.add(); pyInsert(b.dataset.ins,b.dataset.inline==="1"); });
+  $("pal").addEventListener("click",e=>{ const b=e.target.closest(".pyins"); if(!b||!G||!G.py||G.busy) return; SND.add();
+    if(G.pick) return pickPal(b.dataset.ins,b.dataset.inline==="1"); pyInsert(b.dataset.ins,b.dataset.inline==="1"); });
   $("canvas").addEventListener("input",e=>{ if(e.target.id==="pyta") pySync(); });
   /* Tab = 4 espacios (Shift+Tab saca), Enter mantiene la sangría y suma 4 después de «:» */
   $("canvas").addEventListener("keydown",e=>{ const ta=e.target; if(ta.id!=="pyta"||ta.readOnly) return;
@@ -1175,6 +1204,143 @@ export function boot(hidden?: Record<string, number[]>) {
       else taInsert(ta,"    ".slice((s-ls)%4)); pySync(); }
     else if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); const before=v.slice(ls,s); let ind=before.match(/^ */)[0]; if(before.trimEnd().endsWith(":")) ind+="    ";
       taInsert(ta,"\n"+ind); pySync(); } });
+
+  /* ---------- modo «Elegir»: el código se arma con selects, una fila por línea ----------
+     El programa sigue siendo el texto G.code (corre, cuenta líneas y marca errores igual que al escribir): cada línea se reconoce
+     (pickRead) y se vuelve a escribir (pickBuild). La sangría la pone el juego, siempre de 4 espacios: ← → solo dejan las que valen
+     en Python (después de «:» va una más; si no, igual o menos). Las líneas que no se reconocen se muestran tal cual */
+  function pickRead(t){ let s=t, com=""; const h=s.indexOf("#"); if(h>=0){ com=s.slice(h).trim(); s=s.slice(0,h); } s=s.trim(); let m;
+    const R=(k,f={})=>Object.assign({k,com},f);
+    if(!s) return R(com?"com":"blank");
+    if(s==="___"||s==="..."||s==="pass") return R("hole");
+    if(m=s.match(/^(arriba|abajo|izquierda|derecha|pintar|bailar)\(\)$/)) return R(m[1]);
+    if((m=s.match(/^repetir\(\s*(\w+)\s*\):$/))||(m=s.match(/^for \w+ in range\(\s*(\w+)\s*\):$/))) return R("rep",{n:m[1]});
+    if(m=s.match(/^def (\w+)\(\s*(\w*)\s*\):$/)) return R("def",{name:m[1],p:m[2]});
+    if(m=s.match(/^(while|if) (not )?(\w+)\(\):$/)) return R(m[1],{c:(m[2]||"")+m[3]});
+    if(s==="else:") return R("else");
+    if((m=s.match(/^(\w+)\s*=\s*(\w+)\s*\+\s*(\w+)$/))&&m[1]===m[2]) return R("inc",{name:m[1],n:m[3]});
+    if(m=s.match(/^(\w+)\s*=\s*(\w+)$/)) return R("set",{name:m[1],v:m[2]});
+    if(m=s.match(/^(\w+)\(\s*(\w*)\s*\)$/)) return R("call",{name:m[1],a:m[2]});
+    return R("raw",{t:s}); }
+  function pickBuild(r){ const k=r.k, b=k==="hole"?"___":k==="rep"?`repetir(${r.n}):`:k==="def"?`def ${r.name}(${r.p||""}):`:k==="call"?`${r.name}(${r.a||""})`:
+      k==="set"?`${r.name} = ${r.v}`:k==="inc"?`${r.name} = ${r.name} + ${r.n}`:k==="while"||k==="if"?`${k} ${r.c}():`:k==="else"?"else:":k==="raw"?r.t:k+"()";
+    return r.com?b+"  "+r.com:b; }
+  const HOLE=ind=>({ind,t:"___",r:{k:"hole",com:""}});
+  function pickLines(){ return G.code.replace(/\n$/,"").split("\n").map(t=>({ind:Math.floor(t.match(/^ */)[0].length/4),t:t.trim(),r:pickRead(t)})); }
+  const pickHead=l=>["rep","def","while","if","else"].includes(l.r.k)||(l.r.k==="raw"&&l.r.t.endsWith(":"));
+  /* def main(): y la llamada main() del final no se tocan */
+  const pickFixed=l=>l.ind===0&&((l.r.k==="def"&&l.r.name==="main"&&!l.r.p)||(l.r.k==="call"&&l.r.name==="main"&&!l.r.a));
+  const pickSkip=l=>l.r.k==="blank"||l.r.k==="com";
+  function pickPrev(L,i){ let p=i-1; while(p>=0&&pickSkip(L[p])) p--; return p; }
+  /* sangrías que valen para la fila i: después de «:», una más; si no, de 0 a la de arriba. Después de def main():, al menos 1 */
+  function pickRange(L,i){ const p=pickPrev(L,i), head=p>=0&&pickHead(L[p]); let hi=p<0?0:head?L[p].ind+1:L[p].ind, lo=head?hi:0;
+    if(lo===0&&L.slice(0,i).some(l=>pickFixed(l)&&l.r.k==="def")){ lo=1; hi=Math.max(hi,1); } return [lo,hi]; }
+  function pickNorm(L){ L.forEach((l,i)=>{ if(pickSkip(l)||pickFixed(l)) return; const [lo,hi]=pickRange(L,i); l.ind=Math.max(lo,Math.min(hi,l.ind)); }); }
+  function pickSave(L){ pickNorm(L); const code=L.map(l=>l.r.k==="blank"?"":"    ".repeat(l.ind)+l.t).join("\n")+"\n";
+    if(code===G.code) return pickRender(); G.code=code; PYCODE[G.map.id]=code; changed(); }
+  function pickNames(L){ const fns=[], vars=new Set();
+    L.forEach(l=>{ if(l.r.k==="def"){ if(l.r.name!=="main") fns.push(l.r); if(l.r.p) vars.add(l.r.p); } if(l.r.k==="set"||l.r.k==="inc") vars.add(l.r.name); });
+    return {fns,vars:[...vars].filter(v=>v!=="___")}; }
+  const pickNameOk=v=>String(v).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9_]+/g,"_").replace(/^[0-9_]+/,"").slice(0,16);
+  /* [orden, cómo se ve en la lista, tool que la muestra] */
+  const PICK_KINDS=[["Movimiento",[["arriba","arriba()"],["abajo","abajo()"],["izquierda","izquierda()"],["derecha","derecha()"]]],
+    ["Acciones",[["pintar","pintar()","p"],["bailar","bailar()","b"]]],
+    ["Python",[["rep","repetir(…):","r"],["def","def …():","f"],["set","… = …","v"],["inc","… = … + …","v"],["while","while …:","w"],["if","if …:","i"],["else","else:","i"]]]];
+  const pickQs=()=>PY_PAL.find(g=>g.id==="pg-ask").items.filter(([, ,t])=>!t||G.tools.includes(t)).map(([c])=>c.replace("()",""));
+  const pickOpt=(v,label,cur)=>`<option value="${escH(v)}"${v===cur?" selected":""}>${escH(label)}</option>`;
+  function pickVals(cur,from,to,names){ const vs=[]; for(let k=from;k<=to;k++) vs.push(String(k)); vs.push(...names); if(cur&&!vs.includes(cur)) vs.unshift(cur);
+    return vs.map(v=>pickOpt(v,v==="___"?"—":v,cur)).join(""); }
+  function pickRowHTML(L,i,N){ const l=L[i], r=l.r, ln=i+1, num=`<span class="pickn">${ln}</span>`, pad=`<span class="pickind" style="width:${l.ind*24}px"></span>`;
+    if(r.k==="blank") return `<div class="pickrow blank" data-ln="${ln}">${num}</div>`;
+    if(pickFixed(l)||r.k==="com") return `<div class="pickrow fix${G.pkSel===i?" sel":""}" data-ln="${ln}" data-i="${i}">${num}${pad}<code>${pyHTML(l.t)}</code>`+
+      (r.k==="def"?`<span class="pickctl"><button data-pick-add title="Agregar una línea abajo" aria-label="Agregar una línea abajo">＋</button></span>`:"")+`</div>`;
+    const T_=G.tools, cur=r.k==="call"?"call:"+r.name:r.k;
+    let ks=r.k==="hole"?pickOpt("hole","— elegí —","hole"):r.k==="raw"?pickOpt("raw",r.t,"raw"):"";
+    for(const [g,items] of PICK_KINDS){ const its=items.filter(([k, ,t])=>!t||T_.includes(t)||k===r.k); if(its.length) ks+=`<optgroup label="${g}">${its.map(([k,lab])=>pickOpt(k,lab,cur)).join("")}</optgroup>`; }
+    const calls=N.fns.map(f=>f.name); if(r.k==="call"&&!calls.includes(r.name)) calls.push(r.name);
+    if(calls.length) ks+=`<optgroup label="Tus funciones">${calls.map(n=>{ const fd=N.fns.find(x=>x.name===n); return pickOpt("call:"+n,`${n}(${fd&&fd.p?"…":""})`,cur); }).join("")}</optgroup>`;
+    const fs=(k,html,lab)=>`<select class="pickf" data-pick-f="${k}" aria-label="${lab}">${html}</select>`;
+    const fi=(k,v,ph,lab)=>`<input class="pickf name" data-pick-f="${k}" value="${escH(v||"")}" placeholder="${ph}" maxlength="16" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="${lab}">`;
+    const w=t=>`<span class="pickw">${t}</span>`, others=N.vars.filter(v=>v!==r.name);
+    let f="";
+    if(r.k==="rep") f=w("veces")+fs("n",pickVals(r.n,1,10,N.vars),"Cuántas veces");
+    else if(r.k==="def") f=w("nombre")+fi("name",r.name,"nombre","Nombre de la función")+(T_.includes("v")||r.p?w("parámetro")+fi("p",r.p,"ninguno","Parámetro"):"");
+    else if(r.k==="call"){ const fd=N.fns.find(x=>x.name===r.name); if(fd&&fd.p||r.a) f=w(escH(fd&&fd.p||"valor"))+fs("a",pickVals(r.a||"___",1,10,N.vars),"Valor"); }
+    else if(r.k==="set") f=w("variable")+fi("name",r.name,"nombre","Nombre de la variable")+w("vale")+fs("v",pickVals(r.v,0,10,others),"Valor");
+    else if(r.k==="inc") f=w("variable")+fi("name",r.name,"nombre","Nombre de la variable")+w("suma")+fs("n",pickVals(r.n,1,5,others),"Cuánto suma");
+    else if(r.k==="while"||r.k==="if"){ const cs=pickQs().flatMap(q=>["not "+q,q]); if(!cs.includes(r.c)) cs.unshift(r.c);
+      f=fs("c",cs.map(c=>pickOpt(c,c+"()",r.c)).join(""),"Pregunta"); }
+    const out=f?`<code class="pickout">${pyHTML(l.t)}</code>`:r.com?`<code class="pickout">${pyHTML(r.com)}</code>`:"";
+    const [lo,hi]=pickRange(L,i);
+    const ctl=`<span class="pickctl"><button data-pick-ind="-1" title="Menos sangría: sale del bloque" aria-label="Menos sangría"${l.ind>lo?"":" disabled"}>←</button>`+
+      `<button data-pick-ind="1" title="Más sangría: entra al bloque" aria-label="Más sangría"${l.ind<hi?"":" disabled"}>→</button>`+
+      `<button data-pick-add title="Agregar una línea abajo" aria-label="Agregar una línea abajo">＋</button><button data-pick-del title="Borrar la línea" aria-label="Borrar la línea">✕</button></span>`;
+    return `<div class="pickrow${r.k==="hole"?" hole":""}${G.pkSel===i?" sel":""}" data-ln="${ln}" data-i="${i}">${num}${pad}<span class="pickmain">`+
+      `<select class="pickk" data-pick-k aria-label="Orden de la línea ${ln}">${ks}</select>${f}${out}</span>${ctl}</div>`; }
+  function pickRender(){ const box=$("pickrows"); if(!box) return; const L=pickLines(), N=pickNames(L);
+    box.innerHTML=(G.pickOnly?"":`<button class="pickadd" data-pick-add>＋ Agregar una línea arriba de todo</button>`)+L.map((_,i)=>pickRowHTML(L,i,N)).join("");
+    if(G.pyBlocksLn) pyMark(G.pyBlocksLn.ln,G.pyBlocksLn.cls); }
+  /* cambia la orden de la fila i. Si ahora termina en «:» (y antes no), se agrega abajo una línea para completar */
+  function pickKind(L,i,v){ const l=L[i], was=pickHead(l), N=pickNames(L); let r;
+    if(v.startsWith("call:")){ const n=v.slice(5), fd=N.fns.find(x=>x.name===n); r={k:"call",name:n,a:fd&&fd.p?"1":""}; }
+    else if(v==="rep") r={k:"rep",n:"2"};
+    else if(v==="def"){ let k=1; const nm=()=>k>1?"mi_funcion"+k:"mi_funcion"; while(N.fns.some(f=>f.name===nm())) k++; r={k:"def",name:nm(),p:""}; }
+    else if(v==="set") r={k:"set",name:"largo",v:"1"};
+    else if(v==="inc") r={k:"inc",name:N.vars[0]||"largo",n:"1"};
+    else if(v==="while") r={k:"while",c:"not en_estrella"};
+    else if(v==="if") r={k:"if",c:"celda_roja"};
+    else r={k:v};
+    r.com=l.r.com; l.r=r; l.t=pickBuild(r);
+    if(pickHead(l)&&!was){ L.splice(i+1,0,HOLE(l.ind+1)); G.pkSel=i+1; } } /* lo próximo va adentro */
+  /* agrega una línea vacía abajo de la fila i (adentro del bloque si la fila termina en «:»); i=-1: arriba de todo */
+  function pickAdd(L,i){ const l=i<0?null:L[i]; L.splice(i+1,0,HOLE(!l?0:pickHead(l)?l.ind+1:l.ind)); G.pkSel=i+1; }
+  /* borra la fila i (con todo lo de adentro si termina en «:»). Si era lo único adentro de un bloque, queda una línea vacía */
+  function pickDel(L,i){ const l=L[i]; if(pickFixed(l)) return; let j=i+1;
+    if(pickHead(l)) for(let k=i+1;k<L.length;k++){ if(L[k].r.k==="blank") continue; if(L[k].ind>l.ind) j=k+1; else break; }
+    const p=pickPrev(L,i); let nx=j; while(nx<L.length&&pickSkip(L[nx])) nx++;
+    const only=p>=0&&pickHead(L[p])&&(nx>=L.length||L[nx].ind<=L[p].ind);
+    L.splice(i,j-i,...(only?[HOLE(L[p].ind+1)]:[])); G.pkSel=Math.min(i,L.length-1); }
+  /* sangría: mueve la fila (y lo de adentro, si termina en «:») */
+  function pickInd(L,i,d){ const l=L[i], [lo,hi]=pickRange(L,i), to=Math.max(lo,Math.min(hi,l.ind+d)), dd=to-l.ind; if(!dd) return;
+    if(pickHead(l)) for(let k=i+1;k<L.length;k++){ if(L[k].r.k==="blank") continue; if(L[k].ind>l.ind) L[k].ind+=dd; else break; }
+    l.ind=to; }
+  /* fila donde va lo que se toca en la lista de comandos: la elegida, o la última que se puede cambiar */
+  function pickTarget(L){ const ok=i=>i!=null&&i>=0&&i<L.length&&!pickSkip(L[i])&&(!pickFixed(L[i])||L[i].r.k==="def");
+    if(ok(G.pkSel)) return G.pkSel;
+    for(let i=L.length-1;i>=0;i--) if(ok(i)&&!pickFixed(L[i])) return i;
+    const m=L.findIndex(l=>pickFixed(l)&&l.r.k==="def"); return m>=0?m:null; }
+  /* comando de la izquierda en modo «Elegir»: llena la línea vacía elegida o agrega una abajo. Las preguntas cambian el while/if elegido */
+  function pickPal(txt,inline){ const L=pickLines(); let i=pickTarget(L);
+    if(inline){ const l=i!=null&&L[i];
+      if(!l||(l.r.k!=="while"&&l.r.k!=="if")) return say("warn",ICO.code("#3776AB"),"Las preguntas van en un while o un if","Tocá primero la línea del while o del if");
+      l.r.c=(l.r.c.startsWith("not ")?"not ":"")+txt.replace("()",""); l.t=pickBuild(l.r); return pickSave(L); }
+    const r=pickRead(txt); let v=r.k;
+    if(r.k==="call"){ const N=pickNames(L); if(!N.fns.length) return say("warn",ICO.code("#3776AB"),"Todavía no hay funciones","Primero creá una con def"); v="call:"+N.fns[0].name; }
+    if(i==null||L[i].r.k!=="hole"){ pickAdd(L,i==null?-1:i); i=G.pkSel; }
+    G.pkSel=i; pickKind(L,i,v); const l=L[i];
+    if(r.k==="rep") l.r.n=r.n; if(r.k==="def"&&r.p) l.r.p=r.p; l.t=pickBuild(l.r);
+    pickSave(L); }
+  $("canvas").addEventListener("click",e=>{ if(!G||!G.py||!e.target.closest) return; const m=e.target.closest("[data-pymode]");
+    if(m){ const p=m.dataset.pymode==="pick"; if(p===G.pick||G.busy) return; PY_PICK=G.pick=p; G.pkSel=null; SND.add(); renderProg(true); return; }
+    if(!G.pick||G.busy) return; const row=e.target.closest(".pickrow[data-i]");
+    if(row&&G.pkSel!==+row.dataset.i){ G.pkSel=+row.dataset.i; document.querySelectorAll("#pickrows .pickrow.sel").forEach(x=>x.classList.remove("sel")); row.classList.add("sel"); }
+    const b=e.target.closest("[data-pick-add],[data-pick-del],[data-pick-ind]"); if(!b) return;
+    const L=pickLines(), i=row?+row.dataset.i:-1;
+    if(b.hasAttribute("data-pick-add")){ pickAdd(L,i); SND.add(); }
+    else if(b.hasAttribute("data-pick-del")){ if(i<0) return; pickDel(L,i); SND.trash(); }
+    else { if(i<0) return; pickInd(L,i,+b.dataset.pickInd); SND.add(); }
+    pickSave(L); });
+  $("canvas").addEventListener("change",e=>{ if(!G||!G.py||!G.pick||G.busy) return; const el=e.target, row=el.closest&&el.closest(".pickrow[data-i]"); if(!row) return;
+    const L=pickLines(), i=+row.dataset.i, l=L[i]; G.pkSel=i;
+    if(el.hasAttribute("data-pick-k")) pickKind(L,i,el.value);
+    else if(el.dataset.pickF){ const k=el.dataset.pickF; let v=el.value;
+      if(el.tagName==="INPUT"){ v=pickNameOk(v); if(k==="name"&&!v) return pickRender(); }
+      /* si cambia el nombre de una función, también cambian sus llamadas */
+      if(k==="name"&&l.r.k==="def"&&v!==l.r.name){ const old=l.r.name; L.forEach(x=>{ if(x.r.k==="call"&&x.r.name===old){ x.r.name=v; x.t=pickBuild(x.r); } }); }
+      l.r[k]=v; l.t=pickBuild(l.r); }
+    else return;
+    SND.add(); pickSave(L); });
+  $("canvas").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches&&e.target.matches("input[data-pick-f]")) e.target.blur(); });
   const splitA=a=>{ a=String(a); const k=a.indexOf(":"), t=k<0?a:a.slice(k+1); return {f:k<0?null:a.slice(0,k),path:t===""?[]:t.split(".").map(Number)}; }; /* "A:0.1" = función A, bloque 0.1; sin letra = programa */
   const joinA=(f,path)=>f?f+":"+path.join("."):path.join(".");
   const badCall=(b,f)=>f&&(b.t==="call"?!(G.map.adv?b.f<=f:b.f<f):b.body&&b.body.some(x=>badCall(x,f))); /* una función solo llama a otra anterior (B a A); en los niveles avanzados también a sí misma */
@@ -1376,9 +1542,9 @@ export function boot(hidden?: Record<string, number[]>) {
     /* Python: vuelve al código de arranque del nivel (también pide confirmar) */
     if(G.py){ const start=G.map.pre??PY_START; if(G.busy||G.code===start) return; const b=$("clearBtn");
       if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro?"; clearT=setTimeout(resetClear,3000); return; }
-      G.code=start; delete PYCODE[G.map.id]; SND.trash(); changed(); renderProg(true); return say("",ICO.code("#3776AB"),"Código inicial","Escribí tu programa y tocá Ir"); }
+      G.code=start; delete PYCODE[G.map.id]; SND.trash(); changed(); renderProg(true); return say("",ICO.code("#3776AB"),"Código inicial",G.pick?"Armá tu programa y tocá Ir":"Escribí tu programa y tocá Ir"); }
     if(G.busy||(!G.prog.length&&!Object.keys(G.evs).length&&!G.fids.some(f=>!G.lock.includes(f)&&G.funcs[f].length))) return; const b=$("clearBtn");
-
+  
     if(!b.classList.contains("ask")){ b.classList.add("ask"); b.innerHTML=ICO.trash("#fff")+"¿Seguro?"; clearT=setTimeout(resetClear,3000); return; }
 
     Object.keys(G.evs).forEach(k=>delete G.evs[k]); G.prog.length=0; G.fids.forEach(f=>{ if(!G.lock.includes(f)) G.funcs[f].length=0; }); SND.trash(); changed(); say("",ICO.drag(),"Programa vacío","Arrastrá bloques para empezar"); };
@@ -1669,7 +1835,7 @@ export function boot(hidden?: Record<string, number[]>) {
       /* se acaba de terminar la parte y falta su desafío: volver al menú e invitar a jugarlo */
       const ch=part&&!wasDone&&partDone(SAVE.stars,part)&&chOf(part), toCh=ch&&!SAVE.stars[ch.id];
       if(toCh) extra+=`<div class="unl">${ICO.clock()} ¡Se abrió el ${ch.title}!</div>`;
-      else if(idx>=0&&gs&&gs.open) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;
+      else if(idx>=0&&gs&&gs.open&&!(PARTS.find(P=>P.id===nxt.part)?.extra&&!PARTS.find(P=>P.id===part)?.extra)) extra+=`<button class="nextbtn" data-next="${nxt.id}">Siguiente${ICO.next()}</button>`;
       say("ok",ICO.star(),hasE(G.map)?"¡Llegó!":"¡Listo!",sub,extra);
       celebrate(gained);
       if(toCh) setTimeout(()=>{ if(SCREEN!=="game"||G.map!==map) return; stopRun(); renderMenu(); show("menu"); chModal(ch); },2800);
@@ -1770,7 +1936,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const sec=Math.floor(CH.acc/1000), k=timeStars(ch,sec), old=SAVE.stars[ch.id]||0, prev=SAVE.best[ch.id], rec=prev==null||sec<prev;
   
-    const gained=Math.max(0,k-old), lockedBefore=lockedSecrets();
+    const gained=Math.max(0,k-old), lockedBefore=lockedSecrets(), before=groupsNow();
   
     if(k>old) SAVE.stars[ch.id]=k; if(rec) SAVE.best[ch.id]=sec; persist();
   
@@ -1783,11 +1949,34 @@ export function boot(hidden?: Record<string, number[]>) {
     if(rec&&prev!=null) extra+=`<div class="unl">${ICO.clock()} ¡Nuevo récord!</div>`;
     extra+=secretMsgs(lockedBefore);
   
-    extra+=`<button class="nextbtn" data-chagain>Jugar otra vez${ICO.next()}</button>`;
+    /* desafío completo: no se vuelve a jugar solo; se sale al menú y se felicita */
+    const opened=groupsNow().filter((s,i)=>s.open&&!before[i].open).map(s=>s.g), map=G.map;
+    extra+=`<button class="nextbtn" data-chdone>Volver al menú${ICO.next()}</button>`;
   
     say("ok",ICO.star(),`¡Desafío completo en ${fmtTime(sec)}!`,sub,extra);
   
     celebrate(gained);
+    CH.done={ch,k,sec,rec:rec&&prev!=null,opened};
+    setTimeout(()=>{ if(SCREEN==="game"&&G.map===map&&CH&&CH.done) chDone(); },3200);
+  }
+  /* sale del desafío terminado y muestra la felicitación en el menú */
+  function chDone(){ const d=CH&&CH.done; if(!d) return;
+    stopRun(); renderMenu(); show("menu"); chCongrats(d); }
+  function chCongrats({ch,k,sec,rec,opened}){
+    const names=[...new Set(opened.map(g=>g.part))].map(id=>PARTS.find(P=>P.id===id)).filter(Boolean);
+    const norm=names.filter(P=>!P.extra), adv=names.some(P=>P.extra);
+    let msg=`<p>Terminaste el <b>${ch.title}</b> en <b>${fmtTime(sec)}</b>${rec?" · ¡nuevo récord!":""}.</p>`;
+    if(norm.length) msg+=`<p>${ICO.unlock()} Se abrió ${norm.map(P=>`<b>${P.title}</b>`).join(" y ")}.</p>`;
+    if(adv) msg+=`<p>${ICO.unlock()} También se abrieron los <b>Niveles avanzados</b> (opcionales, abajo de todo).</p>`;
+    const dlg=openModal(`<span class="mico">${ICO.star()}</span><h2>¡Felicitaciones! Superaste la ${partName(ch.part)}</h2>`+
+      `<div class="bigstars">${starRow(k)}</div>${msg}`+
+      `<div class="mbtns"><button class="mbtn" data-go>Seguir${ICO.next()}</button></div>`);
+    confetti(); SND.unlock&&SND.unlock();
+    dlg.querySelector("[data-go]").onclick=()=>{ closeModal();
+      /* llevar a la primera card que se abrió (si es de una parte normal) */
+      const g=opened.find(g=>!PARTS.find(P=>P.id===g.part)?.extra), m=g&&MISSIONS.find(m=>m.grp===g.id);
+      const el=m&&document.querySelector(`.card[data-id="${m.id}"]`);
+      if(el){ el.scrollIntoView({block:"center",behavior:RM.matches?"auto":"smooth"}); bumpEl(el,"hey"); } };
   
   }
   
@@ -1801,7 +1990,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(CH&&e.target.closest("[data-chnext]")){ stopRun(); CH.idx++; return playLevel(); }
   
-    if(CH&&e.target.closest("[data-chagain]")){ stopRun(); return startChallenge(CH.ch); }
+    if(CH&&e.target.closest("[data-chdone]")) return chDone();
   
     const b=e.target.closest("[data-next]"); if(!b) return;
   
