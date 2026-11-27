@@ -15,7 +15,10 @@ export function countB(rows){ return rows.join("").split("B").length-1; }
 export function cellsOf(rows,ch){ const out=[]; rows.forEach((row,r)=>[...row].forEach((x,c)=>{ if(x===ch) out.push(r+","+c); })); return out; }
 export function hasE(map){ return map.rows.some(r=>r.includes("E")); }
 /* pnt: celdas pintadas, dan: verdes donde bailó, wrong: pintadas que no eran rojas, pen: pincel en uso */
-export function startState(map){ const R=find(map.rows,"R"); return {r:R[0],c:R[1],got:[],pnt:[],dan:[],wrong:0,pen:false,starNoBat:false,keys:[],open:[]}; }
+/* celdas de colores («Si no»): amarilla, azul y marrón. Solo se miran: en cada una hay que dar una voltereta (bloque «voltereta», letra t) */
+export const MULTI="YAM";
+export function multiCells(rows){ return [...MULTI].flatMap(ch=>cellsOf(rows,ch)); }
+export function startState(map){ const R=find(map.rows,"R"); return {r:R[0],c:R[1],got:[],pnt:[],dan:[],flp:[],wrong:0,pen:false,starNoBat:false,keys:[],open:[]}; }
 /* ===== Portales y llaves (inicio) =====
    Portales: «O» (azul) y «U» (naranja), cada letra va en 2 celdas. Pisar un portal lleva a GENI al otro del mismo color
    (al salir no vuelve a entrar: hay que salir y volver a pisarlo). Llaves: «k» (dorada) abre «K», «j» (rosa) abre «J», «c» (celeste) abre «C».
@@ -27,7 +30,7 @@ export function portalExit(rows,r,c){ const ch=rows[r][c]; if(!PORTALS.includes(
   return null; }
 /* ===== Portales y llaves (fin) ===== */
 /* bloques de acción y su letra en las soluciones */
-export const ACTS={paint:"p",dance:"b",penon:"n",penoff:"f"};
+export const ACTS={paint:"p",dance:"b",flip:"t",penon:"n",penoff:"f"};
 /* pinta la celda (r,c) si se puede (la estrella no se pinta). Pintar algo que no es rojo cuenta como «wrong», salvo en llegar pintando */
 export function paintCell(map,S,r,c){ const key=r+","+c, ch=map.rows[r][c];
   if(ch==="E"||S.pnt.includes(key)) return S;
@@ -35,8 +38,8 @@ export function paintCell(map,S,r,c){ const key=r+","+c, ch=map.rows[r][c];
 /* lo que falta para ganar (baterías, rojas, verdes, celdas en pintar libre) */
 export function goalLeft(map,S){
   return {bat:countB(map.rows)-S.got.length, red:cellsOf(map.rows,"X").filter(k=>!S.pnt.includes(k)).length,
-    green:cellsOf(map.rows,"V").filter(k=>!S.dan.includes(k)).length, need:map.need?Math.max(0,map.need-S.pnt.length):0}; }
-export function goalMet(map,S){ const g=goalLeft(map,S); return !g.bat&&!g.red&&!g.green&&!g.need; }
+    green:cellsOf(map.rows,"V").filter(k=>!S.dan.includes(k)).length, multi:multiCells(map.rows).filter(k=>!(S.flp||[]).includes(k)).length, need:map.need?Math.max(0,map.need-S.pnt.length):0}; }
+export function goalMet(map,S){ const g=goalLeft(map,S); return !g.bat&&!g.red&&!g.green&&!g.multi&&!g.need; }
 
 /* un movimiento: devuelve choque, ok o llegada (no modifica S) */
 export function tryMove(map,S,dir){
@@ -69,6 +72,9 @@ export function tryAct(map,S,a){
     if(!S.pnt.includes(key)) S2.pnt=S.pnt.concat(key);
     if(!ok&&!map.need) S2.wrong=S.wrong+1;
     return {k:"ok",S:S2,ok}; }
+  if(a==="t"){ const ok=MULTI.includes(ch); if(!ok&&map.strict) return {k:"bad",why:"t"}; /* voltereta: solo en las celdas de colores */
+    if(ok&&!(S.flp||[]).includes(key)) S2.flp=(S.flp||[]).concat(key);
+    return {k:"ok",S:S2,ok}; }
   const ok=ch==="V"; if(!ok&&map.strict) return {k:"bad",why:"b"};
   if(ok&&!S.dan.includes(key)) S2.dan=S.dan.concat(key);
   return {k:"ok",S:S2,ok};
@@ -90,10 +96,10 @@ export function sense(map,S,c){
    Devuelve [[fila,col,acción],...] (acción: u d l r, n/f pincel, p pintar, b bailar) */
 export function shortest(map,S){
   const rows=map.rows, n=rows.length, m=rows[0].length, E=hasE(map), PEN=!!map.tools&&map.tools.includes("n");
-  const bats=cellsOf(rows,"B"), tg=cellsOf(rows,"X").map(k=>[k,"p"]).concat(PEN?[]:cellsOf(rows,"V").map(k=>[k,"b"]));
+  const bats=cellsOf(rows,"B"), tg=cellsOf(rows,"X").map(k=>[k,"p"]).concat(PEN?[]:cellsOf(rows,"V").map(k=>[k,"b"]),PEN?[]:multiCells(rows).map(k=>[k,"t"]));
   const fullB=(1<<bats.length)-1, fullT=(1<<tg.length)-1; let b0=0, t0=0;
   S.got.forEach(k=>{ const i=bats.indexOf(k); if(i>=0) b0|=1<<i; });
-  tg.forEach(([k,a],i)=>{ if((a==="p"?S.pnt:S.dan).includes(k)) t0|=1<<i; });
+  tg.forEach(([k,a],i)=>{ if((a==="p"?S.pnt:a==="t"?(S.flp||[]):S.dan).includes(k)) t0|=1<<i; });
   if(!E&&b0===fullB&&t0===fullT) return [];
   /* con pincel: pisar (r,c) pinta; devuelve el nuevo t o -1 si pintaría una celda que no es roja */
   const ink=(t,r,c)=>{ const k=r+","+c, ch=rows[r][c], i=tg.findIndex(([x])=>x===k);
@@ -187,7 +193,7 @@ export function groupState(stars,codes=[]){
     else { gate=prev.gate; needCode=prev.needCode; prevLeft=prev.ms.length-prev.done; open=prev.open&&prevLeft===0&&earned>=g.need; }
     return prev={g,ms,done,open,prevLeft,prevTitle:prev&&prev.g.title,gate,needCode,earned}; });
 }
-/* notación de la solución: u d l r mover, p b n f acciones, «N(...)» repetir N veces, «?x(...)» si roja, «?v(...)» si verde,
+/* notación de la solución: u d l r mover, p b t n f acciones (t = voltereta), «N(...)» repetir N veces, «?x(...)» si roja, «?v(...)» si verde,
    «?wr(...)» si pared a la derecha (condición de 2 letras: w/n = hay/no hay pared + u d l r), «!(...)» si no (del si anterior).
    Funciones (mayúscula): «A=(r r u)» define A (en cualquier lugar, se separa con «;»), «A» sola la llama.
    parseSolF devuelve {prog,funcs}; parseSol solo el programa */

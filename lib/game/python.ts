@@ -253,7 +253,7 @@ export function pyCondText(e){
   return pyExprText(e); }
 
 /* ---------- de bloques a Python (el espejo debajo de los bloques) ---------- */
-const MOVE_PY={u:"arriba",d:"abajo",l:"izquierda",r:"derecha"}, ACT_PY={paint:"pintar",dance:"bailar",penon:"usar_pincel",penoff:"guardar_pincel"};
+const MOVE_PY={u:"arriba",d:"abajo",l:"izquierda",r:"derecha"}, ACT_PY={paint:"pintar",dance:"bailar",flip:"voltereta",penon:"usar_pincel",penoff:"guardar_pincel"};
 const SENSE_PY=Object.fromEntries(Object.entries(PY_SENSE).map(([k,v])=>[v,k]));
 /* nombre libre del alumno → nombre válido de Python (sin tildes ni espacios); si no sirve, funcion_a */
 export function pyName(name,f){ let s=String(name||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim().replace(/[^a-z0-9_]+/g,"_").replace(/^_+|_+$/g,"");

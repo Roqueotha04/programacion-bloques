@@ -79,8 +79,8 @@ GROUPS.push(
  {id:"CW",part:7,cls:2,norep:true,tools:"pbi",strict:true,title:"Dos celdas",sub:"dos celdas cambian: un si para cada una",need:8,c:"#0EA5A4",l:"#CCF5F0"},
  {id:"CR",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Pasillos",sub:"el si adentro del repetir",need:0,c:"#FF9A2E",l:"#FFE2C2"},
  {id:"CS",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Escaleras",sub:"subir, bajar y doblar con colores",need:6,c:"#E2671A",l:"#FFE4CC"},
- {id:"CN",part:8,cls:2,norep:true,tools:"pbie",strict:true,title:"Si no",sub:"si es roja, pintá; si no, bailá",need:0,c:"#0EA5E9",l:"#D3F0FC"},
- {id:"CO",part:8,cls:2,tools:"rpbie",strict:true,title:"Si no y repetir",sub:"el color dice qué hacer",need:4,c:"#8B5CF6",l:"#E9DEFF"});
+ {id:"CN",part:8,cls:2,norep:true,tools:"ptie",strict:true,conds:["x"],title:"Si no",sub:"si es roja, pintá; si no, voltereta",need:0,c:"#0EA5E9",l:"#D3F0FC"},
+ {id:"CO",part:8,cls:2,norep:true,tools:"ptie",strict:true,conds:["x"],title:"Muchos colores",sub:"varias celdas: un si no para cada una",need:4,c:"#8B5CF6",l:"#E9DEFF"});
 /* ===== Condicionales (fin) ===== */
 export const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
@@ -208,21 +208,22 @@ const CONDS=[
   worlds:[["R.###","#X.##","##V.#","###X.","####E"],["R.###","#V.##","##X.#","###V.","####E"]]},
  {id:"ca7",grp:"CS",title:"Pasillo y bajada",max:13,reveal:true,sol:"3(r ?x(p) ?v(b)) 3(d ?x(p) ?v(b))",
   worlds:[["RX.V","###X","###V","###E"],["RV.X","###V","###.","###E"]]},
- /* parte 8: si no, con colores. «Si es roja, pintá; si no, bailá» y el color como señal («si es roja, pintá y bajá; si no, seguí») */
- {id:"cs1",grp:"CN",title:"Si no",max:9,reveal:true,sol:"r r ?x(p) !(b) r r",
-  tip:["Si… si no…","Si la celda es roja, pintá; si no, bailá. El si no va justo debajo del si: corre cuando el si no se cumple"],
-  worlds:[["#####","R.X.E","#####"],["#####","R.V.E","#####"]]},
- {id:"cs2",grp:"CN",title:"Si no en la esquina",max:9,reveal:true,sol:"r r ?x(p) !(b) d d",
-  worlds:[["R.X","##.","##E"],["R.V","##.","##E"]]},
- {id:"cs3",grp:"CO",title:"Pasillo de si no",max:8,reveal:true,sol:"5(r ?x(p) !(b)) r",
-  worlds:[["#######","RXVVXVE","#######"],["#######","RVXXVXE","#######"]]},
- {id:"cs4",grp:"CO",title:"Escalera de si no",max:9,reveal:true,sol:"3(r d ?x(p) !(b)) r",
-  worlds:[["R.###","#X.##","##V.#","###XE"],["R.###","#V.##","##X.#","###VE"]]},
- {id:"cs5",grp:"CO",title:"La roja dice bajá",max:7,reveal:true,sol:"5(?x(p d) !(r))",
-  tip:["El color dice el camino","Si es roja, pintá y bajá; si no, seguí a la derecha"],
-  worlds:[["RX##","#..X","###E"],["R.X#","##.X","###E"]]},
- {id:"cs6",grp:"CO",title:"La verde dice subí",max:7,reveal:true,sol:"5(?v(b u) !(r))",
-  worlds:[["###E","#..V","RV##"],["###E","##.V","R.V#"]]}
+ /* parte 8: si no, con celdas de colores (sin repetir, solo gestos). Rojas X: pintar; amarillas Y, azules A y marrones M: voltereta.
+    En el si solo se pregunta «roja» (conds:["x"]): el si no es lo que cubre todos los otros colores */
+ {id:"cm1",grp:"CN",title:"Si no",max:9,reveal:true,sol:"r r ?x(p) !(t) r r",
+  tip:["Si… si no…","Si la celda es roja, pintá; si no (amarilla, azul, marrón…), ¡voltereta! El si no va justo debajo del si"],
+  worlds:[["#####","R.X.E","#####"],["#####","R.Y.E","#####"]]},
+ {id:"cm2",grp:"CN",title:"Tres colores",max:9,reveal:true,sol:"r r ?x(p) !(t) d d",
+  tip:["Un si no para todos","No hace falta un si por cada color: lo que no es rojo, lo hace el si no"],
+  worlds:[["R.X","##.","##E"],["R.A","##.","##E"],["R.M","##.","##E"]]},
+ {id:"cm3",grp:"CN",title:"Para arriba",max:9,reveal:true,sol:"r r ?x(p) !(t) u u",
+  worlds:[["##E","##.","R.X"],["##E","##.","R.Y"],["##E","##.","R.A"]]},
+ {id:"cm4",grp:"CO",title:"Dos celdas",max:15,reveal:true,sol:"r r ?x(p) !(t) r r ?x(p) !(t) r r",
+  worlds:[["#######","R.X.Y.E","#######"],["#######","R.A.X.E","#######"],["#######","R.M.A.E","#######"]]},
+ {id:"cm5",grp:"CO",title:"Esquina de colores",max:14,reveal:true,sol:"r r ?x(p) !(t) d d ?x(p) !(t) r",
+  worlds:[["R.X#","##.#","##YE"],["R.A#","##.#","##XE"],["R.M#","##.#","##AE"]]},
+ {id:"cm6",grp:"CO",title:"Fila de colores",max:17,reveal:true,sol:"r ?x(p) !(t) r ?x(p) !(t) r ?x(p) !(t) r",
+  worlds:[["#####","RXYAE","#####"],["#####","RYXME","#####"],["#####","RAMXE","#####"]]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds;
   return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,norep:m.norep??!!g.norep,conds:m.conds??g.conds}); });
 MISSIONS.push(...CONDS);
@@ -342,10 +343,10 @@ CHALLENGES.push(
    {title:"Fila de colores",max:7,reveal:true,sol:"4(r ?x(p) ?v(b))",worlds:[["#####","RXV.E","#####"],["#####","RVX.E","#####"]]},
    {title:"Bajada de colores",max:7,reveal:true,sol:"3(d ?x(p) ?v(b))",worlds:[["R##","X##","V##","E##"],["R##","V##","X##","E##"]]},
    {title:"Escalera hacia arriba",max:8,reveal:true,sol:"3(r u ?x(p) ?v(b))",worlds:[["###E","##X.","#X.#","R.##"],["###E","##V.","#V.#","R.##"]]}]},
- {id:"xsn",part:8,cls:2,tools:"rpbie",strict:true,title:"Desafío del si no",t3:150,t2:240,levels:[
-   {title:"Escalerita",max:9,reveal:true,sol:"2(r d ?x(p) !(b)) r",worlds:[["R.##","#X.#","##VE"],["R.##","#V.#","##XE"]]},
-   {title:"Pasillo de si no",max:8,reveal:true,sol:"4(r ?x(p) !(b)) r",worlds:[["######","RXVVXE","######"],["######","RVXXVE","######"]]},
-   {title:"La roja dice bajá",max:7,reveal:true,sol:"4(?x(p d) !(r))",worlds:[["RX#","#.X","##E"],["R.X","##X","##E"]]}]});
+ {id:"xsm",part:8,cls:2,norep:true,conds:["x"],tools:"ptie",strict:true,title:"Desafío del si no",t3:150,t2:240,levels:[
+   {title:"Pasillo",max:9,reveal:true,sol:"r ?x(p) !(t) r r r",worlds:[["#####","RX..E","#####"],["#####","RM..E","#####"]]},
+   {title:"Bajada",max:8,reveal:true,sol:"d ?x(p) !(t) d d",worlds:[["R##","X##",".##","E##"],["R##","A##",".##","E##"],["R##","Y##",".##","E##"]]},
+   {title:"Esquina doble",max:13,reveal:true,sol:"r r ?x(p) !(t) d ?x(p) !(t) d",worlds:[["R.X","##Y","##E"],["R.A","##X","##E"],["R.M","##A","##E"]]}]});
 CHALLENGES.forEach(c=>c.levels.forEach(m=>{ if(m.worlds) m.rows=m.worlds[0]; if(c.conds) m.conds=c.conds; if(c.norep) m.norep=true; }));
 /* ===== Condicionales (fin) ===== */
 CHALLENGES.sort(byPart);

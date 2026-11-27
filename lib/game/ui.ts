@@ -7,7 +7,7 @@ import {
   ACTS, DIRS, MAXSTEPS, MAXACT, countProgram, hasCall, parseSol, cellColor, cellsOf, sense, pickWorlds, worldMap, countB, countBlocks, find,
   fmtTime, goalLeft, goalMet, groupState, hasE, hasRepeat, hasRepeatAll, limitFor, maxStars, optFor, starsAdv, starsPy,
   chOf, gateTxt, partDone, partName, selfTest, shortest, starsFor, startState, timeStars,
-  tryAct, tryMove, walk, EVMAX, DOORS,
+  tryAct, tryMove, walk, EVMAX, DOORS, MULTI, multiCells,
 } from "./engine";
 import { parsePy, pyWalk, pyLines, pyMissing, PY_REQ_TIP, blocksToPy, pyHTML, pyExprText, pyCondText } from "./python";
 import { freshSave, isKids, isProfe, isPython, saveKey } from "./save";
@@ -291,6 +291,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     brushOff:(c="#fff")=>`<svg viewBox="0 0 32 32"><g opacity=".75"><rect x="4" y="4" width="20" height="9" rx="3" fill="${c}"/><path d="M24 8.5h3v8H15v4" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/><rect x="12.5" y="20" width="5" height="9" rx="2" fill="${c}"/></g><path d="M4 28L28 4" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/></svg>`,
   
+    flip:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M8 21a9 9 0 1 1 6.5 5.6" fill="none" stroke="${c}" stroke-width="2.8" stroke-linecap="round"/><path d="M4.5 16.5L8 21.5l4.6-3.8" fill="none" stroke="${c}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     music:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M12 24V7l14-3v17" fill="none" stroke="${c}" stroke-width="2.8" stroke-linejoin="round"/><circle cx="8.5" cy="24" r="4" fill="${c}"/><circle cx="22.5" cy="21" r="4" fill="${c}"/></svg>`,
   
     ifq:(c="#fff")=>`<svg viewBox="0 0 32 32"><path d="M16 3l13 13-13 13L3 16z" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/><path d="M13 13a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4" fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="21.6" r="1.6" fill="${c}"/></svg>`,
@@ -348,7 +349,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     paint:()=>{tone(400,.12,"triangle",.09);tone(700,.1,"sine",.07,.06)},
   
-    dance:()=>[784,988,784,1175].forEach((f,i)=>tone(f,.1,"square",.05,i*.1)), nope:()=>{tone(300,.1,"triangle",.1);tone(240,.14,"triangle",.1,.09)},
+    dance:()=>[784,988,784,1175].forEach((f,i)=>tone(f,.1,"square",.05,i*.1)), flip:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.09,"sine",.08,i*.07)), nope:()=>{tone(300,.1,"triangle",.1);tone(240,.14,"triangle",.1,.09)},
   
     unlock:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.2,"triangle",.11,i*.09)),
   
@@ -805,7 +806,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
       const inner=ch==="#"?rockSVG():ch==="E"?goalSVG():ch==="B"?batSVG():PCOL[ch]?portalSVG(ch):KCOL[ch]?keySVG(ch):DOORS[ch]?doorSVG(ch):(ch==="R"&&!withRobot)?`<svg class="rsvg" viewBox="-50 -50 100 100" data-look="r">${robotSVG()}</svg>`:"";
   
-      h+=`<div class="cell${(r+c)%2?" alt":""}${ch==="X"?" red":ch==="V"?" green":PCOL[ch]?" portalc po-"+ch:DOORS[ch]?" doorc":""}" data-r="${r}" data-c="${c}" style="--i:${r+c}">${inner}</div>`; }
+      h+=`<div class="cell${(r+c)%2?" alt":""}${ch==="X"?" red":ch==="V"?" green":MULTI.includes(ch)?" multi mc-"+ch:PCOL[ch]?" portalc po-"+ch:DOORS[ch]?" doorc":""}" data-r="${r}" data-c="${c}" style="--i:${r+c}">${inner}</div>`; }
   
     if(withRobot) h+=`<div class="robot noanim${intro?" drop":""}" id="bot" data-look="r"><div class="shadow"></div><div class="bob"><svg viewBox="-50 -50 100 100">${robotSVG()}</svg></div><span class="penmark">${ICO.brush()}</span><span class="keymark"></span></div>`;
   
@@ -835,7 +836,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const tools=map.tools??"r"; /* el mapa propio (cls 0) tiene repetir */
   
-    G={map,rows:map.rows,n:map.rows.length,m:map.rows[0].length,nB:countB(map.rows),nX:cellsOf(map.rows,"X").length,nV:cellsOf(map.rows,"V").length,
+    G={map,rows:map.rows,n:map.rows.length,m:map.rows[0].length,nB:countB(map.rows),nX:cellsOf(map.rows,"X").length,nV:cellsOf(map.rows,"V").length,nM:multiCells(map.rows).length,
   
        prog:PROGS[map.id],funcs:FUNCS[map.id],names:NAMES[map.id],fids,fn:fids.length>0,lock:map.lock||[],run:0,busy:false,ctx:null,S,tools,rep:tools.includes("r"),opt,max:limitFor(map,opt),hint:false,
        ev:!!map.ev,free:!!map.free,capture:null,keys:map.keys?[...map.keys]:[],evs:EVS[map.id],listen:false,live:false,pn:0,kq:Promise.resolve()}; /* eventos: teclas del nivel, sus bloques (evs), si espera teclas (listen) y cuántas acciones hizo (pn) */
@@ -898,7 +899,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const mark=(keys,cls)=>keys.forEach(k=>{ const [r,c]=k.split(",").map(Number); cellEl(r,c).classList.add(cls); });
   
-    mark(G.S.got,"got"); mark(G.S.pnt,"pnt"); mark(G.S.dan,"danced"); mark(G.S.open||[],"open"); keyCells(G.S.keys||[]).forEach(el=>el.classList.add("got")); $("bot").classList.toggle("pen",!!G.S.pen);
+    mark(G.S.got,"got"); mark(G.S.pnt,"pnt"); mark(G.S.dan,"danced"); mark(G.S.flp||[],"flipped"); mark(G.S.open||[],"open"); keyCells(G.S.keys||[]).forEach(el=>el.classList.add("got")); $("bot").classList.toggle("pen",!!G.S.pen);
   
     placeNow();
   
@@ -917,7 +918,7 @@ export function boot(hidden?: Record<string, number[]>) {
   function placeNow(){ const bot=$("bot"); bot.classList.add("noanim"); place(G.S); void bot.offsetWidth; bot.classList.remove("noanim"); renderStatus(); }
   
   /* cambia al mundo i: redibuja el tablero con sus filas y recalcula los contadores */
-  function setWorld(i){ G.wi=i; G.rows=G.worlds[i]; G.wm=worldMap(G.map,G.rows); G.nB=countB(G.rows); G.nX=cellsOf(G.rows,"X").length; G.nV=cellsOf(G.rows,"V").length; drawBoard(false); }
+  function setWorld(i){ G.wi=i; G.rows=G.worlds[i]; G.wm=worldMap(G.map,G.rows); G.nB=countB(G.rows); G.nX=cellsOf(G.rows,"X").length; G.nV=cellsOf(G.rows,"V").length; G.nM=multiCells(G.rows).length; drawBoard(false); }
 
   /* ---------- varios mapas a la vez (niveles con worlds, menos Python) ----------
      Un tablero y un robot por mapa, uno al lado del otro. El mismo programa corre en todos a la vez, un paso por vez: cada robot
@@ -944,8 +945,8 @@ export function boot(hidden?: Record<string, number[]>) {
   const cellB=(b,r,c)=>b.holder.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
   function placeB(b,S,dx=0,dy=0){ b.bot.style.transform=`translate(${(S.c+dx)*b.step}px,${(S.r+dy)*b.step}px)`; }
   function resetB(b){ b.S=startState(b.wm); b.trail=0; b.moves=0;
-    b.holder.querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced"));
-    b.holder.classList.remove("win","bump","wfail"); b.bot.dataset.look="r"; b.bot.classList.remove("happy","shake","moving","boogie","pen");
+    b.holder.querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","flipped"));
+    b.holder.classList.remove("win","bump","wfail"); b.bot.dataset.look="r"; b.bot.classList.remove("happy","shake","moving","boogie","flip","pen");
     b.bot.classList.add("noanim"); placeB(b,b.S); void b.bot.offsetWidth; b.bot.classList.remove("noanim"); }
   /* un paso de un robot; loud: solo el primero hace sonar, así no suena todo dos veces */
   async function moveB(b,r,dir,loud){ const t=T(), bot=b.bot; bot.dataset.look=dir;
@@ -958,9 +959,11 @@ export function boot(hidden?: Record<string, number[]>) {
     if(r.k==="bad"){ SND.crash(); c.classList.add("flash"); bot.classList.add("shake"); setTimeout(()=>bot.classList.remove("shake"),400); floatText(x,y-20,"¡Ups!","#FF5A62"); await sleep(t*.8); return; }
     b.S=r.S;
     if(kind==="paint"){ c.classList.add("pnt"); if(loud) SND.paint(); burst(x,y,["#4C8DF6","#2563C9","#9CC3FF","#FFFFFF"],14,4); if(r.ok) floatText(x,y-24,"¡Pintada!","#2563C9"); }
+    else if(kind==="flip"){ bot.classList.remove("flip"); void bot.offsetWidth; bot.classList.add("flip"); if(loud) SND.flip();
+      if(r.ok){ c.classList.add("flipped"); burst(x,y,["#FFC21A","#3B82F0","#A0673A","#FFFFFF"],16,5); floatText(x,y-24,"¡Voltereta!","#7C3AED"); } }
     else if(kind==="dance"){ bot.classList.remove("boogie"); void bot.offsetWidth; bot.classList.add("boogie"); if(loud) SND.dance();
       if(r.ok){ c.classList.add("danced"); burst(x,y,["#1EC48C","#FFC21A","#FF6FB5","#FFFFFF"],16,5); floatText(x,y-24,"♪ ♫","#11986A"); } }
-    await sleep(t); bot.classList.remove("boogie"); }
+    await sleep(t); bot.classList.remove("boogie","flip"); }
   /* la respuesta del si de cada robot, arriba de él */
   function ifB(b,ok){ const [x,y]=center(b.bot); floatText(x,y-30,ok?"sí":"no",ok?"#11986A":"#5F7F96"); }
   const addrOf=ev=>typeof ev.addr[0]==="string"?ev.addr[0]+":"+ev.addr.slice(1).join("."):ev.addr.join(".");
@@ -1006,7 +1009,7 @@ export function boot(hidden?: Record<string, number[]>) {
     if(isMulti()&&G.B){ G.wm=G.B[0].wm; G.rows=G.B[0].rows; } /* después de una falla en otro mapa, se vuelve al mapa 1 */
     G.S=startState(G.wm); G.trail=0; G.lastGot=null; clearHint(); G.listen=false; G.live=false; keypadState();
   
-    $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","scorch","open","warping","nokey"));
+    $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","flipped","scorch","open","warping","nokey"));
   
     $("gBoard").classList.remove("win","bump");
   
@@ -1014,7 +1017,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     document.querySelectorAll("#canvas .running, #canvas .yes, #canvas .nope").forEach(b=>b.classList.remove("running","yes","nope"));
   
-    $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen","boom","dizzy","warpout","warpin","haskey"); setFace(null); $("bot").querySelectorAll(".dz").forEach(e=>e.remove()); $("gBoard").classList.remove("kaboom"); placeNow();
+    $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","flip","pen","boom","dizzy","warpout","warpin","haskey"); setFace(null); $("bot").querySelectorAll(".dz").forEach(e=>e.remove()); $("gBoard").classList.remove("kaboom"); placeNow();
     pyMark(null);
     if(isMulti()&&G.B) G.B.forEach(resetB);
   
@@ -1035,6 +1038,7 @@ export function boot(hidden?: Record<string, number[]>) {
     if(G.nX&&!isMulti()) h+=chip("#FF5A62",G.nX-g.red,G.nX,"Rojas"); /* con varios mapas a la vez, cada tablero muestra lo suyo */
   
     if(G.nV&&!isMulti()) h+=chip("#1EC48C",G.nV-g.green,G.nV,"Verdes");
+    if(G.nM&&!isMulti()) h+=chip("linear-gradient(135deg,#FFC21A 33%,#3B82F0 33% 66%,#A0673A 66%)",G.nM-g.multi,G.nM,"Colores");
   
     if(G.map.need) h+=chip("var(--paint)",Math.min(G.S.pnt.length,G.map.need),G.map.need,"Pintadas");
   
@@ -1095,7 +1099,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(T_.includes("p")||T_.includes("b")||T_.includes("n")){
   
-      h+=`<div class="pgroup" id="pg-act"><h4><i style="background:var(--pnt)"></i>Acciones</h4>${T_.includes("n")?blockHTML({t:"penon"},null,true)+blockHTML({t:"penoff"},null,true):""}${T_.includes("p")?blockHTML({t:"paint"},null,true):""}${T_.includes("b")?blockHTML({t:"dance"},null,true):""}</div>`;
+      h+=`<div class="pgroup" id="pg-act"><h4><i style="background:var(--pnt)"></i>Acciones</h4>${T_.includes("n")?blockHTML({t:"penon"},null,true)+blockHTML({t:"penoff"},null,true):""}${T_.includes("p")?blockHTML({t:"paint"},null,true):""}${T_.includes("b")?blockHTML({t:"dance"},null,true):""}${T_.includes("t")?blockHTML({t:"flip"},null,true):""}</div>`;
   
       cats+=`<button class="cat" data-g="pg-act"><i style="background:var(--pnt)"></i>Acciones</button>`; }
   
@@ -1155,6 +1159,7 @@ export function boot(hidden?: Record<string, number[]>) {
     if(b.t==="paint") return `<div class="blk act" ${at}><span class="ic">${ICO.brush()}</span><span>pintar</span></div>`;
   
     if(b.t==="dance") return `<div class="blk act" ${at}><span class="ic">${ICO.music()}</span><span>bailar</span></div>`;
+    if(b.t==="flip") return `<div class="blk act" ${at}><span class="ic">${ICO.flip()}</span><span>voltereta</span></div>`;
   
     if(b.t==="penon") return `<div class="blk act" ${at}><span class="ic">${ICO.brush()}</span><span>usar pincel</span></div>`;
   
@@ -1455,7 +1460,7 @@ export function boot(hidden?: Record<string, number[]>) {
   function evOk(block,f,path){ if(!G.ev) return true; if(block.t==="evnew") return false;
     if(f&&f[0]==="@") return getList(f,[]).length<EVMAX&&!path.length;
     if(f||path.length) return false;
-    return block.t==="listen"?!G.prog.some(b=>b.t==="listen"):["move","paint","dance"].includes(block.t); }
+    return block.t==="listen"?!G.prog.some(b=>b.t==="listen"):["move","paint","dance","flip"].includes(block.t); }
   const evEl=k=>document.querySelector(`#canvas .evt[data-ev="${k}"]`);
   /* agrega el evento de la tecla key al final de «Mis eventos». Libre: id nuevo y sin tecla («?»): se elige tocándolo */
   function placeEv(key){ let id=key;
@@ -1847,11 +1852,13 @@ export function boot(hidden?: Record<string, number[]>) {
   
       if(r.ok) floatText(x,y-24,"¡Pintada!","#2563C9"); }
   
+    else if(kind==="flip"){ bot.classList.remove("flip"); void bot.offsetWidth; bot.classList.add("flip"); SND.flip();
+      if(r.ok){ c.classList.add("flipped"); burst(x,y,["#FFC21A","#3B82F0","#A0673A","#FFFFFF"],16,5); floatText(x,y-24,"¡Voltereta!","#7C3AED"); } }
     else { bot.classList.remove("boogie"); void bot.offsetWidth; bot.classList.add("boogie"); SND.dance();
   
       if(r.ok){ c.classList.add("danced"); burst(x,y,["#1EC48C","#FFC21A","#FF6FB5","#FFFFFF"],16,5); floatText(x,y-24,"♪ ♫","#11986A"); } }
   
-    await sleep(t); bot.classList.remove("boogie");
+    await sleep(t); bot.classList.remove("boogie","flip");
   
     renderStatus();
   
@@ -1962,6 +1969,7 @@ export function boot(hidden?: Record<string, number[]>) {
 
     if(res.k==="bad"){ const el=!G.py&&last&&document.querySelector(`#canvas .blk[data-a="${last}"]`); el&&el.classList.add("err"); if(G.py) pyMark(last,"err");
   
+      if(res.why==="t") return say("err",ICO.flip("#FF5A62"),"¡Ahí no va la voltereta!","Solo en las celdas de colores (amarillas, azules, marrones…)"+(G.tools.includes("e")?": usá el si no":""));
       return res.why==="p"?say("err",ICO.brush("#FF5A62"),"¡Esa celda no era roja!","Solo se pintan las rojas"+(G.tools.includes("i")?": usá el bloque si":""))
   
                           :say("err",ICO.music("#FF5A62"),"¡Ahí no se baila!","Solo en las celdas verdes"+(G.tools.includes("i")?": usá el bloque si":"")); }
@@ -1978,6 +1986,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     if(g.red) return say("warn",ICO.brush("#FF5A62"),g.red>1?`Faltan pintar ${g.red} rojas`:"Falta pintar 1 roja",`Pintá todas las rojas${toStar}`);
   
+    if(g.multi) return say("warn",ICO.flip("#7C3AED"),g.multi>1?`Faltan ${g.multi} volteretas`:"Falta 1 voltereta","En cada celda de color (que no sea roja), ¡voltereta!");
     if(g.green) return say("warn",ICO.music("#11986A"),g.green>1?`Faltan bailar en ${g.green} verdes`:"Falta bailar en 1 verde","En cada verde, ¡a bailar!");
   
     if(g.need) return say("warn",ICO.brush("#7E3DB0"),g.need>1?`Faltan pintar ${g.need} celdas`:"Falta pintar 1 celda",`Tenés que pintar ${G.map.need}${toStar}`);
