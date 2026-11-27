@@ -47,7 +47,6 @@ export function boot(hidden?: Record<string, number[]>) {
   if(!SAVE.face) SAVE.face="normal";
   if(!Array.isArray(SAVE.faces)) SAVE.faces=["normal"];
   else if(!SAVE.faces.includes("normal")) SAVE.faces.unshift("normal");
-  if(!["robi","gato","astro","dino","lentes","rayo","caballero","rey"].includes(SAVE.skin)) SAVE.skin="robi";
   if(!Array.isArray(SAVE.codes)) SAVE.codes=[];
   SAVE.codes=SAVE.codes.map(c=>c===3?4:c); /* Repetir pasó de la parte 3 a la 4: el código ya ingresado sigue valiendo */
   function applyProfe(){ if(PROFE){ SAVE.seen=GROUPS.map(g=>g.id).concat(CHALLENGES.map(c=>c.id)); SAVE.owned=["robi","gato","chica","astro","dino","princesa","lentes","rayo","caballero","valquiria","rey"]; SAVE.faces=["normal","guino","enojado","cool"]; } }
@@ -88,6 +87,9 @@ export function boot(hidden?: Record<string, number[]>) {
   const ACCENTS={marino:["#14325C","#C5D9F0","Marino"],cel:["#2FB0F0","#BDE8FF","Celeste"],ver:["#1EC48C","#BFF3DF","Verde"],nar:["#FF9A2E","#FFDDB8","Naranja"],ros:["#FF6FB5","#FFD0E6","Rosa"],vio:["#8B6CF0","#DCD2FF","Violeta"],ama:["#F5B800","#FFEBA6","Amarillo"]};
   const SKINS=[{id:"robi",name:"GENI",price:0},{id:"gato",name:"Gatobot",price:6},{id:"chica",name:"Chica bot",price:9},{id:"astro",name:"Astro",price:12},{id:"dino",name:"Dinobot",price:18},{id:"princesa",name:"Princess",price:21},{id:"lentes",name:"Lentes",price:24},{id:"rayo",name:"Rayo",price:30},{id:"caballero",name:"Caballero",price:36},{id:"valquiria",name:"Valquiria bot",price:39},{id:"rey",name:"Rey Robot",price:42},
     {id:"mega",name:"67 BOT",price:0,secret:"mega"},{id:"dios",name:"DIOS BOT",price:0,secret:"dios"}];
+  if(!SKINS.some(s=>s.id===SAVE.skin)) SAVE.skin="robi"; /* (antes había una lista vieja que dejaba afuera los secretos y las chicas: al recargar volvían a GENI) */
+  /* promo: los robots secretos, gratis para todos hasta el 27/11/2026 a las 17:30 (hora de la compu). Después se vuelven a ganar */
+  const FREE_UNTIL=new Date(2026,10,27,17,30).getTime(), freeNow=()=>Date.now()<FREE_UNTIL;
   /* robots secretos: no se compran, se ganan. Los desafíos cuentan solo si se jugaron (mira el mejor tiempo, así los códigos de clase no los regalan) */
   const all3=ms=>ms.every(m=>(SAVE.stars[m.id]||0)>=maxStars(m));
   const chPlayed3=ch=>{ const b=SAVE.best[ch.id]; return b!=null&&timeStars(ch,b)>=3; };
@@ -95,7 +97,10 @@ export function boot(hidden?: Record<string, number[]>) {
     /* (si la edición no tiene Repetir, como la de Python, no se regala: hace falta al menos un nivel) */
     mega:{hint:"sacá 3 estrellas en todos los niveles de Repetir y Repetir avanzado, y en el Desafío de repetir",ok:()=>{ const ms=MISSIONS.filter(m=>!m.py&&(m.part===4||m.part===4.5)); return ms.length>0&&all3(ms)&&CHALLENGES.filter(c=>c.part===4).every(chPlayed3); }},
     dios:{hint:"sacá 3 estrellas en todos los niveles y todos los desafíos del juego",ok:()=>all3(MISSIONS)&&CHALLENGES.every(chPlayed3)}};
-  function secretOk(s){ return !s.secret||PROFE||SECRETS[s.secret].ok(); }
+  function secretOk(s){ return !s.secret||PROFE||freeNow()||SECRETS[s.secret].ok(); }
+  const promoOnly=s=>!!s.secret&&!PROFE&&freeNow()&&!SECRETS[s.secret].ok();
+  /* si terminó la promo y tenía puesto un secreto que no ganó, vuelve a GENI */
+  function fixSkin(){ const s=SKINS.find(x=>x.id===SAVE.skin); if(!s||(s.secret&&!skinOwned(s))){ SAVE.skin="robi"; persist(); } }
   const skinOwned=s=>SAVE.owned.includes(s.id)||(!!s.secret&&secretOk(s));
   const lockedSecrets=()=>SKINS.filter(s=>s.secret&&!skinOwned(s));
   const secretMsgs=before=>before.filter(skinOwned).map(s=>`<div class="unl">${ICO.unlock()} ¡Ganaste un robot secreto: ${s.name}! Buscalo en el taller</div>`).join("");
@@ -188,7 +193,10 @@ export function boot(hidden?: Record<string, number[]>) {
    <g class="pupils">${pupils}</g>
    ${mouth}${front}`;
     /* robots secretos: brillo alrededor */
-    return glow?`<defs><filter id="glow-${s}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="${glow}" flood-opacity=".9"/></filter></defs><g filter="url(#glow-${s})">${core}</g>`:core; }
+    /* el id del filtro es único por dibujo: con uno fijo, si el primero quedaba en una pantalla oculta, los demás se veían invisibles */
+    const gid=`glow-${s}-${++GLOW}`;
+    return glow?`<defs><filter id="${gid}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="${glow}" flood-opacity=".9"/></filter></defs><g filter="url(#${gid})">${core}</g>`:core; }
+  let GLOW=0;
   function rockSVG(){ return `<svg viewBox="0 0 100 100"><polygon points="50,12 86,31 50,50 14,31" fill="#D3DEE8" stroke="#0D3049" stroke-width="3" stroke-linejoin="round"/>
   
    <polygon points="14,31 50,50 50,90 14,71" fill="#9CB0C2" stroke="#0D3049" stroke-width="3" stroke-linejoin="round"/>
@@ -465,7 +473,7 @@ export function boot(hidden?: Record<string, number[]>) {
   const ADV_OPEN={}; /* «Niveles avanzados» de cada mundo: empieza plegado */
   function renderMenu(onlyAdv=false){
   
-    if(!onlyAdv){ $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();
+    if(!onlyAdv){ fixSkin(); $("heroBot").innerHTML=robotSVG(); $("logoBot").innerHTML=robotSVG(); renderWallet();
   
     $("total").innerHTML=starIco(true)+`${earned()} estrellas ganadas`; }
   
@@ -838,7 +846,7 @@ export function boot(hidden?: Record<string, number[]>) {
 
     setTop(map.num||ICO.pencil(),map.ch?`Desafío · Nivel ${map.num} de 3`:map.title); renderTopStars();
 
-    $("hintBtn").classList.toggle("hidden",!!map.ch||!!map.need||!!map.worlds||map.cls===3||G.py||G.ev); $("stepBtn").classList.toggle("hidden",G.ev); renderKeypad();
+    $("hintBtn").classList.toggle("hidden",!!map.ch||!!map.need||!!map.worlds||map.cls===3||G.py||G.ev); $("stepBtn").classList.toggle("hidden",G.ev); $("pauseBtn").classList.toggle("hidden",G.ev); $("pauseBtn").disabled=true; renderKeypad();
 
     renderPalette(); show("game"); drawBoard(false,true); renderProg(true);
   
@@ -852,7 +860,7 @@ export function boot(hidden?: Record<string, number[]>) {
     else if(G.py) say("",ICO.code("#3776AB"),"¡Escribí el programa en Python!","Tocá un comando de la izquierda para agregarlo · Ir para probar");
 
     else if(map.adv) say("",ICO.blocks(),"¡Una función que se llama a sí misma!",`Creá tu función y llamala adentro de ella misma: se repite hasta llegar a la estrella${G.nX||G.nV?" · Pintá las rojas y bailá en las verdes":""} · ${lim}`);
-    else if(map.worlds) say("",ICO.ifq("#6366F1"),"¡El mapa cambia!",`Tu programa tiene que funcionar en todos${map.reveal?" · Mirá los mundos de abajo":""} · ${lim}`);
+    else if(map.worlds) say("",ICO.ifq("#6366F1"),"¡El mapa cambia!",`Tu programa tiene que funcionar en todos los mapas · Normal: de a uno · Doble: todos a la vez · ${lim}`);
     else if((G.nV||G.nX)&&!tools.includes("i")&&!tools.includes("n")) say("",ICO.music("#11986A"),G.nX?"Pintá las rojas y bailá en las verdes":G.nV>1?"¡Bailá en las celdas verdes!":"¡Bailá en la celda verde!",`Después, a la estrella${map.cls===2?" · "+lim:""}`);
     else if(G.fn) say("",ICO.blocks(),G.fids.every(f=>G.lock.includes(f))?"¡Llamá a la función para ahorrar bloques!":"¡Creá una función y llamala varias veces!",lim);
     else if(G.nV) say("",ICO.ifq("#11986A"),"Rojas: pintar · Verdes: bailar",`Usá el bloque si y llegá a la estrella · ${lim}`);
@@ -874,7 +882,8 @@ export function boot(hidden?: Record<string, number[]>) {
   function boardSpace(){ const wide=innerWidth>1150; return [$("boardwrap").clientWidth-26, wide?Math.max(240,innerHeight-430):620]; }
   
   function drawBoard(keep,intro){
-  
+    if(isMulti()) return drawBoards(intro);
+    unMulti();
     const [w,h]=boardSpace(); G.step=buildBoard($("gBoard"),G.rows,true,w,h,intro);
   
     if(intro) setTimeout(()=>{ const b=$("bot"); b&&b.classList.remove("drop"); },1300);
@@ -903,8 +912,92 @@ export function boot(hidden?: Record<string, number[]>) {
   
   /* cambia al mundo i: redibuja el tablero con sus filas y recalcula los contadores */
   function setWorld(i){ G.wi=i; G.rows=G.worlds[i]; G.wm=worldMap(G.map,G.rows); G.nB=countB(G.rows); G.nX=cellsOf(G.rows,"X").length; G.nV=cellsOf(G.rows,"V").length; drawBoard(false); }
+
+  /* ---------- varios mapas a la vez (niveles con worlds, menos Python) ----------
+     Un tablero y un robot por mapa, uno al lado del otro. El mismo programa corre en todos a la vez, un paso por vez: cada robot
+     pregunta el si por su propia celda (arriba de cada uno sale «sí» o «no»). Los bloques se iluminan siguiendo al primer mapa que
+     sigue andando. Si un mapa falla, se frena todo. El tablero del mapa 1 es el de siempre (#gBoard, #bot); G.B tiene uno por mapa */
+  let VIEW2=false; /* vista de los mapas: false = Normal (de a uno, como siempre), true = Doble (todos a la vez). Se recuerda entre niveles */
+  function isMulti(){ return !!(G&&G.worlds&&!G.py&&VIEW2); }
+  function setView(v){ if(!G||!G.worlds||G.busy||VIEW2===v) return; VIEW2=v; SND.add(); G.keepW=false; G.wi=null;
+    G.rows=G.worlds[0]; G.wm=worldMap(G.map,G.rows); drawBoard(false); }
+  $("status").addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest("[data-view]"); if(b) setView(b.dataset.view==="2"); });
+  function unMulti(){ const wb=$("wboards"); if(G) G.B=null; if(!wb) return; $("boardwrap").appendChild($("gBoard")); wb.remove(); $("boardwrap").classList.remove("multi"); }
+  function drawBoards(intro){
+    const wrap=$("boardwrap"), N=G.worlds.length; wrap.appendChild($("gBoard")); /* el tablero de siempre sale antes de rehacer las cajas */
+    let wb=$("wboards"); if(!wb){ wb=document.createElement("div"); wb.id="wboards"; wb.className="wboards"; wrap.appendChild(wb); }
+    wrap.classList.add("multi");
+    const [w,h]=boardSpace(), bw=w-26, bh=Math.max(190,Math.floor((h-(N-1)*14)/N)-44); /* un mapa abajo del otro */
+    wb.innerHTML=G.worlds.map((_,i)=>`<div class="wbox"><span class="wlbl">Mapa ${i+1}</span>${i?`<div class="board" data-wb="${i}"></div>`:""}</div>`).join("");
+    wb.firstElementChild.appendChild($("gBoard"));
+    G.B=G.worlds.map((rows,i)=>{ const holder=i?wb.querySelector(`[data-wb="${i}"]`):$("gBoard"), step=buildBoard(holder,rows,true,bw,bh,intro), bot=holder.querySelector(".robot");
+      if(i) bot.removeAttribute("id"); return {i,holder,bot,rows,wm:worldMap(G.map,rows),step,S:startState(worldMap(G.map,rows)),trail:0,moves:0}; });
+    G.step=G.B[0].step; G.rows=G.worlds[0]; G.wm=G.B[0].wm;
+    if(intro) setTimeout(()=>{ if(G&&G.B) G.B.forEach(b=>b.bot.classList.remove("drop")); },1300);
+    resetRobot(); }
+  const cellB=(b,r,c)=>b.holder.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+  function placeB(b,S,dx=0,dy=0){ b.bot.style.transform=`translate(${(S.c+dx)*b.step}px,${(S.r+dy)*b.step}px)`; }
+  function resetB(b){ b.S=startState(b.wm); b.trail=0; b.moves=0;
+    b.holder.querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced"));
+    b.holder.classList.remove("win","bump","wfail"); b.bot.dataset.look="r"; b.bot.classList.remove("happy","shake","moving","boogie","pen");
+    b.bot.classList.add("noanim"); placeB(b,b.S); void b.bot.offsetWidth; b.bot.classList.remove("noanim"); }
+  /* un paso de un robot; loud: solo el primero hace sonar, así no suena todo dos veces */
+  async function moveB(b,r,dir,loud){ const t=T(), bot=b.bot; bot.dataset.look=dir;
+    if(r.k==="crash"){ const [dr,dc]=DIRS[dir]; placeB(b,b.S,dc*.32,dr*.32); SND.crash(); await sleep(t*.45); placeB(b,b.S);
+      bot.classList.add("shake"); setTimeout(()=>bot.classList.remove("shake"),400); bumpEl(b.holder); const [x,y]=center(bot); floatText(x,y-20,"¡Pum!","#FF5A62"); await sleep(t*.5); return; }
+    const prev=cellB(b,b.S.r,b.S.c); prev.style.setProperty("--tc",RAIN[b.trail++%RAIN.length]); prev.classList.add("trail");
+    b.S=r.S; bot.classList.add("moving"); placeB(b,b.S); if(loud) SND.move();
+    await sleep(t); bot.classList.remove("moving"); }
+  async function actB(b,r,kind,loud){ const t=T(), bot=b.bot, c=cellB(b,b.S.r,b.S.c), [x,y]=center(c);
+    if(r.k==="bad"){ SND.crash(); c.classList.add("flash"); bot.classList.add("shake"); setTimeout(()=>bot.classList.remove("shake"),400); floatText(x,y-20,"¡Ups!","#FF5A62"); await sleep(t*.8); return; }
+    b.S=r.S;
+    if(kind==="paint"){ c.classList.add("pnt"); if(loud) SND.paint(); burst(x,y,["#4C8DF6","#2563C9","#9CC3FF","#FFFFFF"],14,4); if(r.ok) floatText(x,y-24,"¡Pintada!","#2563C9"); }
+    else if(kind==="dance"){ bot.classList.remove("boogie"); void bot.offsetWidth; bot.classList.add("boogie"); if(loud) SND.dance();
+      if(r.ok){ c.classList.add("danced"); burst(x,y,["#1EC48C","#FFC21A","#FF6FB5","#FFFFFF"],16,5); floatText(x,y-24,"♪ ♫","#11986A"); } }
+    await sleep(t); bot.classList.remove("boogie"); }
+  /* la respuesta del si de cada robot, arriba de él */
+  function ifB(b,ok){ const [x,y]=center(b.bot); floatText(x,y-30,ok?"sí":"no",ok?"#11986A":"#5F7F96"); }
+  const addrOf=ev=>typeof ev.addr[0]==="string"?ev.addr[0]+":"+ev.addr.slice(1).join("."):ev.addr.join(".");
+  async function runMulti(id,ctx){
+    const B=G.B, its=B.map(b=>walk(G.prog,c=>sense(b.wm,b.S,c),[],G.funcs)), st=B.map(()=>({n:0,res:null,last:null,left:false}));
+    let fail=-1, ticks=0;
+    while(fail<0){
+      if(G.paused){ await pauseGate(id); if(id!==G.run) return; }
+      const lead=st.findIndex(x=>!x.res); if(lead<0) break;
+      /* cada mapa avanza hasta su próxima acción; el primero que sigue andando ilumina los bloques (con sus pausas) */
+      const acts=[];
+      for(let i=0;i<B.length;i++){ const s=st[i]; if(s.res) continue;
+        for(let nx=its[i].next();;nx=its[i].next()){
+          if(nx.done){ s.res={k:"end"}; break; }
+          if(++s.n>MAXSTEPS){ s.res={k:"boom"}; break; }
+          const ev=nx.value, addr=addrOf(ev);
+          if(ev.t==="loop"||ev.t==="call"){ if(i===lead){ ev.t==="loop"?setLap(addr,ev.k+1,ev.n):light(addr); SND.loop(); if(!ctx.stepMode){ await sleep(T()*.25); if(id!==G.run) return; } } continue; }
+          if(ev.t==="if"||ev.t==="else"){ if(ev.t==="if") ifB(B[i],ev.ok); if(i===lead){ askIf(addr,ev.ok); if(!ctx.stepMode){ await sleep(T()*.35); if(id!==G.run) return; } } continue; }
+          if(G.map.cls!==0&&B[i].moves>=(G.map.maxAct||MAXACT)){ s.res={k:"boom"}; break; }
+          s.last=addr; acts.push([i,ev]); break; }
+        if(s.res&&s.res.k!=="win"){ fail=i; break; } }
+      if(fail>=0||!acts.length) break;
+      const la=acts.find(([i])=>i===lead)||acts[0]; light(st[la[0]].last);
+      const rs=await Promise.all(acts.map(async([i,ev],k)=>{ const b=B[i];
+        const r=ev.t==="move"?tryMove(b.wm,b.S,ev.dir):tryAct(b.wm,b.S,ACTS[ev.t]);
+        await (ev.t==="move"?moveB(b,r,ev.dir,k===0):actB(b,r,ev.t,k===0)); return [i,r]; }));
+      if(id!==G.run) return;
+      ticks++;
+      for(const [i,r] of rs){ const s=st[i]; B[i].moves++;
+        if(r.k==="win"){ /* llegó: ¿sobraron bloques? */ let nx, g=0; do{ nx=its[i].next(); }while(++g<MAXSTEPS&&!nx.done&&(nx.value.t==="loop"||nx.value.t==="if"||nx.value.t==="else"||nx.value.t==="call"));
+          s.left=!nx.done; s.res={k:"win"}; B[i].holder.classList.add("win"); B[i].bot.classList.add("happy"); }
+        else if(r.k!=="ok"){ s.res=r; if(fail<0) fail=i; } }
+      if(fail<0&&ctx.stepMode&&st.some(x=>!x.res)){ say("",ICO.step(),`Paso ${ticks}`,"Tocá Paso para seguir o Ir para terminar"); await waitStep(); if(id!==G.run) return; }
+    }
+    G.ctx=null; setBusy(false);
+    if(fail<0){ const wrong=Math.max(0,...B.map(b=>b.S.wrong||0));
+      G.S={...B[0].S,wrong}; G.wm=B[0].wm; G.rows=B[0].rows;
+      return finish({k:"win",left:st.some(x=>x.left),acts:Math.max(...B.map(b=>b.moves)),world:null},st[0].last); }
+    const b=B[fail]; b.holder.classList.add("wfail"); G.S=b.S; G.wm=b.wm; G.rows=b.rows;
+    finish({...st[fail].res,acts:b.moves,world:fail},st[fail].last); }
   function resetRobot(){
-    if(G.worlds&&!G.keepW){ const back=G.wi>0; G.wi=null; if(back) return setWorld(0); }
+    if(G.worlds&&!G.keepW&&!isMulti()){ const back=G.wi>0; G.wi=null; if(back) return setWorld(0); }
+    if(isMulti()&&G.B){ G.wm=G.B[0].wm; G.rows=G.B[0].rows; } /* después de una falla en otro mapa, se vuelve al mapa 1 */
     G.S=startState(G.wm); G.trail=0; G.lastGot=null; clearHint(); G.listen=false; G.live=false; keypadState();
   
     $("gBoard").querySelectorAll(".cell").forEach(el=>el.classList.remove("trail","got","flash","pnt","danced","scorch","open","warping","nokey"));
@@ -917,6 +1010,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     $("bot").dataset.look="r"; $("bot").classList.remove("happy","shake","moving","boogie","pen","boom","dizzy","warpout","warpin","haskey"); setFace(null); $("bot").querySelectorAll(".dz").forEach(e=>e.remove()); $("gBoard").classList.remove("kaboom"); placeNow();
     pyMark(null);
+    if(isMulti()&&G.B) G.B.forEach(resetB);
   
   }
   
@@ -932,9 +1026,9 @@ export function boot(hidden?: Record<string, number[]>) {
   
     const g=goalLeft(G.wm,G.S), chip=(col,done,tot,txt)=>`<span class="chip${done>=tot?" full":""}"><span class="sq" style="background:${col}"></span>${txt} ${done} / ${tot}</span>`;
   
-    if(G.nX) h+=chip("#FF5A62",G.nX-g.red,G.nX,"Rojas");
+    if(G.nX&&!isMulti()) h+=chip("#FF5A62",G.nX-g.red,G.nX,"Rojas"); /* con varios mapas a la vez, cada tablero muestra lo suyo */
   
-    if(G.nV) h+=chip("#1EC48C",G.nV-g.green,G.nV,"Verdes");
+    if(G.nV&&!isMulti()) h+=chip("#1EC48C",G.nV-g.green,G.nV,"Verdes");
   
     if(G.map.need) h+=chip("var(--paint)",Math.min(G.S.pnt.length,G.map.need),G.map.need,"Pintadas");
   
@@ -942,8 +1036,9 @@ export function boot(hidden?: Record<string, number[]>) {
     { const km=$("bot")&&$("bot").querySelector(".keymark"), ks=G.S.keys||[]; if(km){ km.innerHTML=ks.map(k=>keySVG(k,"")).join(""); $("bot").classList.toggle("haskey",ks.length>0); } }
     if(G.tools.includes("n")) h+=`<span class="chip pench${G.S.pen?" on":""}">${ICO.brush(G.S.pen?"#fff":"#7E3DB0")}${G.S.pen?"Pincel en uso":"Pincel guardado"}</span>`;
   
-    if(G.worlds&&G.wi!=null) h+=`<span class="chip wchip">Mundo ${G.wi+1} de ${G.worlds.length}</span>`;
-    if(G.worlds&&G.map.reveal) h+=`<div class="wstrip"><span>Estos son los mundos posibles</span>${G.worlds.map((w,i)=>`<div class="wmini${i===G.wi?" on":""}">${miniMap(w,10)}</div>`).join("")}</div>`;
+    if(G.worlds&&!G.py) h+=`<div class="vsw" role="group" aria-label="Cómo ver los mapas"><button data-view="1"${VIEW2?"":' class="on"'}>Normal</button><button data-view="2"${VIEW2?' class="on"':""}>Doble</button></div>`;
+    if(G.worlds&&G.wi!=null&&!isMulti()) h+=`<span class="chip wchip">Mapa ${G.wi+1} de ${G.worlds.length}</span>`;
+    if(G.worlds&&G.map.reveal&&!isMulti()) h+=`<div class="wstrip"><span>Estos son los mapas</span>${G.worlds.map((w,i)=>`<div class="wmini${i===G.wi?" on":""}">${miniMap(w,10)}</div>`).join("")}</div>`;
     $("status").innerHTML=h;
   }
   
@@ -1553,7 +1648,16 @@ export function boot(hidden?: Record<string, number[]>) {
   
   /* ---------- ejecución ---------- */
   
+  /* pausa: frena el programa en el medio; Seguir continúa desde ahí (Inicio lo corta) */
+  const PAUSE_SVG=`<svg viewBox="0 0 32 32"><rect x="8" y="6" width="5.5" height="20" rx="2" fill="#0D3049"/><rect x="18.5" y="6" width="5.5" height="20" rx="2" fill="#0D3049"/></svg>`,
+    PLAY_SVG=`<svg viewBox="0 0 32 32"><path d="M10 6 L26 16 L10 26Z" fill="#1EC48C" stroke="#11986A" stroke-width="2" stroke-linejoin="round"/></svg>`;
+  function pauseUI(){ const p=!!(G&&G.paused); $("icoPause").innerHTML=p?PLAY_SVG:PAUSE_SVG; $("pauseTxt").textContent=p?"Seguir":"Pausa"; $("pauseBtn").title=p?"Seguir":"Pausa"; $("pauseBtn").classList.toggle("on",p); }
+  function pauseGate(id){ return new Promise(res=>{ const f=()=>{ if(!G||G.run!==id||!G.paused) return res(); setTimeout(f,80); }; f(); }); }
+  $("pauseBtn").onclick=()=>{ if(!G||!G.busy) return; G.paused=!G.paused; pauseUI(); SND.add();
+    if(G.paused) say("",ICO.robot(),"En pausa","Tocá Seguir para continuar · Inicio para volver a empezar"); else say("",ICO.robot(),"¡Sigue!",""); };
+  pauseUI();
   function setBusy(v){ G.busy=v; document.body.classList.toggle("busy",v); $("runBtn").disabled=v; $("stepBtn").disabled=v; if(v) $("runBtn").classList.remove("ready");
+    $("pauseBtn").disabled=!v; if(!v){ G.paused=false; pauseUI(); }
     const ta=$("pyta"); if(ta) ta.readOnly=v; /* mientras corre, el código no se edita (Inicio lo libera) */ }
   
   function releaseWait(){ if(G&&G.ctx&&G.ctx.waiting){ const w=G.ctx.waiting; G.ctx.waiting=null; w(); } }
@@ -1646,13 +1750,14 @@ export function boot(hidden?: Record<string, number[]>) {
       const r=parsePy(G.code); if(!r.ok){ resetRobot(); return pyErr(r.ln,r.msg); } G.pyAst=r.prog; }
     else if(!G.prog.length) return say("warn",ICO.drag(),"Arrastrá bloques al programa");
 
-    const id=++G.run; G.keepW=false; if(G.worlds&&G.map.pool) G.worlds=pickWorlds(G.map); /* con pool, cada intento sortea sus mundos */
-    resetRobot(); if(G.worlds){ G.keepW=true; setWorld(0); }
+    const id=++G.run; G.keepW=false; if(G.worlds&&G.map.pool){ G.worlds=pickWorlds(G.map); if(isMulti()) drawBoard(false); } /* con pool, cada intento sortea sus mundos */
+    resetRobot(); if(G.worlds&&!isMulti()){ G.keepW=true; setWorld(0); }
     const ctx=G.ctx={id,stepMode:step,waiting:null,moves:0}; setBusy(true);
   
     say("",ICO.robot(),step?"Paso a paso":"¡Allá va!",step?"Tocá Paso para seguir":"");
   
     await sleep(200); if(id!==G.run) return;
+    if(isMulti()) return runMulti(id,ctx); /* varios mapas: todos los robots a la vez */
   
     /* el si pregunta por la celda donde está el robot en ese momento */
   
@@ -1661,6 +1766,7 @@ export function boot(hidden?: Record<string, number[]>) {
     if(wi>0){ setWorld(wi); await sleep(600); if(id!==G.run) return; }
     const it=G.py?pyWalk(G.pyAst,c=>sense(G.wm,G.S,c)):walk(G.prog,c=>sense(G.wm,G.S,c),[],G.funcs); let n=0; res={k:"end"};
     for(let nx=it.next();!nx.done;nx=it.next()){ const ev=nx.value;
+      if(G.paused){ await pauseGate(id); if(id!==G.run) return; }
 
       if(++n>MAXSTEPS){ res={k:"boom"}; break; }
       if(ev.t==="error"){ res={k:"pyerr",ln:ev.ln,msg:ev.msg}; break; }
@@ -1793,7 +1899,7 @@ export function boot(hidden?: Record<string, number[]>) {
   }
   
   /* con mundos, el motivo de la falla va precedido de «¡Falló en el mundo N!» */
-  function finish(res,last){ if(G.worlds&&res.k!=="win"&&res.world!=null){ G.pre=`¡Falló en el mundo ${res.world+1}!`; try{ return finish0(res,last); } finally{ G.pre=""; } } return finish0(res,last); }
+  function finish(res,last){ if(G.worlds&&res.k!=="win"&&res.world!=null){ G.pre=`¡Falló en el mapa ${res.world+1}!`; try{ return finish0(res,last); } finally{ G.pre=""; } } return finish0(res,last); }
   function finish0(res,last){
   
     document.querySelectorAll("#canvas .on").forEach(x=>x.classList.remove("on"));
@@ -1825,7 +1931,7 @@ export function boot(hidden?: Record<string, number[]>) {
       else if(G.map.cls===2&&!usedRep&&!G.map.norep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
       else if(G.S.wrong) sub=`${ICO.brush("#7E3DB0")} Pintaste ${G.S.wrong>1?G.S.wrong+" celdas que no eran rojas":"una celda que no era roja"}${G.tools.includes("n")?" · Guardá el pincel en las blancas":""}`;
       else if(G.opt!=null&&count>G.opt) sub=`${ICO.blocks()} Se puede con <b>${G.opt}</b> bloques`;
-      else sub=G.worlds?"¡Funciona en todos los mundos!":G.map.need?"¡Llegó pintando!":"¡Programa perfecto!";
+      else sub=G.worlds?"¡Funciona en todos los mapas!":G.map.need?"¡Llegó pintando!":"¡Programa perfecto!";
       if(G.hint&&k<3) sub+=" · Sin pista ganás 3 estrellas";
       if(res.left) sub+=G.py?" · Sobró código después de llegar":" · Sobraron bloques";
       const idx=MISSIONS.indexOf(G.map), nxt=MISSIONS[idx+1], gs=nxt&&groupsNow().find(s=>s.g.id===nxt.grp);
@@ -2022,14 +2128,14 @@ export function boot(hidden?: Record<string, number[]>) {
     ["skins","faces"].forEach(id=>{ const el=$(id); el.classList.add("intro"); setTimeout(()=>el.classList.remove("intro"),900); }); }
   function shopTag(on,own,id,price){ return on?`<span class="tag use">${ICO.check()}En uso</span>`:own?`<span class="tag">Usar</span>`:ASK===id?`<span class="tag ask">¿Comprar?</span>`:`<span class="tag buy">${starIco(true)}${price}</span>`; }
   function renderShop(cheer){
-    const w=wallet();
+    fixSkin(); const w=wallet();
     $("ped").innerHTML=`<svg viewBox="-50 -50 100 100" data-look="r">${robotSVG()}</svg>`;
     const face=FACES.find(f=>f.id===SAVE.face);
     $("shopName").textContent=SKINS.find(s=>s.id===SAVE.skin).name+(SAVE.face==="normal"?"":" · "+face.name);
     $("shopStars").innerHTML=starIco(true)+`Tenés <b>${w}</b> estrellas para gastar`;
     $("skins").innerHTML=SKINS.map((s,i)=>{ const own=skinOwned(s), on=SAVE.skin===s.id;
       if(!own&&s.secret) return `<button class="skin secret" data-s="${s.id}" style="--i:${i}"><svg class="prev" viewBox="-50 -50 100 100">${robotSVG({skin:s.id,face:"normal"})}</svg><b>Robot secreto</b><span class="tag">${ICO.lock("#22D3FF")}¿Cómo se gana?</span></button>`;
-      return `<button class="skin${on?" on":""}${!own&&w<s.price?" poor":""}" data-s="${s.id}" style="--i:${i}"><svg class="prev" viewBox="-50 -50 100 100" data-look="r">${robotSVG({skin:s.id})}</svg><b>${s.name}</b>${shopTag(on,own,s.id,s.price)}</button>`; }).join("");
+      return `<button class="skin${on?" on":""}${!own&&w<s.price?" poor":""}" data-s="${s.id}" style="--i:${i}"><svg class="prev" viewBox="-50 -50 100 100" data-look="r">${robotSVG({skin:s.id})}</svg><b>${s.name}</b>${promoOnly(s)?`<span class="freetag">Gratis hasta las 17:30</span>`:""}${shopTag(on,own,s.id,s.price)}</button>`; }).join("");
     $("faces").innerHTML=FACES.map((s,i)=>{ const own=SAVE.faces.includes(s.id), on=SAVE.face===s.id;
       return `<button class="skin${on?" on":""}${!own&&w<s.price?" poor":""}" data-f="${s.id}" style="--i:${i}"><svg class="prev" viewBox="-50 -50 100 100" data-look="r">${robotSVG({skin:"robi",face:s.id})}</svg><b>${s.name}</b>${shopTag(on,own,s.id,s.price)}</button>`; }).join("");
     $("bodies").innerHTML=Object.entries(BODIES).map(([id,c])=>`<button class="sw" data-b="${id}" style="--c:${c[0]}" title="${c[1]}" aria-label="${c[1]}" aria-pressed="${SAVE.body===id}"></button>`).join("");

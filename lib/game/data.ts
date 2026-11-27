@@ -171,7 +171,7 @@ const CONDS=[
   worlds:[["R.X.","###.","###E"],["R...","###.","###E"]]},
  {id:"ci3",grp:"CA",title:"Para abajo",max:8,reveal:true,sol:"d ?x(p) d r r r",
   worlds:[["R###","X###","...E"],["R###",".###","...E"]]},
- {id:"ci4",grp:"CB",title:"Escalera con si",max:6,reveal:true,sol:"3(r d ?x(p))",
+ {id:"ci4",grp:"CA",title:"Escalera con si",max:13,reveal:true,sol:"r d r d ?x(p) r d", /* sin repetir: paso a paso (alcanza para un si en cada escalón) */
   worlds:[["R.##","#..#","##X.","###E"],["R.##","#..#","##..","###E"]]},
  {id:"ci5",grp:"CB",title:"Pasillo con si",max:5,reveal:true,sol:"7(r ?x(p))",
   worlds:[["########","R.X....E","########"],["########","R....X.E","########"]]},

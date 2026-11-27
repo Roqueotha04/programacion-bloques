@@ -23,6 +23,10 @@ export function PlayScreen() {
             <span className="cc" id="icoStep" />
             Paso
           </button>
+          <button className="cbtn" id="pauseBtn" title="Pausa" disabled>
+            <span className="cc" id="icoPause" />
+            <span id="pauseTxt">Pausa</span>
+          </button>
           <button className="cbtn" id="stopBtn" title="Volver al inicio">
             <span className="cc" id="icoStop" />
             Inicio
