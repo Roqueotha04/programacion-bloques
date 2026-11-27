@@ -153,7 +153,7 @@ export function hasIf(list){ return list.some(b=>b.t==="if"||b.t==="else"||(b.bo
 export function optFor(map,path){ return map.cls>=2?map.max:map.need?null:(path?path.length+1:null); }
 export function limitFor(map,opt){ return map.cls>=2?map.max:map.cls===1&&opt!=null?opt+2:MAXB; }
 export function starsFor(map,count,usedRep,opt,hint,wrong){
-  let k=map.cls>=2?(usedRep?3:2):(opt==null||count<=opt?3:2);
+  let k=map.cls>=2?(usedRep||map.norep?3:2):(opt==null||count<=opt?3:2);
   if(wrong) k=Math.min(k,2); if(hint) k--; return Math.max(1,k);
 }
 /* niveles avanzados (map.adv), hasta 3 estrellas como todos: 1 llegó con recursión, +1 dentro de la meta de bloques (goal) y con repetir
@@ -279,7 +279,7 @@ export function selfTest(){
     /* todos los niveles terminan en la estrella: se gana al llegar con todo hecho */
     const best=m.adv?starsAdv(m,{count:cnt,rep:hasRepeatAll(sol,fn),acts:sim.acts,opt:path&&path.length})===3:starsFor(m,cnt,used,opt,false,sim.S&&sim.S.wrong)===3;
     let ok=hasE(m)&&sim.k==="win"&&!!path&&cnt<=lim&&best;
-    if(m.cls===1) ok=ok&&!used&&(m.need||(cnt===opt&&run<=3)); else ok=ok&&used;
+    if(m.cls===1) ok=ok&&!used&&(m.need||(cnt===opt&&run<=3)); else ok=ok&&(used||!!m.norep); /* norep: el nivel no pide repetir */
     /* cls 3: la versión sin funciones (call -> cuerpo) tiene que pasarse del máximo, si no la función no hace falta.
        Niveles adv: la solución tiene que ganar con una función que se llama a sí misma, sin crear funciones sin usar y sin pasarse del tope de acciones */
     if(m.adv) ok=ok&&m.tools.includes("f")&&sim.rec===true&&cnt<=m.max&&m.goal<=m.max&&!m.pre&&(!m.rep||hasRepeatAll(sol,fn))&&sim.acts<=(m.maxAct||MAXACT);

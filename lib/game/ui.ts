@@ -828,7 +828,7 @@ export function boot(hidden?: Record<string, number[]>) {
   
     /* mundos: wm = mapa del mundo que se está jugando, worlds = filas de los mundos de este intento, wi = mundo actual (null si no corre) */
     G.tries=0; G.pathLen=(shortest(map,S)||[]).length; /* adv: intentos fallidos y largo del camino más corto, para las estrellas */
-    G.wm=map; G.worlds=map.worlds?pickWorlds(map):null; G.wi=null; G.keepW=false; G.conds=map.conds||(tools.includes("b")?["x","v"]:["x"]);
+    G.wm=map; G.worlds=map.worlds?pickWorlds(map):null; G.wi=null; G.keepW=false; G.conds=map.conds||["x","v"]; /* en el si siempre se elige el color: roja o verde */
     /* Python: el programa es texto (G.code); se lee con parsePy al tocar Ir */
     G.fun=/[OUkjcKJC]/.test(map.rows.join("")); G.nK=[...new Set(map.rows.join("").match(/[kjc]/g)||[])]; /* portales y llaves */
     G.py=!!map.py; G.code=G.py?(PYCODE[map.id]??(map.pre??PY_START)):""; G.pyAst=null; $("game").classList.toggle("pymode",G.py);
@@ -1374,7 +1374,7 @@ export function boot(hidden?: Record<string, number[]>) {
   function setEvKey(id,key){ closeKeyMenu(); if(!G.evs[id]) return; G.evs[id].key=key; SND.add(); changed(); }
   function tooMany(extra){ if(used()+extra<=G.max) return false;
   
-    say("warn",G.rep?ICO.repeat("#D9780F"):ICO.blocks(),`¡Máximo ${G.max} bloques!`,G.ev?"Cada «al apretar» y cada acción cuentan un bloque · «al tocar» también cuenta":G.map.cls===3?"Usá una función para ahorrar bloques":G.tools.includes("i")?"Usá repetir y si para ahorrar bloques":G.map.cls===2?"Usá repetir para ahorrar bloques":"El bloque «al tocar» también cuenta");
+    say("warn",G.rep?ICO.repeat("#D9780F"):ICO.blocks(),`¡Máximo ${G.max} bloques!`,G.ev?"Cada «al apretar» y cada acción cuentan un bloque · «al tocar» también cuenta":G.map.cls===3?"Usá una función para ahorrar bloques":G.tools.includes("i")?(G.map.norep?"Usá el si: adentro va lo que cambia":"Usá repetir y si para ahorrar bloques"):G.map.cls===2?"Usá repetir para ahorrar bloques":"El bloque «al tocar» también cuenta");
   
     bumpEl($("count"),"no"); SND.nope(); return true; }
   
@@ -1822,7 +1822,7 @@ export function boot(hidden?: Record<string, number[]>) {
       else if(G.map.ev){ const m=G.map; sub=count>m.goal?`${ICO.blocks()} Se puede con <b>${m.goal}</b> bloques`:res.acts>G.pathLen?"Se puede con menos pasos":"¡Eventos perfectos!"; }
       else if(G.map.adv){ const m=G.map; sub=count>m.goal?`${ICO.blocks()} Se puede con <b>${m.goal}</b> bloques`:m.rep&&!hasRepeatAll(G.prog,G.funcs)?`${ICO.repeat("#D9780F")} Probá usar repetir para ganar 3 estrellas`:res.acts>G.pathLen?"Se puede con menos pasos":"¡Recursión perfecta!"; }
       else if(G.map.cls===3&&!usedRep) sub=`${ICO.blocks()} ¿Probás con una función?`;
-      else if(G.map.cls===2&&!usedRep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
+      else if(G.map.cls===2&&!usedRep&&!G.map.norep) sub=`${ICO.repeat("#D9780F")} ¿Probás con repetir?`;
       else if(G.S.wrong) sub=`${ICO.brush("#7E3DB0")} Pintaste ${G.S.wrong>1?G.S.wrong+" celdas que no eran rojas":"una celda que no era roja"}${G.tools.includes("n")?" · Guardá el pincel en las blancas":""}`;
       else if(G.opt!=null&&count>G.opt) sub=`${ICO.blocks()} Se puede con <b>${G.opt}</b> bloques`;
       else sub=G.worlds?"¡Funciona en todos los mundos!":G.map.need?"¡Llegó pintando!":"¡Programa perfecto!";

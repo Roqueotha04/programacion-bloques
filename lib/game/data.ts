@@ -10,7 +10,7 @@ export const WORLDS=[];
 export const NORMAL_WORLDS=[
  {id:1,theme:"seq",title:"Secuencia",sub:"el robot sigue tus órdenes, paso a paso",c:"#3B82F0",l:"#DCE9FF",parts:[1,2,3]},
  {id:2,theme:"opt",title:"Optimización",sub:"menos bloques: repetir y funciones",c:"#FF9A2E",l:"#FFE2C2",parts:[4,4.5,5,5.5]},
- {id:3,theme:"cond",title:"Condicionales",sub:"el robot mira el mapa y decide solo",c:"#0EA5A4",l:"#CCF5F0",parts:[6,7]},
+ {id:3,theme:"cond",title:"Condicionales",sub:"el robot mira el mapa y decide solo",c:"#0EA5A4",l:"#CCF5F0",parts:[6,7,7.5]},
  {id:4,theme:"ev",title:"Eventos",sub:"el robot reacciona a las teclas",c:"#8B5CF6",l:"#E9DEFF",parts:[8,9,10],lock:true}
 ];
 export const PARTS=[
@@ -18,9 +18,8 @@ export const PARTS=[
  {id:2,title:"Pintar",sub:"usar el pincel y guardarlo",c:"#A35BD6",l:"#F0E1FF",after:[1]},
  {id:3,title:"Bailar",sub:"pintar, bailar y juntar baterías",c:"#EC4899",l:"#FCE0EF",after:[2]},
  {id:4,title:"Repetir",sub:"el bloque que repite",c:"#FF9A2E",l:"#FFE2C2",after:[]},
- {id:5,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[4]},
- /* la parte 6 (Mundos) se agrega más abajo; la 7 (Si) va última */
- {id:7,title:"Si",sub:"el robot mira la celda y decide",c:"#14B8A6",l:"#CCF5EF",after:[6]}
+ {id:5,title:"Funciones",sub:"poné nombre a un grupo de pasos",c:"#5B6CF0",l:"#E3E6FF",after:[4]}
+ /* las partes 6, 7 y 7.5 (Condicionales) se agregan más abajo */
 ];
 /* cls: reglas (1 = meta de bloques, 2 = máximo de bloques).
    tools: bloques extra (r repetir, n pincel, p pintar de un toque, b bailar, i si).
@@ -34,8 +33,6 @@ export const GROUPS=[
  {id:"D",part:4,cls:2,tools:"r",title:"Repetir",sub:"pocos bloques, muchos pasos",need:0,c:"#FF9A2E",l:"#FFE2C2"},
  {id:"E",part:4,cls:2,tools:"r",title:"Repetir con batería",sub:"repetir y juntar",need:8,c:"#FF6FB5",l:"#FFDCEC"},
  {id:"F",part:4,cls:2,tools:"r",title:"Repetir con 2 baterías",sub:"el gran desafío",need:12,c:"#E64C55",l:"#FFD9DB"},
- {id:"J",part:7,cls:2,tools:"rpi",strict:true,title:"Si es roja",sub:"pintá solo las rojas",need:0,c:"#14B8A6",l:"#CCF5EF"},
- {id:"K",part:7,cls:2,tools:"rpbi",strict:true,title:"Rojo y verde",sub:"rojas: pintar · verdes: bailar",need:6,c:"#0EA5E9",l:"#D3F0FC"},
  /* ===== Bailar (inicio) ===== */
  {id:"L",part:3,cls:1,tools:"b",strict:true,title:"Bailar",sub:"bailá en la celda verde",need:0,c:"#EC4899",l:"#FCE0EF"},
  {id:"M",part:3,cls:1,tools:"pb",strict:true,title:"Pintar y bailar",sub:"rojas: pintar · verdes: bailar",need:3,c:"#D946EF",l:"#F8DDFB"},
@@ -58,22 +55,28 @@ GROUPS.push(
 /* ===== Repetir avanzado (fin) ===== */
 /* ===== Funciones avanzadas (inicio) ===== */
 /* PARTE 5.5: funciones avanzadas (recursión). Se abre al superar la parte 5, no cuenta para abrir otras partes. No está en la edición chicos.
-   (Mundos y Si, antes partes 6 y 7, están comentadas de momento) */
+   */
 PARTS.push({id:5.5,title:"Funciones avanzadas",sub:"una función que se llama a sí misma",c:"#7C3AED",l:"#EDE4FF",after:[5],extra:true});
 GROUPS.push(
  {id:"Y",part:5.5,cls:3,adv:true,tools:"pf",strict:true,title:"Se llama a sí misma",sub:"la función se repite hasta llegar a la estrella",need:0,c:"#7C3AED",l:"#EDE4FF"},
  {id:"Z",part:5.5,cls:3,adv:true,tools:"rpbf",strict:true,title:"Recursión con todo",sub:"repetir, pintar y bailar",need:6,c:"#C026D3",l:"#FAE1FD"},
  {id:"N",part:5.5,cls:3,adv:true,tools:"rpbf",strict:true,title:"Para pensar",sub:"un arranque, dos carriles y una serpiente",need:10,c:"#0EA5E9",l:"#D3F0FC"});
 /* ===== Funciones avanzadas (fin) ===== */
-/* ===== Mundos (inicio) ===== */
-/* el mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
-   reveal: se muestran las miniaturas de los mundos antes de correr. conds: condiciones del bloque si. pool+show: se sortean show mundos del pool */
-PARTS.push({id:6,title:"Condicional",sub:"el mapa cambia y tu programa decide",c:"#6366F1",l:"#E0E1FF",after:[]});
+/* ===== Condicionales (inicio) ===== */
+/* Mundo Condicionales: 6 «Si», 7 «Si avanzado», 7.5 «Si no». El mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño,
+   robot y estrella) y el programa tiene que ganar en TODOS. reveal: se muestran los mapas antes de correr. conds: lo que se puede elegir
+   en el si (sin conds: roja o verde). pool+show: se sortean show mundos del pool. norep: el nivel no pide repetir (3 estrellas sin él) */
+PARTS.push(
+ {id:6,title:"Si",sub:"si la celda es roja, pintala",c:"#6366F1",l:"#E0E1FF",after:[]},
+ {id:7,title:"Si avanzado",sub:"rojas y verdes: pintar o bailar",c:"#14B8A6",l:"#CCF5EF",after:[6]},
+ {id:7.5,title:"Si no",sub:"si hay pared, doblá; si no, seguí",c:"#0EA5E9",l:"#D3F0FC",after:[7]});
 GROUPS.push(
- {id:"S",part:6,cls:2,tools:"rpbie",strict:true,title:"El mapa cambia",sub:"las celdas cambian de lugar",need:0,c:"#6366F1",l:"#E0E1FF"},
- {id:"T",part:6,cls:2,tools:"rie",strict:true,title:"Paredes",sub:"el robot siente las paredes",need:6,c:"#0EA5E9",l:"#D3F0FC"},
- {id:"U",part:6,cls:2,tools:"rpbie",strict:true,title:"Mundos sorpresa",sub:"cada vez salen mundos distintos",need:12,c:"#EC4899",l:"#FFDCEC"});
-/* ===== Mundos (fin) ===== */
+ {id:"CA",part:6,cls:2,norep:true,tools:"pi",strict:true,title:"Una celda",sub:"¿es roja o no? el si decide",need:0,c:"#6366F1",l:"#E0E1FF"},
+ {id:"CB",part:6,cls:2,tools:"rpi",strict:true,title:"Si y repetir",sub:"el si adentro del repetir",need:6,c:"#FF9A2E",l:"#FFE2C2"},
+ {id:"CV",part:7,cls:2,tools:"rpbi",strict:true,title:"Roja o verde",sub:"rojas: pintar · verdes: bailar",need:0,c:"#14B8A6",l:"#CCF5EF"},
+ {id:"CN",part:7.5,cls:2,norep:true,tools:"ie",conds:["wr","wd"],title:"Pared o camino",sub:"si hay pared… si no…",need:0,c:"#0EA5E9",l:"#D3F0FC"},
+ {id:"CO",part:7.5,cls:2,tools:"rie",conds:["wr","wd"],title:"Si no y repetir",sub:"el robot encuentra el camino solo",need:4,c:"#8B5CF6",l:"#E9DEFF"});
+/* ===== Condicionales (fin) ===== */
 export const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
  {id:"a2",grp:"A",title:"La esquina",rows:[".....","#....",".##E.",".##..","R...."],sol:"r r r u u"},
@@ -100,12 +103,6 @@ export const MISSIONS=[
  {id:"e1",grp:"E",tools:"rp",strict:true,title:"Ida y vuelta pintando",max:8,rows:["R.....X",".######",".#.....",".#.##..","E#....."],sol:"6(r) p 6(l) 4(d)"},
  {id:"e2",grp:"E",title:"Escalera a la batería",max:6,rows:["##.#...","#..B..E","##..#.#","#..#..#","R.#...."],sol:"3(r u) 3(r)"},
  {id:"f1",grp:"F",tools:"rb",strict:true,title:"Dos puntas y baile",max:8,rows:["B..R..V","######.","######.","#.....E"],sol:"3(l) 6(r) b 3(d)"},
- {id:"j1",grp:"J",title:"Solo las rojas",max:5,rows:["#.##.#.#","RX.XX.XE","#.#..#.#"],sol:"7(r ?x(p))"},
- {id:"j2",grp:"J",title:"Escalera roja",max:7,rows:["####XE","###X.#","##..##","#X.###","R.####"],sol:"4(r u ?x(p)) r"},
- {id:"j3",grp:"J",title:"Bajar y doblar",max:9,rows:["R#....","X#.#..","X#...#",".#.#..","X#....","..XX.E"],sol:"5(d ?x(p)) 5(r ?x(p))"},
- {id:"k1",grp:"K",title:"A bailar",max:5,rows:["##.#.##","R.VV.VE","#.##..#"],sol:"6(r ?v(b))"},
- {id:"k2",grp:"K",title:"Rojo y verde",max:7,rows:["#.#..#.#","RXV.XXVE","#..#.#.."],sol:"7(r ?x(p) ?v(b))"},
- {id:"k3",grp:"K",title:"Escalera de colores",max:8,rows:["R.####","#X.###","##V.##","###..#","####X.","#####E"],sol:"5(r d ?x(p) ?v(b))"},
  /* ===== Bailar (inicio) ===== */
  {id:"l1",grp:"L",title:"El primer baile",rows:["#####","#...#","R.V.E","#...#","#####"],sol:"r r b r r"},
  {id:"l2",grp:"L",title:"Dos bailes",rows:["#.###","R.V.#","#.#V.","###.E"],sol:"r r b r d b d r"},
@@ -158,54 +155,41 @@ export const MISSIONS=[
  {id:"v9",grp:"N",title:"La serpiente",goal:13,max:15,rep:true,rows:["RXX","##.","XX.",".##",".XX","##.","EX."],sol:"C=(2(r p) 2(d) 2(l p) 2(d) C); C"}
  /* ===== Funciones avanzadas (fin) ===== */
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:m.tools??g.tools,strict:m.strict??!!g.strict,adv:!!g.adv}); });
-/* ===== Mundos (inicio) ===== */
-const MUNDOS=[
- {id:"s1",grp:"S",title:"Las rojas cambian",max:5,reveal:true,conds:["x"],sol:"7(r ?x(p))",
-  worlds:[
-    ["########","########","RX.XX..E","########",".##.##.#"],
-    ["########","########","R.X..XXE","########","##.##.##"]]},
- {id:"s2",grp:"S",title:"Rojas y verdes",max:7,reveal:true,conds:["x","v"],sol:"7(r ?x(p) ?v(b))",
-  worlds:[
-    ["########","########","RXV.XV.E","########",".##.##.#"],
-    ["########","########","R.XVV.XE","########","##.##.##"],
-    ["........","########","RVX.X.VE","########","#.##.##."]]},
- {id:"s3",grp:"S",title:"Escalera sorpresa",max:8,reveal:false,conds:["x","v"],sol:"5(r d ?x(p) ?v(b))",
-  worlds:[
-    ["R.####","#X.###","##V.#.","###X.#",".###..","##.##E"],
-    ["R.####","#V.##.",".#X.##","###..#","##.#X.",".##.#E"],
-    ["R.#...","#..#.#","##X.##","..#V.#","#.##V.","#.###E"]]},
- {id:"t1",grp:"T",title:"Pasillo con codos",max:6,reveal:true,conds:["wr","nr","wd","nd"],sol:"10(?wr(d) !(r))",
-  worlds:[
-    ["R.######","#...##.#","###...##","#####..E"],
-    ["R...####","###.####",".##....#","######.E"],
-    ["R####...",".....###","####....","....###E"]]},
- {id:"t2",grp:"T",title:"Gravedad",max:6,reveal:true,conds:["wr","nr","wd","nd"],sol:"10(?wd(r) !(d))",
-  worlds:[
-    ["R######",".##.##.","...####","##.....",".#####E"],
-    ["R..####","##.##.#",".#.####","##.....","######E"],
-    ["R#.....","..##.##","#..#.##",".#..###","#.#...E"]]},
- {id:"t3",grp:"T",title:"Arriba o abajo",max:9,reveal:false,conds:["wr","nr","wd","nd","wu","nu"],sol:"11(?wr(?wd(u) !(d)) !(r))",
-  worlds:[
-    ["###...##","#...#..#","R.####.E","########",".##.##.#"],
-    ["########","##.##.##","R#####.E",".......#","##..####"],
-    ["###.....","...#####","R#...##E","#.##....","#.######"]]},
- {id:"u1",grp:"U",title:"Mundo sorpresa",max:10,reveal:false,conds:["x","v","wr","nr","wd","nd"],show:3,sol:"10(?wr(d) !(r) ?x(p) ?v(b))",
-  worlds:[
-    ["R.######","#V#.##.#","#X######","#.V.XX.E"],
-    ["R.######","#.######","#VXV..##","#####XXE"],
-    ["R#......",".######.","V.XV.XX#","######.E"],
-    ["RV######","#.VXX...","#######X","#######E"],
-    ["RV######","#..#####",".#.XXVX#","######.E"]]},
- {id:"u2",grp:"U",title:"La gran sorpresa",max:11,reveal:false,conds:["x","wr","nr","wd","nd","wu","nu"],show:3,sol:"11(?wr(?wd(u) !(d)) !(r) ?x(p))",
-  worlds:[
-    ["########","########","R#.X..XE",".X.#..##","###.##.#"],
-    ["########","##.##.##","R.#.###E","#..###X.","##...XX#"],
-    [".###.XX#","#..X.#..","R.#####E","##.....#","#.##.##."],
-    ["########","..XX.X..","R###..#E","########",".##.##.#"],
-    ["########","########","RX..XX.E","....####","#####.##"]]}
-].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds; return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict}); });
-MISSIONS.push(...MUNDOS);
-/* ===== Mundos (fin) ===== */
+/* ===== Condicionales (inicio) =====
+   Muy simples: dos mapas por nivel y una sola celda que cambia. Primero solo pintar y sin repetir (pasillo, pasillo que dobla,
+   pasillo para abajo), después un repetir mínimo (escalera y pasillo). Los ids (ci…, cv…, cn…) no se renombran */
+const CONDS=[
+ {id:"ci1",grp:"CA",title:"¿Es roja?",max:7,reveal:true,sol:"r r ?x(p) r r",
+  tip:["¿Es roja?","Mirá los dos mapas: la celda del medio a veces es roja. Poné un si (tocá el color para elegir roja) y adentro, pintar"],
+  worlds:[["#####","R.X.E","#####"],["#####","R...E","#####"]]},
+ {id:"ci2",grp:"CA",title:"El pasillo dobla",max:8,reveal:true,sol:"r r ?x(p) r d d",
+  worlds:[["R.X.","###.","###E"],["R...","###.","###E"]]},
+ {id:"ci3",grp:"CA",title:"Para abajo",max:8,reveal:true,sol:"d ?x(p) d r r r",
+  worlds:[["R###","X###","...E"],["R###",".###","...E"]]},
+ {id:"ci4",grp:"CB",title:"Escalera con si",max:6,reveal:true,sol:"3(r d ?x(p))",
+  worlds:[["R.##","#..#","##X.","###E"],["R.##","#..#","##..","###E"]]},
+ {id:"ci5",grp:"CB",title:"Pasillo con si",max:5,reveal:true,sol:"7(r ?x(p))",
+  worlds:[["########","R.X....E","########"],["########","R....X.E","########"]]},
+ {id:"cv1",grp:"CV",title:"¿Roja o verde?",max:9,norep:true,reveal:true,sol:"r r ?x(p) ?v(b) r r",
+  tip:["¿Roja o verde?","La celda cambia de color: un si para la roja (pintar) y otro para la verde (bailar). Tocá el color del si para cambiarlo"],
+  worlds:[["#####","R.X.E","#####"],["#####","R.V.E","#####"]]},
+ {id:"cv2",grp:"CV",title:"Pasillo de colores",max:7,reveal:true,sol:"6(r ?x(p) ?v(b))",
+  worlds:[["#######","R.X.V.E","#######"],["#######","R.V.X.E","#######"]]},
+ {id:"cv3",grp:"CV",title:"Escalera de colores",max:8,reveal:true,sol:"3(r d ?x(p) ?v(b))",
+  worlds:[["R.##","#X.#","##V.","###E"],["R.##","#V.#","##X.","###E"]]},
+ {id:"cn1",grp:"CN",title:"¿Pared o camino?",max:8,reveal:true,sol:"r ?wr(d r) !(r d)",
+  tip:["Si… si no…","Si hay pared a la derecha, bajá; si no, seguí a la derecha. El si no va justo debajo del si"],
+  worlds:[["R.#","#.E"],["R..","##E"]]},
+ {id:"cn2",grp:"CN",title:"¿Bajo o sigo?",max:8,reveal:true,sol:"d ?wd(r d) !(d r)",
+  worlds:[["R#","..","#E"],["R#",".#",".E"]]},
+ {id:"cn3",grp:"CO",title:"El codo",max:6,reveal:true,sol:"6(?wr(d) !(r))",
+  worlds:[["R...","###.","###.","###E"],["R###",".###",".###","...E"]]},
+ {id:"cn4",grp:"CO",title:"Caer y seguir",max:6,reveal:true,sol:"6(?wd(r) !(d))",
+  worlds:[["R###",".###",".###","...E"],["R.##","#.##","#.##","#..E"],["R...","###.","###.","###E"]]}
+].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds;
+  return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,norep:m.norep??!!g.norep,conds:m.conds??g.conds}); });
+MISSIONS.push(...CONDS);
+/* ===== Condicionales (fin) ===== */
 /* ===== Eventos (inicio) ===== */
 /* PARTE 8 (Mundo 3, experimental): eventos. Los bloques «al apretar [tecla]» son bloques de inicio (como «al tocar»): se ponen donde se quiera,
    uno por tecla, y cada uno lleva su pila de hasta 3 acciones. Tras Ir, cada tecla (teclado o botones en pantalla) hace toda la pila de su evento.
@@ -268,7 +252,7 @@ MISSIONS.push(...[
   tip:["Tres llaves, un portal y dos baterías","Un mapa grande: mirá todo antes de apretar la primera tecla"]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); return Object.assign(m,{cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,ev:true,free:true}); }));
 /* ===== Eventos (fin) ===== */
-/* orden: por número de parte (Secuencia, Pintar, Bailar, Repetir, Funciones, Mundos, Si); el sort es estable */
+/* orden: por número de parte (Secuencia, Pintar, Bailar, Repetir, Funciones, Si, Si avanzado, Si no); el sort es estable */
 const byPart=(a,b)=>a.part-b.part;
 PARTS.sort((a,b)=>a.id-b.id); GROUPS.sort(byPart); MISSIONS.sort(byPart);
 function numberMissions(){ PARTS.forEach(p=>MISSIONS.filter(m=>m.part===p.id).forEach((m,i)=>m.num=i+1)); } /* numeración dentro de cada parte */
@@ -294,10 +278,6 @@ export const CHALLENGES=[
    {title:"La gran escalera",max:6,rows:["R..#...","##B#.#.","#....##","#.##.#.","#..#B..","#.###..","...#..E"],sol:"3(2(r) 2(d))"},
    {title:"La montaña bailarina",max:8,rows:["R.####E","#..#...","##.....","###V.##"],sol:"3(r d) b 3(r u)"},
    {title:"Dos pasillos",max:10,rows:["RXVXV","####V","####V","####E"],sol:"2(r p r b) 2(d b) d"}]},
- {id:"x5",part:7,cls:2,tools:"rpbi",strict:true,title:"Desafío del si",t3:150,t2:240,levels:[
-   {title:"Pasillo de colores",max:7,rows:["#.#..#.#.#","RXV.XX.VXE","#..#.#..#."],sol:"9(r ?x(p) ?v(b))"},
-   {title:"Escalera de colores",max:8,rows:["####E","###X.","##X.#","#V.##","R.###"],sol:"4(r u ?x(p) ?v(b))"},
-   {title:"Dos pasillos",max:10,rows:["RX.VX####","####.####","####.V.XX","########.","########E"],sol:"2(4(r ?x(p) ?v(b)) 2(d))"}]},
  /* ===== Bailar (inicio) ===== */
  {id:"x6",part:3,cls:1,tools:"pb",strict:true,title:"Desafío de bailar",t3:150,t2:240,levels:[
    {title:"Zigzag de baile",rows:["R.V.#.","#.#.V.","#..#.E"],sol:"r r b r d r b d r"},
@@ -311,25 +291,22 @@ export const CHALLENGES=[
    {title:"Colores con función",max:12,rows:["####.#XE","##..V.V#","R.V#####"],sol:"A=(r r b); 2(A u) d A u p r"}]}
  /* ===== Funciones (fin) ===== */
 ];
-/* ===== Mundos (inicio) ===== */
-CHALLENGES.push({id:"x8",part:6,cls:2,tools:"rpbie",strict:true,title:"Desafío de mundos",t3:150,t2:240,levels:[
-   {title:"Pasillo cambiante",max:5,reveal:true,conds:["x"],sol:"8(r ?x(p))",
-    worlds:[
-    [".........","#########","RXX..X.XE","#########","#.##.##.#"],
-    ["#########","#########","R..XX..XE","#########",".##.##.##"],
-    ["#########","#########","RX.X.X..E","#########","##.##.##."]]},
-   {title:"Verdes en la bajada",max:8,reveal:true,conds:["wd","nd","v"],sol:"10(?wd(r) !(d) ?v(b))",
-    worlds:[
-    ["R.V####","##.##.#",".#.####","##V....","######E"],
-    ["R###...","..V.###","###.###","..#V.##","#.##..E"],
-    ["R######","V##.##.","..#####","#...V.#",".####.E"]]},
-   {title:"Subir o bajar",max:9,reveal:false,conds:["wr","nr","wd","nd","wu","nu"],sol:"11(?wr(?nd(d) !(u)) !(r))",
-    worlds:[
-    ["###.....","...#.###","R#..##.E","#.#....#","#.#####."],
-    ["########","###.####","R.###..E","#.....##",".##..#.#"],
-    ["########","#####...","R#....#E","...#####","#####.##"]]}]});
-CHALLENGES.filter(c=>c.id==="x8").forEach(c=>c.levels.forEach(m=>m.rows=m.worlds[0]));
-/* ===== Mundos (fin) ===== */
+/* ===== Condicionales (inicio) ===== */
+CHALLENGES.push(
+ {id:"xsi",part:6,cls:2,tools:"rpi",strict:true,title:"Desafío del si",t3:150,t2:240,levels:[
+   {title:"Pasillo rojo",max:5,reveal:true,sol:"5(r ?x(p))",worlds:[["######","R..X.E","######"],["######","R.X..E","######"]]},
+   {title:"La bajada",max:5,reveal:true,sol:"3(d ?x(p))",worlds:[["R##",".##","X##","E##"],["R##","X##",".##","E##"]]},
+   {title:"La escalera",max:6,reveal:true,sol:"3(r d ?x(p))",worlds:[["R.##","#X.#","##..","###E"],["R.##","#..#","##X.","###E"]]}]},
+ {id:"xsa",part:7,cls:2,tools:"rpbi",strict:true,title:"Desafío de colores",t3:150,t2:240,levels:[
+   {title:"Fila de colores",max:7,reveal:true,sol:"4(r ?x(p) ?v(b))",worlds:[["#####","RXV.E","#####"],["#####","RVX.E","#####"]]},
+   {title:"Bajada de colores",max:7,reveal:true,sol:"3(d ?x(p) ?v(b))",worlds:[["R##","X##","V##","E##"],["R##","V##","X##","E##"]]},
+   {title:"Escalera hacia arriba",max:8,reveal:true,sol:"3(r u ?x(p) ?v(b))",worlds:[["###E","##V.","#X.#","R.##"],["###E","##X.","#V.#","R.##"]]}]},
+ {id:"xsn",part:7.5,cls:2,tools:"rie",conds:["wr","wd"],title:"Desafío del si no",t3:150,t2:240,levels:[
+   {title:"El codo",max:6,reveal:true,sol:"4(?wr(d) !(r))",worlds:[["R..","##.","##E"],["R##",".##","..E"]]},
+   {title:"Caer y avanzar",max:6,reveal:true,sol:"5(?wd(r) !(d))",worlds:[["R###",".###","...E"],["R...","###.","###E"],["R.##","#...","###E"]]},
+   {title:"Escalera de paredes",max:6,reveal:true,sol:"6(?wr(d) !(r))",worlds:[["R...","###.","###.","###E"],["R###",".###",".###","...E"],["R.##","#..#","##..","###E"]]}]});
+CHALLENGES.forEach(c=>c.levels.forEach(m=>{ if(m.worlds) m.rows=m.worlds[0]; if(c.conds) m.conds=c.conds; }));
+/* ===== Condicionales (fin) ===== */
 CHALLENGES.sort(byPart);
 CHALLENGES.forEach(ch=>ch.levels.forEach((m,i)=>Object.assign(m,{id:ch.id+"-"+(i+1),num:i+1,cls:ch.cls,part:ch.part,tools:ch.tools,strict:!!ch.strict,ch:ch.id})));
 /* edición chicos (?chicos, 6 a 8 años): solo estos niveles (Secuencia 3,4,5,6,7,9, Pintar 4 a 8, Bailar menos el más largo, y de
