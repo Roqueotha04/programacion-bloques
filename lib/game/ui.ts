@@ -171,7 +171,13 @@ export function boot(hidden?: Record<string, number[]>) {
       front=`<path d="M-29 -10 C-31 -46 31 -46 29 -10 L24 -10 C24 -33 -24 -33 -24 -10Z" fill="#C5CFDD" ${sw}/><path d="M-3 -33 H3 V-20 L0 -17 L-3 -20Z" fill="#C5CFDD" ${sw}/>`+lashes+blush; }
     if(s==="mega"){
       mouth=mouth.split(m).join(l);
-      back=`<path d="M-21 -29 L-33 -55 L-9 -33Z" fill="${m}" ${sw}/><path d="M21 -29 L33 -55 L9 -33Z" fill="${m}" ${sw}/><path d="M-27 -36 L-31 -46 M27 -36 L31 -46" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`+
+      /* los cuernos son manos (palma para arriba): al pasar el nivel hacen «six seven» (.robot.six en game.css). El brazo nace detrás de la cabeza */
+      const hand=d=>{ const cx=d*28;
+        return `<g class="h67 h67${d<0?"l":"r"}"><path d="M${d*12} -24 L${cx} -41" stroke="${k}" stroke-width="9" stroke-linecap="round"/><path d="M${d*12} -24 L${cx} -41" stroke="${m}" stroke-width="5" stroke-linecap="round"/>`+
+          `<g transform="translate(${cx} -44) scale(${d} 1)"><path d="M-4 -6 Q-6 -15 -1 -15 Q2.5 -15 1.5 -6Z" fill="${m}" ${sw}/>`+ /* pulgar */
+          `<path d="M-10 -2 Q-11 -9 -3 -9 L10 -9 Q16 -9 16 -5 Q16 -1 11 -1 L-4 1 Q-10 1 -10 -2Z" fill="${m}" ${sw}/>`+ /* palma y dedos, para arriba */
+          `<path d="M5 -8.5 V-4.5 M9.5 -8.5 V-4.5" stroke="${l}" stroke-width="1.5" stroke-linecap="round"/></g></g>`; };
+      back=hand(-1)+hand(1)+
         `<path d="M-38 -12 L-52 -24 L-46 -2Z" fill="${m}" ${sw}/><path d="M38 -12 L52 -24 L46 -2Z" fill="${m}" ${sw}/>`;
       front=`<path d="M-24 -27 H24" stroke="${l}" stroke-width="2" stroke-linecap="round"/><path d="M-26 10 L-20 16 M26 10 L20 16" stroke="${l}" stroke-width="2" stroke-linecap="round"/>`+
         `<path d="M-3 18 L3 18 L0 24Z M-10 22 H-6 M6 22 H10" fill="${l}" stroke="${l}" stroke-width="1.6" stroke-linecap="round"/>`; }
@@ -1994,9 +2000,15 @@ export function boot(hidden?: Record<string, number[]>) {
       const c=cellEl(G.S.r,G.S.c); if(c) c.classList.add("scorch"); },1900*k);
     setTimeout(()=>{ if(!alive()) return; setBusy(false); $("gBoard").classList.remove("kaboom");
       say("err",ICO.burst(),"¡GENI explotó!",G.ev?`Hizo más de ${G.map.maxAct||MAXACT} movimientos con tus teclas. Tocá Ir y probá un camino más corto`:G.map.adv?"Tu función no termina nunca: ¿llega a la estrella?":`Hizo más de ${G.map.maxAct||MAXACT} movimientos. Revisá tu programa: ¿repite de más o da vueltas?`); },2750*k); }
+  /* 67 BOT: al pasar el nivel hace «six seven» con las manos (solo él; con varios mapas, todos sus robots). Con «reducir movimiento», no */
+  let sixT=null;
+  function six67(){ if(SAVE.skin!=="mega"||RM.matches) return;
+    const bots=[$("bot"),...((G&&G.B)||[]).map(b=>b.bot)].filter((b,i,a)=>b&&a.indexOf(b)===i);
+    bots.forEach(b=>{ b.classList.remove("six"); void b.offsetWidth; b.classList.add("six"); });
+    clearTimeout(sixT); sixT=setTimeout(()=>bots.forEach(b=>b.classList.remove("six")),1800); }
   function celebrate(gained){
   
-    SND.win(); confetti(); $("gBoard").classList.add("win");
+    SND.win(); confetti(); $("gBoard").classList.add("win"); six67();
   
     const bot=$("bot"); bot.classList.add("happy"); setTimeout(()=>bot.classList.remove("happy"),2100); if(G.fun) setFace("wow",2400);
   

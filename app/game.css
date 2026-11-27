@@ -443,6 +443,11 @@ body.busy .vsw{ pointer-events:none; opacity:.6; }
 @keyframes kaboom{ 0%,100%{ transform:translate(0,0); } 10%{ transform:translate(-14px,8px) rotate(-1.2deg); } 25%{ transform:translate(13px,-9px) rotate(1deg); } 40%{ transform:translate(-10px,-6px); } 55%{ transform:translate(8px,6px); } 75%{ transform:translate(-4px,2px); } }
 .cell.scorch{ background-image:radial-gradient(circle,#3A2A1E 0,#5B4331 38%,rgba(91,67,49,.25) 62%,transparent 75%); }
 .robot.happy .bob{ animation:dance .7s ease-in-out 3; }
+/* 67 BOT: «six seven» al pasar el nivel. Una mano sube mientras la otra baja, 3 veces (solo transform: no pesa) */
+.robot.six .h67l{ animation:six67 .52s ease-in-out 3; }
+.robot.six .h67r{ animation:six67 .52s ease-in-out 3 reverse; }
+@keyframes six67{ 0%,100%{ transform:translateY(0); } 25%{ transform:translateY(-7px); } 75%{ transform:translateY(7px); } }
+@media (prefers-reduced-motion:reduce){ .robot.six .h67{ animation:none; } }
 @keyframes dance{ 25%{ transform:translateY(-26%) rotate(-14deg); } 50%{ transform:translateY(0) rotate(0); } 75%{ transform:translateY(-26%) rotate(14deg); } }
 @keyframes float{ 0%,100%{ transform:translateY(-2%); } 50%{ transform:translateY(3%); } }
 @keyframes flick{ to{ opacity:.55; } }
