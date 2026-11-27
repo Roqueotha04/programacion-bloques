@@ -63,15 +63,15 @@ GROUPS.push(
  {id:"N",part:5.5,cls:3,adv:true,tools:"rpbf",strict:true,title:"Para pensar",sub:"un arranque, dos carriles y una serpiente",need:10,c:"#0EA5E9",l:"#D3F0FC"});
 /* ===== Funciones avanzadas (fin) ===== */
 /* ===== Condicionales (inicio) ===== */
-/* Mundo Condicionales: 6 «Si», 7 «Si avanzado», 7.5 «Colores con repetir», 8 «Si no». Todo con colores (sin paredes).
+/* Mundo Condicionales: 6 «Si», 7 «Si avanzado», 7.5 «Colores con repetir» (extra, opcional), 8 «Si no». Todo con colores (sin paredes).
    El mapa cambia: cada nivel trae worlds (rows = worlds[0], mismo tamaño, robot y estrella) y el programa tiene que ganar en TODOS.
    reveal: se muestran los mapas antes de correr. conds: lo que se puede elegir en el si (sin conds: roja o verde).
    pool+show: se sortean show mundos del pool. norep: el nivel no pide repetir (3 estrellas sin él) */
 PARTS.push(
  {id:6,title:"Si",sub:"si la celda es roja, pintala",c:"#6366F1",l:"#E0E1FF",after:[]},
  {id:7,title:"Si avanzado",sub:"rojas y verdes: pintar o bailar",c:"#14B8A6",l:"#CCF5EF",after:[6]},
- {id:7.5,title:"Colores con repetir",sub:"pasillos y escaleras: el si adentro del repetir",c:"#FF9A2E",l:"#FFE2C2",after:[7]},
- {id:8,title:"Si no",sub:"si es roja… si no…",c:"#0EA5E9",l:"#D3F0FC",after:[7.5]});
+ {id:7.5,title:"Colores con repetir",sub:"pasillos y escaleras: el si adentro del repetir",c:"#FF9A2E",l:"#FFE2C2",after:[7],extra:true}, /* opcional, como 4.5 y 5.5: sin desafío y no abre nada */
+ {id:8,title:"Si no",sub:"si es roja… si no…",c:"#0EA5E9",l:"#D3F0FC",after:[7]});
 GROUPS.push(
  {id:"CA",part:6,cls:2,norep:true,tools:"pi",strict:true,title:"Una celda",sub:"¿es roja o no? el si decide",need:0,c:"#6366F1",l:"#E0E1FF"},
  {id:"CB",part:6,cls:2,tools:"rpi",strict:true,title:"Si y repetir",sub:"el si adentro del repetir",need:6,c:"#FF9A2E",l:"#FFE2C2"},
@@ -339,10 +339,6 @@ CHALLENGES.push(
    {title:"Roja o verde",max:9,reveal:true,sol:"r ?x(p) ?v(b) r r r",worlds:[["#####","RX..E","#####"],["#####","RV..E","#####"]]},
    {title:"Bajada",max:8,reveal:true,sol:"d ?x(p) ?v(b) d d",worlds:[["R##","X##",".##","E##"],["R##","V##",".##","E##"]]},
    {title:"Esquina doble",max:13,reveal:true,sol:"r r ?x(p) ?v(b) d ?x(p) ?v(b) d",worlds:[["R.X","##V","##E"],["R.V","##X","##E"]]}]},
- {id:"xsb",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Desafío de colores con repetir",t3:150,t2:240,levels:[
-   {title:"Fila de colores",max:7,reveal:true,sol:"4(r ?x(p) ?v(b))",worlds:[["#####","RXV.E","#####"],["#####","RVX.E","#####"]]},
-   {title:"Bajada de colores",max:7,reveal:true,sol:"3(d ?x(p) ?v(b))",worlds:[["R##","X##","V##","E##"],["R##","V##","X##","E##"]]},
-   {title:"Escalera hacia arriba",max:8,reveal:true,sol:"3(r u ?x(p) ?v(b))",worlds:[["###E","##X.","#X.#","R.##"],["###E","##V.","#V.#","R.##"]]}]},
  {id:"xsm",part:8,cls:2,norep:true,conds:["x"],tools:"ptie",strict:true,title:"Desafío del si no",t3:150,t2:240,levels:[
    {title:"Pasillo",max:9,reveal:true,sol:"r ?x(p) !(t) r r r",worlds:[["#####","RX..E","#####"],["#####","RM..E","#####"]]},
    {title:"Bajada",max:8,reveal:true,sol:"d ?x(p) !(t) d d",worlds:[["R##","X##",".##","E##"],["R##","A##",".##","E##"],["R##","Y##",".##","E##"]]},
