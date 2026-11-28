@@ -82,9 +82,9 @@ GROUPS.push(
  {id:"CS",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Escaleras",sub:"subir, bajar y doblar con colores",need:6,c:"#E2671A",l:"#FFE4CC"},
  {id:"CN",part:8,cls:2,norep:true,tools:"ptie",strict:true,conds:["x"],title:"Si no",sub:"si es roja, pintá; si no, voltereta",need:0,c:"#0EA5E9",l:"#D3F0FC"},
  {id:"CO",part:8,cls:2,norep:true,tools:"ptie",strict:true,conds:["x"],title:"Muchos colores",sub:"varias celdas: un si no para cada una",need:4,c:"#8B5CF6",l:"#E9DEFF"},
- {id:"DA",part:8.5,cls:2,tools:"rpbi",strict:true,title:"Escaleras",sub:"avanzá y, si es roja, bajá",need:0,c:"#E11D48",l:"#FFE0E6"},
- {id:"DB",part:8.5,cls:2,tools:"rpbie",strict:true,title:"La celda decide",sub:"roja: bajá · si no: derecha",need:6,c:"#DB2777",l:"#FCE0EE"},
- {id:"DC",part:8.5,cls:2,tools:"rpbie",strict:true,title:"Caminos largos",sub:"roja, verde o nada: tres caminos",need:12,c:"#9333EA",l:"#F0E2FF"});
+ {id:"DA",part:8.5,cls:2,tools:"rpbi",strict:true,title:"Escaleras",sub:"avanzá y mirá el color",need:0,c:"#E11D48",l:"#FFE0E6"},
+ {id:"DB",part:8.5,cls:2,tools:"rpbie",strict:true,title:"Los dos colores",sub:"rojas abajo, verdes arriba y zigzag",need:6,c:"#DB2777",l:"#FCE0EE"},
+ {id:"DC",part:8.5,cls:2,tools:"rpbie",strict:true,title:"Si no",sub:"roja, verde o nada: tres caminos",need:12,c:"#9333EA",l:"#F0E2FF"});
 /* ===== Condicionales (fin) ===== */
 export const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
@@ -234,9 +234,6 @@ const CONDS=[
  {id:"cd11",grp:"DA",title:"Roja: bajá",max:6,reveal:true,sol:"4(r ?x(p d))",
   tip:["La regla en cada paso","Adentro del repetir: avanzá y, si es roja, pintá y bajá"],
   worlds:[["RX###","#...E"],["R.X##","##..E"]]},
- {id:"cd12",grp:"DA",title:"Verde: subí",max:6,reveal:true,sol:"4(r ?v(b u))",
-  tip:["Ahora la verde","Avanzá y, si es verde, bailá y subí"],
-  worlds:[["#...E","RV###"],["###.E","R..V#"]]},
  {id:"cd8",grp:"DA",title:"Escalera roja",max:6,reveal:true,sol:"5(r ?x(p d))",
   worlds:[["RX####","#..X##","###..E"],["R.X###","##..X#","####.E"],["RX####","#...X#","####.E"]]},
  {id:"cd13",grp:"DA",title:"Escalera verde",max:6,reveal:true,sol:"5(r ?v(b u))",
@@ -244,18 +241,22 @@ const CONDS=[
  {id:"cd9",grp:"DB",title:"Sube y baja",max:9,reveal:true,sol:"6(r ?x(p d) ?v(b u))",
   tip:["Los dos colores","Avanzá · si es roja, pintá y bajá · si es verde, bailá y subí"],
   worlds:[["#######","RX##..E","#...V##"],["##...X#","R.V##.E","#######"],["#######","R..X#.E","###..V#"]]},
- {id:"cd14",grp:"DB",title:"La roja dice bajá",max:7,reveal:true,sol:"6(?x(p d) !(r))",
-  tip:["La celda decide","Si es roja, pintá y bajá; si no, andá a la derecha"],
-  worlds:[["RX###","#..X#","###.E"],["R.X##","##.X#","###.E"],["RX###","#.X##","##..E"]]},
- {id:"cd15",grp:"DB",title:"La verde dice subí",max:7,reveal:true,sol:"6(?v(b u) !(r))",
-  worlds:[["###.E","#..V#","RV###"],["###.E","##.V#","R.V##"],["####E","###.V","R..V#"]]},
- {id:"cd10",grp:"DC",title:"El camino largo",max:9,reveal:true,sol:"9(r ?x(p d) ?v(b u))",
+ {id:"cd10",grp:"DB",title:"El camino largo",max:9,reveal:true,sol:"9(r ?x(p d) ?v(b u))",
   worlds:[["##########","RX#..X#..E","#..V#..V##"],["#...X#####","RV##..X..E","######.V##"],["##########","R.X#.X...E","##..V.V###"]]},
+ {id:"cd18",grp:"DB",title:"Zigzag",max:8,reveal:true,sol:"5(r ?x(p d) !(u))",
+  tip:["El si no también mueve","Avanzá · si es roja, pintá y bajá · si no, subí"],
+  worlds:[["######","RX.X.E","#....#","######"],["#.X.X#","R....E","######","######"],["######","RX##.E","#.X..#","##..##"]]},
  {id:"cd16",grp:"DC",title:"Tres caminos",max:11,reveal:true,sol:"9(?x(p d) !(?v(b u) !(r)))",
   tip:["Un si adentro del si no","Si es roja, bajá · si no: si es verde, subí · si no, derecha"],
   worlds:[["######","RX##.E","#.X.V#","##.V##"],["#.X###","RV.X.E","###.V#","######"],["######","R.X.XE","##.V.V","######"]]},
+ {id:"cd19",grp:"DC",title:"La roja te frena",max:7,reveal:true,sol:"6(r ?x(p) !(d))",
+  tip:["Al revés","Avanzá · si es roja, pintala y quedate en la fila · si no, bajá"],
+  worlds:[["RX.####","##.XX.#","#####.E"],["R.#####","#.XX.##","####.XE"],["RXX.###","###..##","####.XE"]]},
  {id:"cd17",grp:"DC",title:"Bajadas y subidas",max:11,reveal:true,sol:"11(?x(p d) !(?v(b u) !(r)))",
-  worlds:[["RX#..E","#X#V##","#.XV##","##.V##"],["RX#..E","#.XV##","##XV##","##.V##"],["RX.X#E","#.V.XV","####.V","######"]]}
+  worlds:[["RX#..E","#X#V##","#.XV##","##.V##"],["RX#..E","#.XV##","##XV##","##.V##"],["RX.X#E","#.V.XV","####.V","######"]]},
+ {id:"cd20",grp:"DC",title:"Avanzá y decidí",max:12,reveal:true,sol:"7(r ?x(p d) !(?v(b u) !(r)))",
+  tip:["El desafío final","Avanzá · si es roja, bajá · si no: si es verde, subí · si no, otra a la derecha"],
+  worlds:[["##########","RX##...X.E","#...V##.V#","##########"],["#...X##.X#","RV##...V.E","##########","##########"],["##########","RX####...E","#.X##.V###","##...V####"]]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds;
   return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,norep:m.norep??!!g.norep,conds:m.conds??g.conds}); });
 MISSIONS.push(...CONDS);
