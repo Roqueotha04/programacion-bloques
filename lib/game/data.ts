@@ -82,9 +82,9 @@ GROUPS.push(
  {id:"CS",part:7.5,cls:2,tools:"rpbi",strict:true,title:"Escaleras",sub:"subir, bajar y doblar con colores",need:6,c:"#E2671A",l:"#FFE4CC"},
  {id:"CN",part:8,cls:2,norep:true,tools:"ptie",strict:true,conds:["x"],title:"Si no",sub:"si es roja, pintá; si no, voltereta",need:0,c:"#0EA5E9",l:"#D3F0FC"},
  {id:"CO",part:8,cls:2,norep:true,tools:"ptie",strict:true,conds:["x"],title:"Muchos colores",sub:"varias celdas: un si no para cada una",need:4,c:"#8B5CF6",l:"#E9DEFF"},
- {id:"DA",part:8.5,cls:2,norep:true,tools:"pbie",strict:true,title:"Una señal",sub:"una celda dice para dónde ir",need:0,c:"#E11D48",l:"#FFE0E6"},
- {id:"DB",part:8.5,cls:2,norep:true,tools:"pbie",strict:true,title:"Dos señales",sub:"dos celdas, o tres caminos",need:6,c:"#DB2777",l:"#FCE0EE"},
- {id:"DC",part:8.5,cls:2,tools:"rpbie",strict:true,title:"Con repetir",sub:"la misma regla en cada paso",need:10,c:"#9333EA",l:"#F0E2FF"});
+ {id:"DA",part:8.5,cls:2,tools:"rpbi",strict:true,title:"Escaleras",sub:"avanzá y, si es roja, bajá",need:0,c:"#E11D48",l:"#FFE0E6"},
+ {id:"DB",part:8.5,cls:2,tools:"rpbie",strict:true,title:"La celda decide",sub:"roja: bajá · si no: derecha",need:6,c:"#DB2777",l:"#FCE0EE"},
+ {id:"DC",part:8.5,cls:2,tools:"rpbie",strict:true,title:"Caminos largos",sub:"roja, verde o nada: tres caminos",need:12,c:"#9333EA",l:"#F0E2FF"});
 /* ===== Condicionales (fin) ===== */
 export const MISSIONS=[
  {id:"a1",grp:"A",title:"Primer paseo",rows:[".....","..#..","R....","..E..","....."],sol:"r r d"},
@@ -228,33 +228,34 @@ const CONDS=[
   worlds:[["R.X#","##.#","##YE"],["R.A#","##.#","##XE"],["R.M#","##.#","##AE"]]},
  {id:"cm6",grp:"CO",title:"Fila de colores",max:17,reveal:true,sol:"r ?x(p) !(t) r ?x(p) !(t) r ?x(p) !(t) r",
   worlds:[["#####","RXYAE","#####"],["#####","RYXME","#####"],["#####","RAMXE","#####"]]},
- /* parte 8.5 (extra): el color dice el camino. Roja: pintá y bajá · verde: bailá y subí · si no, seguí.
-    Primero una señal (fáciles), después dos señales y tres caminos (medios) y al final la misma regla adentro de un repetir (difíciles) */
- {id:"cd1",grp:"DA",title:"Roja: bajá",max:9,reveal:true,sol:"r ?x(p d r) !(r d)",
-  tip:["El color dice el camino","Si la celda es roja, pintá y bajá; si no, seguí derecho"],
-  worlds:[["RX#","#.E"],["R..","##E"]]},
- {id:"cd2",grp:"DA",title:"Verde: subí",max:9,reveal:true,sol:"r ?v(b u r) !(r u)",
-  tip:["Ahora la verde","Si la celda es verde, bailá y subí; si no, seguí derecho"],
-  worlds:[["#.E","RV#"],["##E","R.."]]},
- {id:"cd3",grp:"DA",title:"Arriba o abajo",max:15,reveal:true,sol:"r ?x(p d r r u) ?v(b u r r d) r",
-  tip:["Dos caminos","Roja: por abajo · verde: por arriba. Un si para cada color"],
-  worlds:[["#####","RX#.E","#...#"],["#...#","RV#.E","#####"]]},
- {id:"cd4",grp:"DA",title:"Más adelante",max:11,reveal:true,sol:"r r ?x(p d r) !(r d) r",
-  worlds:[["R.X##","##..E"],["R...#","###.E"]]},
- {id:"cd5",grp:"DB",title:"Dos rojas",max:18,reveal:true,sol:"r ?x(p d r) !(r d) r ?x(p d r) !(r d) r",
-  worlds:[["RX####","#....#","####.E"],["R..###","##.X##","###..E"],["RX####","#..X##","###..E"]]},
- {id:"cd6",grp:"DB",title:"Bajá y subí",max:20,reveal:true,sol:"r ?x(p d r) ?v(b u r) r ?x(p d r) ?v(b u r) r",
-  worlds:[["######","RX#..E","#..V##"],["#..X##","RV#..E","######"]]},
- {id:"cd7",grp:"DB",title:"Tres caminos",max:19,reveal:true,sol:"r ?x(p d r r u) !(?v(b u r r d) !(r r)) r",
-  tip:["Un si adentro del si no","Si es roja, por abajo · si no: si es verde, por arriba · si no, derecho"],
-  worlds:[["#####","RX#.E","#...#"],["#...#","RV#.E","#####"],["#####","R...E","#####"]]},
- {id:"cd8",grp:"DC",title:"Escalera roja",max:6,reveal:true,sol:"5(r ?x(p d))",
+ /* parte 8.5 (extra): el color dice el camino, siempre adentro de un repetir (la regla se escribe una vez y sirve en cada paso).
+    Roja: pintá y bajá · verde: bailá y subí · si no, seguí. Fáciles: avanzar y mirar un color · medios: los dos colores y «la celda decide»
+    (si es roja, bajá; si no, derecha) · difíciles: caminos largos y tres caminos (un si adentro del si no) */
+ {id:"cd11",grp:"DA",title:"Roja: bajá",max:6,reveal:true,sol:"4(r ?x(p d))",
   tip:["La regla en cada paso","Adentro del repetir: avanzá y, si es roja, pintá y bajá"],
+  worlds:[["RX###","#...E"],["R.X##","##..E"]]},
+ {id:"cd12",grp:"DA",title:"Verde: subí",max:6,reveal:true,sol:"4(r ?v(b u))",
+  tip:["Ahora la verde","Avanzá y, si es verde, bailá y subí"],
+  worlds:[["#...E","RV###"],["###.E","R..V#"]]},
+ {id:"cd8",grp:"DA",title:"Escalera roja",max:6,reveal:true,sol:"5(r ?x(p d))",
   worlds:[["RX####","#..X##","###..E"],["R.X###","##..X#","####.E"],["RX####","#...X#","####.E"]]},
- {id:"cd9",grp:"DC",title:"Sube y baja",max:9,reveal:true,sol:"6(r ?x(p d) ?v(b u))",
+ {id:"cd13",grp:"DA",title:"Escalera verde",max:6,reveal:true,sol:"5(r ?v(b u))",
+  worlds:[["###..E","#..V##","RV####"],["####.E","##..V#","R.V###"],["####.E","#...V#","RV####"]]},
+ {id:"cd9",grp:"DB",title:"Sube y baja",max:9,reveal:true,sol:"6(r ?x(p d) ?v(b u))",
+  tip:["Los dos colores","Avanzá · si es roja, pintá y bajá · si es verde, bailá y subí"],
   worlds:[["#######","RX##..E","#...V##"],["##...X#","R.V##.E","#######"],["#######","R..X#.E","###..V#"]]},
+ {id:"cd14",grp:"DB",title:"La roja dice bajá",max:7,reveal:true,sol:"6(?x(p d) !(r))",
+  tip:["La celda decide","Si es roja, pintá y bajá; si no, andá a la derecha"],
+  worlds:[["RX###","#..X#","###.E"],["R.X##","##.X#","###.E"],["RX###","#.X##","##..E"]]},
+ {id:"cd15",grp:"DB",title:"La verde dice subí",max:7,reveal:true,sol:"6(?v(b u) !(r))",
+  worlds:[["###.E","#..V#","RV###"],["###.E","##.V#","R.V##"],["####E","###.V","R..V#"]]},
  {id:"cd10",grp:"DC",title:"El camino largo",max:9,reveal:true,sol:"9(r ?x(p d) ?v(b u))",
-  worlds:[["##########","RX#..X#..E","#..V#..V##"],["#...X#####","RV##..X..E","######.V##"],["##########","R.X#.X...E","##..V.V###"]]}
+  worlds:[["##########","RX#..X#..E","#..V#..V##"],["#...X#####","RV##..X..E","######.V##"],["##########","R.X#.X...E","##..V.V###"]]},
+ {id:"cd16",grp:"DC",title:"Tres caminos",max:11,reveal:true,sol:"9(?x(p d) !(?v(b u) !(r)))",
+  tip:["Un si adentro del si no","Si es roja, bajá · si no: si es verde, subí · si no, derecha"],
+  worlds:[["######","RX##.E","#.X.V#","##.V##"],["#.X###","RV.X.E","###.V#","######"],["######","R.X.XE","##.V.V","######"]]},
+ {id:"cd17",grp:"DC",title:"Bajadas y subidas",max:11,reveal:true,sol:"11(?x(p d) !(?v(b u) !(r)))",
+  worlds:[["RX#..E","#X#V##","#.XV##","##.V##"],["RX#..E","#.XV##","##XV##","##.V##"],["RX.X#E","#.V.XV","####.V","######"]]}
 ].map(m=>{ const g=GROUPS.find(x=>x.id===m.grp); if(m.show) m.pool=m.worlds;
   return Object.assign(m,{rows:m.worlds[0],cls:g.cls,part:g.part,tools:g.tools,strict:!!g.strict,norep:m.norep??!!g.norep,conds:m.conds??g.conds}); });
 MISSIONS.push(...CONDS);
